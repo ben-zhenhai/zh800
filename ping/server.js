@@ -26,8 +26,8 @@ var iniRead = require('./iniRead.js')(function(iniData){
 	console.log('ready:'+iniData);
 	console.log('ready::'+iniData.pingTime);
 	initPingSet(pingSet,iniData.ipRange);
-	//setInterval(checkIP,iniData.pingTime,pingSet);
-	//setInterval(checkIPfail, iniData.checkTime,pingSet,addIpNotice,iniData.checkTimes);
+	setInterval(checkIP,iniData.pingTime,pingSet);
+	setInterval(checkIPfail, iniData.checkTime,pingSet,addIpNotice,iniData.checkTimes);
 });
 
 app.set('view engine', 'jade');
