@@ -18,10 +18,15 @@ var pingSet={};
 var http = require('http');
 var fs = require('fs');
 var express = require('express');
+var connect = require("connect");
+var socketio = require("socket.io");
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 var app = express();
 var routes = require('./routes')(app);
+var io;
+var server = http.createServer(app);
+
 var iniRead = require('./iniRead.js')(function(iniData){
 	console.log('ready:'+iniData);
 	console.log('ready::'+iniData.pingTime);
@@ -29,14 +34,22 @@ var iniRead = require('./iniRead.js')(function(iniData){
 	setInterval(checkIP,iniData.pingTime,pingSet);
 	setInterval(checkIPfail, iniData.checkTime,pingSet,addIpNotice,iniData.checkTimes);
 });
+io = socketio.listen(server);
+
+
 
 app.set('view engine', 'jade');
 app.set('views', './views');
+app.use(require('stylus').middleware({
+     src: './views',
+     compress: true
+}));
 app.use(express.static('./public'));
 app.use(express.static('./javascript'));
 app.use(express.static('./files'));
 app.use(express.static('./images'));
 app.use(express.static('./views'));
+app.use(express.static('./stylesheets'));
 app.use(morgan('tiny',{
   stream : fs.createWriteStream('app.log', {'flags':'w'})
 }));
@@ -53,7 +66,7 @@ app.post('/addIpMaping', function(req, res) {
 });
 
 
-http.createServer(app).listen(3000, function(){
+server.listen(3000, function(){
      console.log('Express server listening on port ' + 3000);
 });
 
@@ -63,11 +76,11 @@ function asyncPing(ip,cb)
 	session.pingHost(ip, function (error, target){
 		if(error)
 		{
-			errorAction(ip);	//detect ping Fail
+			//errorAction(ip);	//detect ping Fail
 		}
 		else
 		{
-			//errorAction(ip);	//detect ping success
+			errorAction(ip);	//detect ping success
 		}
 	});
 }
@@ -98,6 +111,11 @@ function errorAction(ip)
 }
 function addIpNotice(ip)
 {
+	io.on("connection", function(socket) {
+  
+    socket.emit("echo", ip);
+  });
+	
 	console.log('Action == ip'+ip+'is error');
 }
 function checkIPfail(pingSet,cb ,checkTimes)
