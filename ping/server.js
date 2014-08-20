@@ -35,7 +35,11 @@ var iniRead = require('./iniRead.js')(function(iniData){
 	setInterval(checkIPfail, iniData.checkTime,pingSet,addIpNotice,iniData.checkTimes);
 });
 io = socketio.listen(server);
-
+io.on("connection", function(socket) {
+	socket.on("echo", function(data) {
+		console.log('--message');
+	});
+});
 
 
 app.set('view engine', 'jade');
@@ -69,6 +73,10 @@ app.post('/addIpMaping', function(req, res) {
 server.listen(3000, function(){
      console.log('Express server listening on port ' + 3000);
 });
+
+
+
+
 
 
 function asyncPing(ip,cb)
@@ -105,29 +113,39 @@ function justPing(ip)
 
 function errorAction(ip)
 {
-	console.log(ip+'='+pingSet[ip]);
+	//console.log(ip+'='+pingSet[ip]+':'+Date());
 	pingSet[ip]=pingSet[ip]+1;
 	//console.log('eeerroorr  --- '+ip);
 }
-function addIpNotice(ip)
+function addIpNotice(ipTable)
 {
+	console.log(ipTable);
 	io.on("connection", function(socket) {
-  
-    socket.emit("echo", ip);
+  	//for(var i in ipTable)
+  	{
+  		console.log('--'+ipTable+'--');
+  		socket.emit("echo", ipTable);	
+  	}
+    
   });
 	
-	console.log('Action == ip'+ip+'is error');
+//	console.log(ipTable);
 }
 function checkIPfail(pingSet,cb ,checkTimes)
 {
+	var failIpTable={};
 	for(var ip in pingSet)
 	{
 		if(pingSet[ip]>checkTimes)
 		{
+			failIpTable[ip]=Date();
 			pingSet[ip]=0;
-			cb(ip);
+			
 		}
 	}
+		cb(failIpTable);
+		//console.log(failIpTable);
+	
 }
 
 
