@@ -26,6 +26,7 @@ var app = express();
 var routes = require('./routes')(app);
 var io;
 var server = http.createServer(app);
+fs.unlinkSync('ip.log');
 
 var iniRead = require('./iniRead.js')(function(iniData){
 	console.log('ready:'+iniData);
@@ -120,6 +121,9 @@ function errorAction(ip)
 function addIpNotice(ipTable)
 {
 	console.log(ipTable);
+	fs.appendFile('ip.log', JSON.stringify(ipTable)+'\r\n',function(args){
+		// body
+	});
 	io.on("connection", function(socket) {
   	//for(var i in ipTable)
   	{
@@ -134,16 +138,21 @@ function addIpNotice(ipTable)
 function checkIPfail(pingSet,cb ,checkTimes)
 {
 	var failIpTable={};
+	var cbRun=0;
 	for(var ip in pingSet)
 	{
 		if(pingSet[ip]>checkTimes)
 		{
 			failIpTable[ip]=Date();
 			pingSet[ip]=0;
+			cbRun=1;
 			
 		}
 	}
-		cb(failIpTable);
+		if(cbRun==1){
+			cb(failIpTable);
+			cbRun=0;
+		}	
 		//console.log(failIpTable);
 	
 }
