@@ -1,0 +1,29 @@
+{
+    "name" : "Alive_Server",
+    "version" : "0.0.1",
+    "description" : "Alive Server",
+    "private" : true,
+    "repository" :
+    { 
+        "type" : "git",
+        "url" : "https://github.com/ZH8000/zh800.git"
+    },
+    "dependencies" : {
+        "net-ping" : "",
+        "express" : "",
+        "connect" : "",
+        "socket.io" : "",
+        "morgan" : "",
+        "body-parser" : "",
+        "base64id" : "",
+        "ejs" : "",
+        "engine.io-parser" : "",
+        "ini" : "",
+        "jade" : "",
+        "net-ping" : "",
+        "node-ini" : "",
+        "stylus" : "",
+        "ws" : "",
+        "mongoose" : ""
+    }
+}
