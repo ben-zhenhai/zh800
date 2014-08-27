@@ -39,6 +39,7 @@ server.on('connection', function(client) {
             if (error) console.error(error)
             console.log('add data ok.')
         })
+        console.log('test')
     })
 
     client.on('close', function() {

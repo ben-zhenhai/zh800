@@ -1,0 +1,16 @@
+{
+    "name" : "Alive_Server_Database",
+    "version" : "0.0.1",
+    "description" : "Alive Server Database",
+    "private" : true,
+    "repository" :
+    { 
+        "type" : "git",
+        "url" : "https://github.com/ZH8000/zh800.git"
+    },
+    "dependencies" : {
+        "express" : "",
+        "mongoose" : "",
+        "jade" : ""
+    }
+}
