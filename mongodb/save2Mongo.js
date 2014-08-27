@@ -12,7 +12,8 @@ server.on('connection', function(client) {
 
     client.on('data', function(data) {
         var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
-        array = tmp.toString().split(/\t+/g)
+        //array = tmp.toString().split(/\t+/g)
+        array = tmp.toString().split(',')
 
         console.log('size: ' + array.length)
         array.forEach(function(data) {
