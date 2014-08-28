@@ -12,6 +12,7 @@ tcpClient.connect(
         console.log('Connected to ' + HOST + ':' + PORT)
         console.log('Start to send data: ' + args)
         tcpClient.write(args.toString())
+        tcpClient.destroy()
     }
 )
 
@@ -28,7 +29,7 @@ tcpClient.on(
     'close', 
     function() {
         console.log('Connection closed')
-        reConnect()
+        //reConnect()
     }
 )
 
