@@ -1,45 +1,35 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>show demo</title>
+ <title>WebSocket Echo Client</title>
+  <meta charset="UTF-8" />
+  <script>
+  window.addEventListener("load", function(event) {
+    var status = document.getElementById("status");
+    var message = document.getElementById("message");
+    var send = document.getElementById("send");
+    var socket;
+    status.textContent = "Not Connected";
+    socket = new WebSocket("ws://localhost:3000");
+     socket.addEventListener("open", function(event) {
+           status.textContent = "Connected";
+      });
+     socket.addEventListener("message", function(event) {
+      console.log(event);
+          message.textContent = "Server Says: " + event.data;
+        });
+     socket.addEventListener("error", function(event) {
+          message.textContent = "Error: " + event;
+        });
+     socket.addEventListener("close", function(event) {
+          open.disabled = false;
+          status.textContent = "Not Connected";
+    }); 
+    });
+  </script>
 </head>
 <body>
-  <!-- add new item Dynamically in the show block -->
-  <div id="showBlock"></div>
-  <!-- click the button to add new item -->
-  <input type="button" id="btn" value="addItem" />
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  //set the default value
- 
-  var socket = io.connect();
-     setInterval(function(){socket.emit("echo", '123123');  },10000);
-    socket.on("echo", function(data) {
-      for(var i in data)
-      {
-        console.log(data[i]);
-        document.write('<b>'+data[i]+'------  '+i+'<br>');
-      }
-      //fail.innHTML=data;
-       $('#fail').append('<div id="div' + '123' + '">Input:</div>');
-      //document.write('<b>'+data+'<br>');
-      console.log(document.length);
-    
-    });
-  var txtId = 1;
-  
-  //add input block in showBlock
-  $("#btn").click(function () {
-      $("#showBlock").append('<div id="div' + txtId + '">Input:</div>');
-      txtId++;
-  });
- 
-  //remove div
-  function deltxt(id) {
-      $("#div"+id).remove();
-  }
-</script> 
-<div id='fail'> </div>
+  status: <span id="status"></span><br />
+  <span id="message"></span>
 </body>
 </html>

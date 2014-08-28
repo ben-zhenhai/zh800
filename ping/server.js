@@ -23,7 +23,7 @@ var socketio = require("socket.io");
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 var app = express();
-var routes = require('./routes')(app);
+var routes = require('./routes')(app,express);
 var WebSocketServer = require("ws").Server;
 var wsServer;
 var io;
@@ -50,12 +50,7 @@ app.use(require('stylus').middleware({
      src: './views',
      compress: true
 }));
-app.use(express.static('./public'));
-app.use(express.static('./javascript'));
-app.use(express.static('./files'));
-app.use(express.static('./images'));
-app.use(express.static('./views'));
-app.use(express.static('./stylesheets'));
+
 app.use(morgan('tiny',{
   stream : fs.createWriteStream('app.log', {'flags':'w'})
 }));
@@ -63,10 +58,7 @@ app.use(morgan('tiny'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 
-app.get('/',function(req, res, next){
-	console.log('get');
-	res.sendFile('ping.html');
-});
+
 app.post('/addIpMaping', function(req, res) {
      var name = req.body.IP;
      var source = req.body.name;
