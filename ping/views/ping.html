@@ -5,27 +5,27 @@
   <meta charset="UTF-8" />
   <script>
   window.addEventListener("load", function(event) {
-    var status = document.getElementById("status");
-    var message = document.getElementById("message");
-    var send = document.getElementById("send");
-    var socket;
-    status.textContent = "Not Connected";
-    socket = new WebSocket("ws://localhost:3000");
-     socket.addEventListener("open", function(event) {
+  	var status = document.getElementById("status");
+  	var message = document.getElementById("message");
+  	var send = document.getElementById("send");
+  	var socket;
+  	status.textContent = "Not Connected";
+  	socket = new WebSocket("ws://localhost:3000");
+  	 socket.addEventListener("open", function(event) {
            status.textContent = "Connected";
-      });
-     socket.addEventListener("message", function(event) {
-      console.log(event);
+  		});
+  	 socket.addEventListener("message", function(event) {
+  	 	console.log(event);
           message.textContent = "Server Says: " + event.data;
         });
-     socket.addEventListener("error", function(event) {
+  	 socket.addEventListener("error", function(event) {
           message.textContent = "Error: " + event;
         });
-     socket.addEventListener("close", function(event) {
+  	 socket.addEventListener("close", function(event) {
           open.disabled = false;
           status.textContent = "Not Connected";
-    }); 
-    });
+		}); 
+  	});
   </script>
 </head>
 <body>
