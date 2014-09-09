@@ -12,10 +12,12 @@
   <link rel="stylesheet" type="text/css" href="../assets/custom/css/custom.css">
 
   <script src="../assets/sementicUI/javascript/semantic.js"></script>
-  <script src="../assets/custom/javascript/chart.js"></script>
 
-  <script src="../assets/lib/js/d3.v3.min.js"></script>
-  <script src="../assets/lib/js/jquery-2.1.1.js"></script>
+  <script src="../assets/custom/javascript/chart.js"></script>
+  <script src="../assets/custom/javascript/steps.js"></script>
+
+  <script src="../assets/lib/javascript/jquery-2.1.1.js"></script>
+  <script src="../assets/lib/javascript/d3.v3.min.js"></script>
 
   <style>
 .chart rect {
@@ -46,12 +48,12 @@
   <div class="center aligned one column ui grid" style="padding-top:60px; padding-bottom:20px">
     <div class="column">
       <div class="ui six steps">
-        <div data-defaultName="Overview" id="stepOverview" class="ui active step">Overview</div>
-        <div data-defaultName="Product" id="stepProduct" class="ui step">Product</div>
-        <div data-defaultName="Monthly" id="stepMonthly" class="ui step">Monthly</div>
-        <div data-defaultName="Weekly" id="stepWeekly" class="ui step">Weekly</div>
-        <div data-defaultName="Date" id="stepDate" class="ui step">Date</div>
-        <div data-defaultName="Machine" id="stepMachine" class="ui step">Machine</div>
+        <div data-defaultName="Overview" id="step0" class="ui active step">Overview</div>
+        <div data-defaultName="Product" id="step1" class="ui step">Product</div>
+        <div data-defaultName="Monthly" id="step2" class="ui step">Monthly</div>
+        <div data-defaultName="Weekly" id="step3" class="ui step">Weekly</div>
+        <div data-defaultName="Date" id="step4" class="ui step">Date</div>
+        <div data-defaultName="Machine" id="step5" class="ui step">Machine</div>
       </div>
     </div>
     <div class="column">
@@ -86,19 +88,7 @@
         extractName: function(data) { return data.name }
       })
 
-      function resetSteps() {
-
-        $(".steps div").removeClass("active");
-
-        $(".steps div").each(function(index, div) { 
-          var defaultName = $(div).attr("data-defaultName");
-          $(div).text(defaultName);
-        })
-
-      }
-
       function onOverviewClick(data) {
-        clearStepsActive();
         $("#stepProduct").addClass("active").text(data.name);
         drawBarChart(".chart", data2);
       }

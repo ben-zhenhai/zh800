@@ -23,12 +23,14 @@ function barChart(options) {
       return index * options.barWidth + index * options.barPadding;
     }
 
-    function getDataValue(data) { return options.extractValue(data); }
+    function getDataValue(data) { 
+      return options.extractValue(data); 
+    }
 
     var totalWidth = getXOffset(dataSet.length);
     var minimalY = options.bottomMargin;
     var maximalY = options.totalHeight - 
-  		 (options.bottomMargin + options.topMargin);
+  		 (options.bottomMargin + options.topMargin + 10);
 
     var scalar = d3.scale.linear().
                     domain([0, d3.max(dataSet, options.extractValue)]).
@@ -66,7 +68,7 @@ function barChart(options) {
         attr("x", function(d, i) { return getXOffset(i) }).
         attr("y", options.totalHeight).
         attr("dx", "25px").
-        text(function(d) { return d.name } )
+        text(options.extractName)
 
   }
 
