@@ -115,7 +115,7 @@
     setTable("#table", tableSchema);
     $("#datepicker").datepicker({firstDay: 0});
 
-    var data2 = [
+    var barChartData = [
       {time: '08:00', qty: 10},
       {time: '09:00', qty: 20},
       {time: '10:00', qty: 5},
@@ -133,8 +133,10 @@
       extractName: function(data) { return data.time }
     })
 
-    drawBarChart(".barChart", data2);
+    drawBarChart(".barChart", barChartData);
 
+    var steps = ["A1xB1", "三月", "第三週", "12 號"];
+    setStepsTitle("step", steps, true);
   </script>
 </body>
 

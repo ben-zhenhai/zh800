@@ -89,7 +89,8 @@
       })
 
       function onOverviewClick(data) {
-        $("#stepProduct").addClass("active").text(data.name);
+
+        setStepsTitle("step", [data.name]);
         drawBarChart(".chart", data2);
       }
 
