@@ -47,19 +47,23 @@ function barChart(options) {
     var bar = chart.selectAll("g").data(dataSet).enter().
                     append("g")
 
+    function calculateRectYPosition(data) {
+      return options.totalHeight - scalar(getDataValue(data)) - options.bottomMargin-10;
+    }
+
+    function calculateTopLabelYPosition(data) {
+      return options.totalHeight - scalar(getDataValue(data)) - options.topMargin;
+    }
+
     bar.append("rect").
         attr("width", options.barWidth - 5).
         attr("height", function(d) { return scalar(getDataValue(d)) }).
         attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", function(d) { return options.totalHeight - scalar(getDataValue(d)) - options.bottomMargin-10 })
-
-    if ($.isFunction(onClickCallback)) {
-      bar.on("click", onClickCallback);
-    }
+        attr("y", calculateRectYPosition)
 
     bar.append("text").
         attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", function(d, i) { return options.totalHeight - scalar(getDataValue(d)) - options.topMargin} ).
+        attr("y", calculateTopLabelYPosition).
         attr("dy", "-15px").
         attr("dx", "20px").
         text(options.extractValue)
@@ -70,6 +74,9 @@ function barChart(options) {
         attr("dx", "25px").
         text(options.extractName)
 
+    if ($.isFunction(onClickCallback)) {
+      bar.on("click", onClickCallback);
+    }
   }
 
   return draw;
