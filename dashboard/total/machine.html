@@ -37,6 +37,11 @@
 .barChart rect:hover {
   fill: brown;
 }
+
+.slice path:hover {
+  fill: brown;
+}
+
   </style>
 
 </head>
@@ -78,8 +83,7 @@
     <div class="twelve wide column" >
       <div class="ui center aligned two column grid">
         <div class="column"><svg class="barChart"></svg></div>
-        <div class="column">PieChart</div>
-
+        <div class="column"><svg class="pieChart"></svg></div>
       </div>
       <div>
         <table class="ui celled table segment">
@@ -137,6 +141,27 @@
 
     var steps = ["A1xB1", "三月", "第三週", "12 號", "A001"];
     setStepsTitle("step", steps);
+  </script>
+  <script>
+
+    var pieData = [
+      {"label":"Error1", "value":120}, 
+      {"label":"Error2", "value":30},
+      {"label":"Error3", "value":30}
+    ];
+
+    var drawPieChart = pieChart({
+      width: 250,
+      height: 250,
+      radius: 100,
+      extractValue: function(data) { return data.value; },
+      extractName: function(data) { return data.label; }
+    })
+
+    drawPieChart(".pieChart", pieData);
+
+
+
   </script>
 </body>
 

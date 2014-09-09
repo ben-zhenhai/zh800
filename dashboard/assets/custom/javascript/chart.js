@@ -14,11 +14,13 @@
  *  The options parameter will control the basic attribute of this chart, and
  *  must have the following attribute:
  *
- *   -  options.totalHeight
- *   -  options.barWidth
- *   -  options.barPadding
- *   -  options.bottomMargin
- *   -  options.topMargin
+ *   - options.totalHeight
+ *   - options.barWidth
+ *   - options.barPadding
+ *   - options.bottomMargin
+ *   - options.topMargin
+ *   - options.extractValue
+ *   - options.extractName
  *
  */
 function barChart(options) {
@@ -103,6 +105,64 @@ function barChart(options) {
     if ($.isFunction(onClickCallback)) {
       bar.on("click", onClickCallback);
     }
+  }
+
+  return draw;
+}
+
+
+function pieChart(options) {
+
+  function assertInt(variable, message) {
+    if (typeof variable !== "number") {
+      var errorMessage = message || "Assertion failed";
+      if (typeof Error !== "undefined") {
+        throw new Error(errorMessage);
+      } else {
+        throw message;
+      }
+    }
+  }        
+
+  assertInt(options.width, "No width attribute");
+  assertInt(options.height, "No height attribute");
+  assertInt(options.radius, "No radius");
+
+  var draw = function (selection, data) {
+
+    function calculateArcCenter(data) {
+      data.innerRadius = 0;
+      data.outerRadius = options.radius;
+      return "translate(" + arc.centroid(data) + ")";
+    }
+
+    var color = d3.scale.category20c();
+
+    var pieData = d3.layout.pie().value(options.extractValue)(data);
+
+
+    var pieChart = d3.select(selection)
+        .attr("width", options.width)
+        .attr("height", options.height)
+        .append("g")
+        .attr("transform", "translate(" + options.radius + "," + options.radius + ")")
+
+    var arc = d3.svg.arc().outerRadius(options.radius);
+
+    var arcs = pieChart.selectAll("g.slice")
+        .data(pieData)
+        .enter()
+        .append("g")
+        .attr("class", "slice");
+
+    arcs.append("path")
+      .attr("fill", function(d, i) { return color(i); } )
+      .attr("d", arc);
+
+    arcs.append("text")
+        .attr("transform", calculateArcCenter)
+        .attr("text-anchor", "middle")
+        .text(function(d,i) { return d.data.label; });
   }
 
   return draw;
