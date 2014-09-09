@@ -78,6 +78,13 @@
         {name: 'Machine2', value: 100}
       ];
 
+      var data3 = [
+        {name: 'Machine1', value: 40},
+        {name: 'Machine2', value: 85},
+        {name: 'Machine2', value: 10}
+      ];
+
+
       var drawBarChart = barChart({
         totalHeight: 420,
         barWidth: 50,
@@ -88,13 +95,18 @@
         extractName: function(data) { return data.name }
       })
 
-      function onOverviewClick(data) {
+      function onOverviewClickProduct(productData) {
+        function onOverviewClickMonth(monthData) {
+          setStepsTitle("step", [productData.name, monthData.name]);
+          drawBarChart(".chart", data3);
+        }
 
-        setStepsTitle("step", [data.name]);
-        drawBarChart(".chart", data2);
+        setStepsTitle("step", [productData.name]);
+        drawBarChart(".chart", data2, onOverviewClickMonth);
       }
 
-      drawBarChart(".chart", data, onOverviewClick)
+
+      drawBarChart(".chart", data, onOverviewClickProduct)
 
 
     </script>
