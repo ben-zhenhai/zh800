@@ -51,7 +51,7 @@ function barChart(options) {
         attr("width", options.barWidth - 5).
         attr("height", function(d) { return scalar(getDataValue(d)) }).
         attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", function(d) { return options.totalHeight - scalar(getDataValue(d)) - options.bottomMargin })
+        attr("y", function(d) { return options.totalHeight - scalar(getDataValue(d)) - options.bottomMargin-10 })
 
     if ($.isFunction(onClickCallback)) {
       bar.on("click", onClickCallback);
@@ -60,13 +60,13 @@ function barChart(options) {
     bar.append("text").
         attr("x", function(d, i) { return getXOffset(i) }).
         attr("y", function(d, i) { return options.totalHeight - scalar(getDataValue(d)) - options.topMargin} ).
-        attr("dy", "-0.5em").
+        attr("dy", "-15px").
         attr("dx", "20px").
         text(options.extractValue)
 
     bar.append("text").
         attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", options.totalHeight).
+        attr("y", options.totalHeight-10).
         attr("dx", "25px").
         text(options.extractName)
 
