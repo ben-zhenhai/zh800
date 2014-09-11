@@ -7,7 +7,7 @@
 
 module.exports = {
 
-  singup:  function(req, res) {
+  signup:  function(req, res) {
     res.view();
   },
 

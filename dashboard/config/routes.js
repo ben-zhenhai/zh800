@@ -37,7 +37,7 @@ module.exports.routes = {
   },
   "/dashboard": { view: "dashboard" },
   "GET /user/show/:id": "User.show",
-  "GET /user/singup": "User.singup",
+  "GET /user/signup": "User.signup",
   "POST /user/create": "User.create"
 
   /***************************************************************************
