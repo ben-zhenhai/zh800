@@ -21,9 +21,16 @@ module.exports = {
         }
         return res.redirect("/user/singup");
       }
-      res.json(newUser);
+      res.redirect("/user/show/" + newUser.id);
     })
+  },
+
+  show: function(req, res, next) {
+    User.findOne(req.param("id"), function foundUser(err, user) {
+      if (err) { return next(err) }
+      if (!user) { return next() }
+      res.view({user: user});
+    });
   }
-	
 };
 

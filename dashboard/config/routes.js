@@ -35,6 +35,8 @@ module.exports.routes = {
   '/': {
     view: 'index'
   },
+  "/dashboard": { view: "dashboard" },
+  "GET /user/show/:id": "User.show",
   "GET /user/singup": "User.singup",
   "POST /user/create": "User.create"
 
