@@ -34,7 +34,9 @@ module.exports.routes = {
 
   '/': {
     view: 'index'
-  }
+  },
+  "GET /user/singup": "User.singup",
+  "POST /user/create": "User.create"
 
   /***************************************************************************
   *                                                                          *
