@@ -11,6 +11,7 @@
   <link rel="stylesheet" type="text/css" href="./assets/sementicUI/css/semantic.css">
   <link rel="stylesheet" type="text/css" href="./assets/custom/css/custom.css">
 
+  <script src="./assets/lib/javascript/jquery-2.1.1.js"></script>
   <script src="./assets/sementicUI/javascript/semantic.js"></script>
 
 </head>
@@ -23,50 +24,93 @@
   <div class="one column ui page grid" style="padding-top:60px; padding-bottom:20px">
     <div class="column">
       <div>
-        <div class="ui form segment">
+        <form class="ui form segment" action="/api/singup" method="post" id="singupForm">
           <div class="field">
-            <label>姓名</label>
+            <label>姓名 <%= Username %></label>
             <div class="ui left labeld icon input">
-              <input placeholder="姓名" type="text">
+              <input placeholder="姓名" type="text" name="username">
               <i class="user icon"></i>
             </div>
           </div>
           <div class="field">
             <label>工碼</label>
             <div class="ui left labeld icon input">
-              <input placeholder="工碼" type="text">
+              <input placeholder="工碼" type="text" name="employeeID">
               <i class="sitemap icon"></i>
             </div>
           </div>
           <div class="field">
             <label>電子郵件地址</label>
             <div class="ui left labeld icon input">
-              <input placeholder="電子郵件地址" type="email">
+              <input placeholder="電子郵件地址" type="email" name="email">
               <i class="mail icon"></i>
             </div>
           </div>
           <div class="field">
             <label>密碼</label>
             <div class="ui left labeld icon input">
-              <input placeholder="請輸入您想要的密碼" type="password">
+              <input placeholder="請輸入您想要的密碼" type="password" name="password">
               <i class="lock icon"></i>
             </div>
           </div>
           <div class="field">
             <label>請再輸入一次密碼</label>
             <div class="ui left labeld icon input">
-              <input placeholder="請再次輸入您想要的密碼以便確認" type="password">
+              <input placeholder="請再次輸入您想要的密碼以便確認" type="password" name="passwordConfirm">
               <i class="lock icon"></i>
             </div>
           </div>
 
           <div class="ui right floated blue submit button">註冊</div>
 
-        </div> 
+        </form> 
       </div>
 
     </div>
   </div>
+  <script>
+    $(function() {
+      var validations = {
+        "username": {
+          "identifier": "username",
+          "rules": [{
+            "type": "empty",
+            "prompt": "請輸入您要使用的使用者名稱"
+          }]
+        },
+        "employeeID": {
+          "identifier": "employeeID",
+          "rules": [{
+            "type": "empty",
+            "prompt": "請輸入您的工號"
+          }]
+        },
+        "email": {
+          "identifier": "email",
+          "rules": [{
+            "type": "email",
+            "prompt": "請確認您的 EMail 格式是否正確"
+          }]
+        },
+        "password": {
+          "identifier": "password",
+          "rules": [{
+            "type": "length[8]",
+            "prompt": "密碼至少要八個字元"
+          }]
+        },
+        "passwordConfirm": {
+          "identifier": "passwordConfirm",
+          "rules": [{
+            "type": "match[password]",
+            "prompt": "兩次輸入的密碼不符，請再次確認您要用的密碼"
+          }]
+        }
+      }
+
+      $("#singupForm").form(validations, {on: "blur", inline: true})
+    })
+  </script>
 </body>
 
 </html>
