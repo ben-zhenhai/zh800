@@ -11,6 +11,7 @@
   <link rel="stylesheet" type="text/css" href="./assets/sementicUI/css/semantic.css">
   <link rel="stylesheet" type="text/css" href="./assets/custom/css/custom.css">
 
+  <script src="./assets/lib/javascript/jquery-2.1.1.js"></script>
   <script src="./assets/sementicUI/javascript/semantic.js"></script>
 
 </head>
@@ -30,32 +31,54 @@
           </div>
         <% } %>
 
-        <form class="ui form segment" action="/user/login" method="POST">
+        <form class="ui form segment" action="/user/login" method="POST" id="loginForm">
           <div class="field">
-            <label>Username</label>
+            <label>使用者帳號</label>
             <div class="ui left labeld icon input">
               <input placeholder="Username" type="text" name="username">
               <i class="user icon"></i>
             </div>
           </div>
           <div class="field">
-            <label>Password</label>
+            <label>密碼</label>
             <div class="ui left labeld icon input">
               <input placeholder="Password" type="password" name="password">
               <i class="lock icon"></i>
             </div>
           </div>
-          <input type="submit" class="ui right floated blue submit button" value="Login" />
+          <input type="submit" class="ui right floated blue submit button" value="登入" />
           <input type="hidden" name="_csrf" value="<%= _csrf %>" />
         </form> 
       </div>
 
       <div style="padding: 1em;">
-        <div style="float: left"><a href="forget.html" >Forget Password</a></div>
-        <div style="float: right"><a href="/user/signup">Signup</a></div>
+        <div style="float: left"><a href="forget.html" >忘記密碼</a></div>
+        <div style="float: right"><a href="/user/signup">註冊</a></div>
       </div>
     </div>
   </div>
+  <script>
+    $(function() {
+      var validations = {
+        "username": {
+          "identifier": "username",
+          "rules": [{
+            "type": "empty",
+            "prompt": "請輸入使用者名稱"
+          }]
+        },
+        "password": {
+          "identifier": "password",
+          "rules": [{
+            "type": "empty",
+            "prompt": "請輸入密碼"
+          }]
+        }
+      }
+      $("#loginForm").form(validations, {on: "blur", inline: true})
+    })
+
+  </script>
 </body>
 
 </html>
