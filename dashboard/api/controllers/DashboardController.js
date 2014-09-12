@@ -1,5 +1,5 @@
 /**
- * UserController
+ * DashboardController
  *
  * @description :: Server-side logic for managing users
  * @help        :: See http://links.sailsjs.org/docs/controllers
@@ -12,7 +12,14 @@ module.exports = {
   },
 
   main: function(req, res) {
-    res.view("dashboard")
+    res.view("dashboard");
+  },
+
+  totalOverviewJSON: function(req, res) {
+    Log.overviewByOrderType(res, function(result) {
+      var resultJSON = {dataSet: result}
+      res.json(resultJSON);
+    });
   }
 
 };

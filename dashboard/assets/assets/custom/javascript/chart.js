@@ -42,7 +42,7 @@ function barChart(options) {
   assertInt(options.bottomMargin, "No bottomMargin attribute");
   assertInt(options.topMargin, "No topMargin attribute");
 
-  var draw = function (selection, dataSet, onClickCallback) {
+  var draw = function (selection, dataSet) {
 
     function getXOffset(index) {
       return index * options.barWidth + index * options.barPadding;
@@ -85,7 +85,8 @@ function barChart(options) {
         attr("width", options.barWidth - 5).
         attr("height", function(d) { return scalar(getDataValue(d)) }).
         attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", calculateRectYPosition)
+        attr("y", calculateRectYPosition).
+        attr("onclick", function(d) { return "window.location.href='" + d.link + "'" })
 
     // The top label, which is the actually data value
     bar.append("text").
@@ -102,9 +103,6 @@ function barChart(options) {
         attr("dx", "25px").
         text(options.extractName)
 
-    if ($.isFunction(onClickCallback)) {
-      bar.on("click", onClickCallback);
-    }
   }
 
   return draw;

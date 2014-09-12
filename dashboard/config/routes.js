@@ -38,7 +38,9 @@ module.exports.routes = {
   "GET /user/signup": "User.signup",
   "POST /user/create": "User.create",
   "POST /user/login": "User.login",
-  "GET /user/logout": "User.logout"
+  "GET /user/logout": "User.logout",
+  "GET /api/json/total/overview": "Dashboard.totalOverviewJSON",
+  "GET /total": "Total.index"
 
   /***************************************************************************
   *                                                                          *

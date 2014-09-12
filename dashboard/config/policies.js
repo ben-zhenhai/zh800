@@ -26,6 +26,7 @@ module.exports.policies = {
   *                                                                          *
   ***************************************************************************/
 
+  total: {"*": "sessionAuth"},
   dashboard: {
     "index": ["flash", "redirectToDashboardIfLogin"],
     "*": "sessionAuth"

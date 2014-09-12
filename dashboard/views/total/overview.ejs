@@ -60,30 +60,13 @@
       <div class="ui right floated button">Export CSV File</div>
     </div>
     <div class="column">
+      <div id="loadingIndicator">Loading....</div>
       <svg class="chart"></svg>
     </div>
 
     <script>
     </script>
     <script>
-
-      var data = [
-        {name: 'A1xB1', value: 30},
-        {name: 'A2xB2', value: 8}
-      ];
-
-      var data2 = [
-        {name: '一月', value: 30},
-        {name: '二月', value: 8},
-        {name: '三月', value: 100}
-      ];
-
-      var data3 = [
-        {name: '第一週', value: 40},
-        {name: '第二週', value: 85},
-        {name: '第三週', value: 10}
-      ];
-
 
       var drawBarChart = barChart({
         totalHeight: 350,
@@ -95,19 +78,15 @@
         extractName: function(data) { return data.name }
       })
 
-      function onOverviewClickProduct(productData) {
-        function onOverviewClickMonth(monthData) {
-          setStepsTitle("step", [productData.name, monthData.name]);
-          drawBarChart(".chart", data3);
+      
+      $.ajax("<%= dataURL %>").done(function(data) {
+        if (data.steps) { 
+          setStepsTitle("step", data.steps) 
         }
-
-        setStepsTitle("step", [productData.name]);
-        drawBarChart(".chart", data2, onOverviewClickMonth);
-      }
-
-
-      drawBarChart(".chart", data, onOverviewClickProduct)
-
+        drawBarChart(".chart", data.dataSet)
+      }).always(function() {
+        $("#loadingIndicator").hide();
+      });
 
     </script>
 
