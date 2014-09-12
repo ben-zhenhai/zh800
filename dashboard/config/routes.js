@@ -32,13 +32,12 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/': {
-    view: 'index'
-  },
-  "/dashboard": { view: "dashboard" },
+  "GET /": "Dashboard.index",
+  "GET /dashboard": "Dashboard.main",
   "GET /user/show/:username": "User.show",
   "GET /user/signup": "User.signup",
-  "POST /user/create": "User.create"
+  "POST /user/create": "User.create",
+  "POST /user/login": "User.login"
 
   /***************************************************************************
   *                                                                          *

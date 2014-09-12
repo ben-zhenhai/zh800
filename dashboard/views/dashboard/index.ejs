@@ -24,12 +24,6 @@
     <div class="column"></div>
     <div class="column">
       <div>
-        <% if (flash && flash.err) { %>
-          <div class="ui error message">
-            <div><%= flash.err[0]["message"] %></div>
-          </div>
-        <% } %>
-
         <form class="ui form segment" action="/user/login" method="POST">
           <div class="field">
             <label>Username</label>

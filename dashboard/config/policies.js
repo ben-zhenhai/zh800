@@ -26,8 +26,14 @@ module.exports.policies = {
   *                                                                          *
   ***************************************************************************/
 
-  // '*': true,
-  '*': 'flash',
+  dashboard: {
+    "index": ["flash", "redirectToDashboardIfLogin"],
+    "*": "sessionAuth"
+  },
+  user: {
+    "signup": "flash",
+    "login": true
+  }
 
   /***************************************************************************
   *                                                                          *
