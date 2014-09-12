@@ -29,16 +29,20 @@ module.exports = {
       "required": true
     }
 
-    /*
+  },
 
-    toJSON: function() {
-      var obj = this.toObject();
-      delete obj.password;
-      delete obj.passwordConfirm;
-      delete obj._csrf;
-      return obj;
+  beforeCreate: function(values, next) {
+    if (!values.password || values.password != values.passwordConfirm) {
+      return next({err: ["Password doesn't match password confirmation."]})
     }
-    */
+
+    var bcrypt = require("bcrypt");
+
+    bcrypt.hash(values.password, 10, function passwordEncrypted(err, encrypedPassword) {
+      if (err) { next(err); }
+      values.password = encrypedPassword;
+      next();
+    });
   }
 };
 
