@@ -32,6 +32,7 @@
 
 .chart rect:hover {
   fill: brown;
+  cursor: pointer;
 }
   </style>
 
@@ -59,9 +60,11 @@
     <div class="column">
       <div class="ui right floated button">Export CSV File</div>
     </div>
-    <div class="column">
-      <div id="loadingIndicator">Loading....</div>
-      <svg class="chart"></svg>
+    <div class="column" style="text-align: center">
+      <div class="container" style="overflow:auto; width: 80%; margin-left: 10%">
+        <div id="loadingIndicator">Loading....</div>
+        <svg class="chart"></svg>
+      </div>
     </div>
 
     <script>
