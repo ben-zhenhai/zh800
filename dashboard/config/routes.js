@@ -40,7 +40,10 @@ module.exports.routes = {
   "POST /user/login": "User.login",
   "GET /user/logout": "User.logout",
   "GET /api/json/total/overview": "Dashboard.totalOverviewJSON",
-  "GET /total": "Total.index"
+  "GET /api/json/total/:product": "Dashboard.totalProductJSON",
+  "GET /total": "Total.index",
+  "GET /total/:product": "Total.product"
+
 
   /***************************************************************************
   *                                                                          *

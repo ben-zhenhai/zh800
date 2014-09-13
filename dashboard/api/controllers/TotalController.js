@@ -11,5 +11,10 @@ module.exports = {
     res.view("total/overview", {dataURL: "/api/json/total/overview"});
   },
 
+  product: function(req, res) {
+    var productDataURL = "/api/json/total/" + req.param("product");
+    res.view("total/overview", {dataURL: productDataURL});
+  }
+
 };
 

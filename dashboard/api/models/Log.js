@@ -25,6 +25,52 @@ module.exports = {
     mach_status: { "type": "string", required: true }
   },
 
+  totalProduct: function(product, callback) {
+    Log.native(function(err, logCollection) {
+
+      var mapFunction = function() {
+        function dateFormatter(date) {
+          return date.getFullYear() + "-" + (date.getMonth() + 1)
+        }
+
+        emit(dateFormatter(this.emb_date), this.bad_qty)
+      }
+
+      var reduceFunction = function (key, values) {
+        return Array.sum(values);
+      }
+
+      var outputControl = {
+        out: {inline: 1},
+        query: {order_type: product}
+      }
+
+      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
+
+        console.log("SSSSSSSSSSSS");
+        console.log(result);
+
+        if (err) { 
+          callback(err); 
+          return; 
+        }
+
+        var resultSet = [];
+
+        for (var i = 0; i < result.length; i++) {
+          resultSet[i] = {
+            name: result[i]._id, 
+            value: result[i].value,
+            link: "/total/" + product + "/" + result[i]._id
+          }
+        }
+
+        console.log(resultSet);
+        callback(err, resultSet);
+      });
+    });
+  },
+
   overviewByOrderType: function(res, callback) {
     Log.native(function(err, logCollection) {
 

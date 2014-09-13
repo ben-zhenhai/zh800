@@ -20,6 +20,23 @@ module.exports = {
       var resultJSON = {dataSet: result}
       res.json(resultJSON);
     });
+  },
+
+  totalProductJSON: function(req, res) {
+    var product = req.param("product");
+
+    Log.totalProduct(product, function(err, data) {
+
+      if (err) {
+        res.serverError(err);
+      }
+
+      var resultJSON = {
+        steps: [product],
+        dataSet: data
+      }
+      res.json(resultJSON);
+    });
   }
 
 };
