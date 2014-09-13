@@ -61,7 +61,18 @@
       <div class="ui right floated button">Export CSV File</div>
     </div>
     <div class="column" style="text-align: center">
-      <div class="container" style="overflow:auto; width: 80%; margin-left: 10%">
+      <div class="ui one column page grid" style="display: none" id="notFoundBlock">
+        <div class="column">
+          <div class="ui icon error message">
+            <i class="inbox icon"></i>
+            <div class="content">
+              <div class="header">查無資料</div>
+              <p>無法查詢到相關資料，請確定網址是否正確。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="container" style="overflow:auto; width: 80%; margin-left: 10%; padding-left: 15px; padding-right: 15px">
         <div id="loadingIndicator">Loading....</div>
         <svg class="chart"></svg>
       </div>
@@ -83,6 +94,11 @@
 
       
       $.ajax("<%= dataURL %>").done(function(data) {
+
+        if (!data.dataSet || data.dataSet.length == 0) {
+          $('#notFoundBlock').show();
+        }
+
         if (data.steps) { 
           setStepsTitle("step", data.steps) 
         }
