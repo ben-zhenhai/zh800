@@ -20,7 +20,15 @@ module.exports = {
     var productDataURL = "/api/json/total/" + req.param("product") + "/" + req.param("month");
     console.log("month:" + req.param("month"));
     res.view("total/overview", {dataURL: productDataURL});
+  },
+
+  productMonthWeek: function(req, res) {
+    var productDataURL = "/api/json/total/" + req.param("product") + "/" + req.param("month") + "/" + req.param("week");
+    console.log("month:" + req.param("month"));
+    console.log("week:" + req.param("week"));
+    res.view("total/overview", {dataURL: productDataURL});
   }
+
 
 };
 

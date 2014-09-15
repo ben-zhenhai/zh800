@@ -25,11 +25,96 @@ module.exports = {
     mach_status: { "type": "string", required: true }
   },
 
-  totalProductMonth: function(product, yearAndMonth, callback) {
+  totalProductMonthWeek: function(product, yearAndMonth, week, callback) {
+
     var year = yearAndMonth.split("-")[0];
     var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
     var startDate = new Date(year, month, 1);
     var endDate = new Date(year, month+1, 1);
+
+    Log.native(function(err, logCollection) {
+
+      var mapFunction = function() {
+
+        function getWeek(isoDate) {
+          var date = isoDate.getDate();
+          var day = isoDate.getDay();
+          return Math.ceil((date - 1 - day) / 7) + 1;
+        }
+
+        function dateFormatter(isoDate) {
+          return isoDate.getFullYear() + "-" + (isoDate.getMonth() + 1) + "-" + isoDate.getDate() ;
+        }
+
+        var key = {
+          date: dateFormatter(this.emb_date),
+          week: getWeek(this.emb_date) 
+        }
+
+        emit(key, this.bad_qty)
+      }
+
+      var reduceFunction = function (key, values) { return Array.sum(values); }
+
+      var outputControl = {
+        out: {inline: 1},
+        query: {
+          order_type: product,
+          emb_date: {$gte: startDate, $lt: endDate}
+        }
+      }
+
+      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
+
+        if (err) { 
+          callback(err); 
+          return; 
+        }
+
+        var resultSet = [];
+
+        for (var i = 0; i < result.length; i++) {
+
+          var currentDate = result[i]._id["date"]
+          var currentWeek = result[i]._id["week"]
+          var dateString = currentDate.split("-")[2]
+
+          if (currentWeek == week) {
+            resultSet.push({
+              name: dateString + " 日",
+              value: result[i].value,
+              link: "/total/" + product + "/" + yearAndMonth + "/" + currentWeek + "/" + dateString
+            });
+          }
+
+        }
+
+        var sortedResult = resultSet.sort(function(objA, objB) {
+
+          function strToDate(dateString) {
+            var columns = dateString.split("-");
+            var year = columns[0];
+            var month = +(columns[1]) - 1; // JSDate's month count from 0
+            var date = columns[2];
+            return new Date(year, month, date);
+          }
+
+          return strToDate(objA.name).getTime() - strToDate(objB.name).getTime();
+        });
+
+        callback(err, resultSet);
+      });
+
+    });
+  },
+
+  totalProductMonth: function(product, yearAndMonth, callback) {
+
+    var year = yearAndMonth.split("-")[0];
+    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
+    var startDate = new Date(year, month, 1);
+    var endDate = new Date(year, month+1, 1);
+
     Log.native(function(err, logCollection) {
 
       var mapFunction = function() {
@@ -70,7 +155,6 @@ module.exports = {
           }
         }
 
-        console.log(resultSet);
         callback(err, resultSet);
       });
 
@@ -113,7 +197,6 @@ module.exports = {
           }
         }
 
-        console.log(resultSet);
         callback(err, resultSet);
       });
     });

@@ -56,7 +56,28 @@ module.exports = {
 
       res.json(resultJSON);
     });
+  },
+
+  totalProductMonthWeekJSON: function(req, res) {
+    var product = req.param("product");
+    var month = req.param("month");
+    var week = req.param("week");
+
+    Log.totalProductMonthWeek(product, month, week, function(err, data) {
+
+      if (err) {
+        res.serverError(err);
+      }
+
+      var resultJSON = {
+        steps: [product, month, "第 " + week + " 週"],
+        dataSet: data
+      }
+
+      res.json(resultJSON);
+    });
   }
+
 
 };
 

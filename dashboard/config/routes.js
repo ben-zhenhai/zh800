@@ -42,12 +42,11 @@ module.exports.routes = {
   "GET /api/json/total/overview": "Dashboard.totalOverviewJSON",
   "GET /api/json/total/:product": "Dashboard.totalProductJSON",
   "GET /api/json/total/:product/:month": "Dashboard.totalProductMonthJSON",
+  "GET /api/json/total/:product/:month/:week": "Dashboard.totalProductMonthWeekJSON",
   "GET /total": "Total.index",
   "GET /total/:product": "Total.product",
-  "GET /total/:product/:month": "Total.productMonth"
-
-
-
+  "GET /total/:product/:month": "Total.productMonth",
+  "GET /total/:product/:month/:week": "Total.productMonthWeek"
 
   /***************************************************************************
   *                                                                          *
