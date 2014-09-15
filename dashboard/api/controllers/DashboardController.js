@@ -37,6 +37,25 @@ module.exports = {
       }
       res.json(resultJSON);
     });
+  },
+
+  totalProductMonthJSON: function(req, res) {
+    var product = req.param("product");
+    var month = req.param("month")
+
+    Log.totalProductMonth(product, month, function(err, data) {
+
+      if (err) {
+        res.serverError(err);
+      }
+
+      var resultJSON = {
+        steps: [product, month],
+        dataSet: data
+      }
+
+      res.json(resultJSON);
+    });
   }
 
 };

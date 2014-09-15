@@ -25,6 +25,58 @@ module.exports = {
     mach_status: { "type": "string", required: true }
   },
 
+  totalProductMonth: function(product, yearAndMonth, callback) {
+    var year = yearAndMonth.split("-")[0];
+    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
+    var startDate = new Date(year, month, 1);
+    var endDate = new Date(year, month+1, 1);
+    Log.native(function(err, logCollection) {
+
+      var mapFunction = function() {
+
+        function dateFormatter(isoDate) {
+          var date = isoDate.getDate();
+          var day = isoDate.getDay();
+          return Math.ceil((date - 1 - day) / 7) + 1;
+        }
+
+        emit(dateFormatter(this.emb_date), this.bad_qty)
+      }
+
+      var reduceFunction = function (key, values) { return Array.sum(values); }
+
+      var outputControl = {
+        out: {inline: 1},
+        query: {
+          order_type: product,
+          emb_date: {$gte: startDate, $lt: endDate}
+        }
+      }
+
+      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
+
+        if (err) { 
+          callback(err); 
+          return; 
+        }
+
+        var resultSet = [];
+
+        for (var i = 0; i < result.length; i++) {
+          resultSet[i] = {
+            name: "第 " + result[i]._id + " 週", 
+            value: result[i].value,
+            link: "/total/" + product + "/" + yearAndMonth + "/" + result[i]._id
+          }
+        }
+
+        console.log(resultSet);
+        callback(err, resultSet);
+      });
+
+    });
+  },
+
   totalProduct: function(product, callback) {
     Log.native(function(err, logCollection) {
 
@@ -46,10 +98,6 @@ module.exports = {
       }
 
       logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
-
-        console.log("SSSSSSSSSSSS");
-        console.log(result);
-
         if (err) { 
           callback(err); 
           return; 
