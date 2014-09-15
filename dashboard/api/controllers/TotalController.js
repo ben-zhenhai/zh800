@@ -29,7 +29,20 @@ module.exports = {
   productMonthWeekDate: function(req, res) {
     var productDataURL = "/api/json/total/" + req.param("product") + "/" + req.param("month") + "/" + req.param("week") + "/" + req.param("date");
     res.view("total/overview", {dataURL: productDataURL});
+  },
+
+  productMonthWeekDateMachine: function(req, res) {
+    var productDataURL = "/api/json/total/" + req.param("product") + "/" + req.param("month") + "/" + req.param("week") + "/" + req.param("date") + "/" + req.param("machine");
+    var year = req.param("month").split("-")[0];
+    var month = +(req.param("month").split("-")[1]) - 1;
+    res.view("total/machine", {
+      fullYear: year,
+      month: month,
+      date: req.param("date"),
+      dataURL: productDataURL
+    });
   }
+
 
 
 

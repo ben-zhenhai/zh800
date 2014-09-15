@@ -97,6 +97,28 @@ module.exports = {
 
       res.json(resultJSON);
     });
+  },
+
+  totalMachineJSON: function(req, res) {
+    var product = req.param("product");
+    var month = req.param("month");
+    var week = req.param("week");
+    var date = req.param("date");
+    var machine = req.param("machine");
+
+    Log.totalMachine(product, month, date, machine, function(err, data) {
+
+      if (err) {
+        res.serverError(err);
+      }
+
+      var resultJSON = {
+        steps: [product, month, "第 " + week + " 週", date + " 日", machine],
+        dataSet: data
+      }
+
+      res.json(resultJSON);
+    });
   }
 
 

@@ -86,7 +86,13 @@ function barChart(options) {
         attr("height", function(d) { return scalar(getDataValue(d)) }).
         attr("x", function(d, i) { return getXOffset(i) + 10 }).
         attr("y", calculateRectYPosition).
-        attr("onclick", function(d) { return "window.location.href='" + d.link + "'" })
+        attr("onclick", function(d) { 
+          if (d.link) {
+            return "window.location.href='" + d.link + "'" 
+          } else {
+            return "void(0);"
+          }
+        })
 
     // The top label, which is the actually data value
     bar.append("text").
