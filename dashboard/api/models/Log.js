@@ -25,6 +25,60 @@ module.exports = {
     mach_status: { "type": "string", required: true }
   },
 
+  totalProductMonthWeekDate: function(product, yearAndMonth, week, date, callback) {
+    var year = yearAndMonth.split("-")[0];
+    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
+    var minDate = new Date(year, month, 1);
+    var maxDate = new Date(year, month+1, 1);
+
+    var targetStartDate = new Date(year, month, date);
+    var targetEndDate = new Date(year, month, date+1);
+
+    var startDate = targetStartDate > minDate ? targetStartDate : minDate;
+    var endDate = targetEndDate < maxDate ? targetEndDate : maxDate;
+
+    Log.native(function(err, logCollection) {
+
+      var mapFunction = function() {
+        emit(this.mach_id, this.bad_qty)
+      }
+
+      var reduceFunction = function (key, values) { return Array.sum(values); }
+
+      var outputControl = {
+        out: {inline: 1},
+        query: {
+          order_type: product,
+          emb_date: {$gte: startDate, $lt: endDate}
+        }
+      }
+
+      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
+
+        if (err) { 
+          callback(err); 
+          return; 
+        }
+
+        var resultSet = [];
+
+        for (var i = 0; i < result.length; i++) {
+
+          resultSet.push({
+            name: result[i]._id,
+            value: result[i].value,
+            link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + result[i]._id
+          });
+
+        }
+
+        callback(err, resultSet);
+      });
+
+    });
+
+  },
+
   totalProductMonthWeek: function(product, yearAndMonth, week, callback) {
 
     var year = yearAndMonth.split("-")[0];
