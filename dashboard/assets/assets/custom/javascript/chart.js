@@ -42,7 +42,7 @@ function barChart(options) {
   assertInt(options.bottomMargin, "No bottomMargin attribute");
   assertInt(options.topMargin, "No topMargin attribute");
 
-  var draw = function (selection, dataSet, onClickCallback) {
+  var draw = function (selection, dataSet) {
 
     function getXOffset(index) {
       return index * options.barWidth + index * options.barPadding;
@@ -70,7 +70,7 @@ function barChart(options) {
                     range([minimalY, maximalY]);
 
     var chart = d3.select(selection).
-                   attr("width", totalWidth).
+                   attr("width", totalWidth + 20).
                    attr("height", options.totalHeight);
 
     // Remove all existing content, so we could draw different
@@ -84,27 +84,31 @@ function barChart(options) {
     bar.append("rect").
         attr("width", options.barWidth - 5).
         attr("height", function(d) { return scalar(getDataValue(d)) }).
-        attr("x", function(d, i) { return getXOffset(i) }).
-        attr("y", calculateRectYPosition)
+        attr("x", function(d, i) { return getXOffset(i) + 10 }).
+        attr("y", calculateRectYPosition).
+        attr("onclick", function(d) { 
+          if (d.link) {
+            return "window.location.href='" + d.link + "'" 
+          } else {
+            return "void(0);"
+          }
+        })
 
     // The top label, which is the actually data value
     bar.append("text").
         attr("x", function(d, i) { return getXOffset(i) }).
         attr("y", calculateTopLabelYPosition).
         attr("dy", "-15px").
-        attr("dx", "20px").
+        attr("dx", "30px").
         text(options.extractValue)
 
     // The bottom label, the name of current data
     bar.append("text").
         attr("x", function(d, i) { return getXOffset(i) }).
         attr("y", options.totalHeight-10).
-        attr("dx", "25px").
+        attr("dx", "35px").
         text(options.extractName)
 
-    if ($.isFunction(onClickCallback)) {
-      bar.on("click", onClickCallback);
-    }
   }
 
   return draw;
