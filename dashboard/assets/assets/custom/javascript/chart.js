@@ -172,3 +172,21 @@ function pieChart(options) {
   return draw;
 }
 
+function formatDate(date) {
+
+  function padding(orig) {
+    switch (orig.toString().length) {
+      case 0: return "00";
+      case 1: return "0" + orig;
+      default: return orig;
+    }
+  }
+
+  return date.getFullYear() + "-" + 
+         padding(date.getMonth()) + "-" + 
+         padding(date.getDate()) + " " +
+         padding(date.getHours()) + ":" + 
+         padding(date.getMinutes()) + ":" + 
+         padding(date.getSeconds());
+}
+
