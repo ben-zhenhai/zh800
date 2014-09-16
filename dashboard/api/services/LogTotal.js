@@ -36,39 +36,24 @@ exports.jsonAPI = function() {
     });
   }
 
-  function machineDetail (product, yearAndMonth, date, machine, callback) {
-
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, +date);
-    var endDate = new Date(+year, +month, (+date) + 1);
-
-    var mapReducer = MapReducer.defineOn({
-      model: Log,
-      groupingFunction: function(data) {
-        return {date: data.emb_date, error: data.defact_id};
-      },
-      mongoFilters: {
-        order_type: product,
-        mach_id: machine,
-        emb_date: {$gte: startDate, $lt: endDate}
-      },
-      converter: function (data) {
-        return {
-          name: data._id,
-          value: data.value,
-        };
-      }
-    });
-
-    mapReducer(callback);
-  }
-
   function product (product, callback) {
+
+    var sortByDate = function (objA, objB) {
+      function strToDate(dateString) {
+        var columns = dateString.split("-");
+        var year = columns[0];
+        var month = +(columns[1]) - 1; // JSDate's month count from 0
+        return new Date(+year, +month, 1);
+      }
+
+      return strToDate(objA._id).getTime() - strToDate(objB._id).getTime();
+    }
+
 
     var mapReducer = MapReducer.defineOn({
       model: Log,
       mongoFilters: {order_type: product},
+      sorting: sortByDate,
       groupingFunction: function (data) { 
         return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
       },
@@ -204,6 +189,34 @@ exports.jsonAPI = function() {
           name: data._id,
           value: data.value,
           link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + data._id
+        };
+      }
+    });
+
+    mapReducer(callback);
+  }
+
+  function machineDetail (product, yearAndMonth, date, machine, callback) {
+
+    var year = yearAndMonth.split("-")[0];
+    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
+    var startDate = new Date(+year, +month, +date);
+    var endDate = new Date(+year, +month, (+date) + 1);
+
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: function(data) {
+        return {date: data.emb_date, error: data.defact_id};
+      },
+      mongoFilters: {
+        order_type: product,
+        mach_id: machine,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
         };
       }
     });
