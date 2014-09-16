@@ -1,6 +1,13 @@
-exports.defineOn = function(model, groupingFunction, mongoFilters, customFilter, converter) {
+exports.defineOn = function(options) {
 
   console.log("In MapReducer....");
+
+  var model = options.model
+  var groupingFunction = options.groupingFunction
+  var mongoFilters = options.mongoFilters
+  var customFilter = options.customFilter
+  var converter = options.converter
+  var sorting = options.sorting
 
   return function(callback) {
     model.native(function(err, collection) {
@@ -21,6 +28,10 @@ exports.defineOn = function(model, groupingFunction, mongoFilters, customFilter,
         if (err) {
           callback(err);
           return;
+        }
+
+        if (sorting) {
+          result.sort(sorting);
         }
 
         var resultSet = [];

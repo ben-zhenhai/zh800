@@ -26,52 +26,31 @@ module.exports = {
   },
 
   totalMachine: function (product, yearAndMonth, date, machine, callback) {
+
     var year = yearAndMonth.split("-")[0];
     var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-
     var startDate = new Date(+year, +month, +date);
     var endDate = new Date(+year, +month, (+date) + 1);
 
-    Log.native(function(err, logCollection) {
-
-      var mapFunction = function() {
-        emit({date: this.emb_date, error: this.defact_id}, this.bad_qty)
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: function(data) {
+        return {date: data.emb_date, error: data.defact_id};
+      },
+      mongoFilters: {
+        order_type: product,
+        mach_id: machine,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+        };
       }
-
-      var reduceFunction = function (key, values) { return Array.sum(values); }
-
-      var outputControl = {
-        out: {inline: 1},
-        query: {
-          order_type: product,
-          mach_id: machine,
-          emb_date: {$gte: startDate, $lt: endDate}
-        }
-      }
-
-      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return; 
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-
-          resultSet.push({
-            name: result[i]._id,
-            value: result[i].value,
-          });
-
-        }
-
-        callback(err, resultSet);
-      });
-
     });
 
+    mapReducer(callback);
   },
 
   totalProductMonthWeekDate: function(product, yearAndMonth, week, date, callback) {
@@ -86,46 +65,23 @@ module.exports = {
     var startDate = targetStartDate > minDate ? targetStartDate : minDate;
     var endDate = targetEndDate < maxDate ? targetEndDate : maxDate;
 
-    Log.native(function(err, logCollection) {
-
-      var mapFunction = function() {
-        emit(this.mach_id, this.bad_qty)
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: function (data) { return data.mach_id; },
+      mongoFilters: {
+        order_type: product,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + data._id
+        };
       }
-
-      var reduceFunction = function (key, values) { return Array.sum(values); }
-
-      var outputControl = {
-        out: {inline: 1},
-        query: {
-          order_type: product,
-          emb_date: {$gte: startDate, $lt: endDate}
-        }
-      }
-
-      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return; 
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-
-          resultSet.push({
-            name: result[i]._id,
-            value: result[i].value,
-            link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + result[i]._id
-          });
-
-        }
-
-        callback(err, resultSet);
-      });
-
     });
 
+    mapReducer(callback);
   },
 
   totalProductMonthWeek: function(product, yearAndMonth, week, callback) {
@@ -135,80 +91,58 @@ module.exports = {
     var startDate = new Date(+year, +month, 1);
     var endDate = new Date(+year, (+month)+1, 1);
 
-    Log.native(function(err, logCollection) {
+    var getWeekAndDate = function (data) {
 
-      var mapFunction = function() {
-
-        function getWeek(isoDate) {
-          var date = isoDate.getDate();
-          var day = isoDate.getDay();
-          return Math.ceil((date - 1 - day) / 7) + 1;
-        }
-
-        function dateFormatter(isoDate) {
-          return isoDate.getFullYear() + "-" + (isoDate.getMonth() + 1) + "-" + isoDate.getDate() ;
-        }
-
-        var key = {
-          date: dateFormatter(this.emb_date),
-          week: getWeek(this.emb_date) 
-        }
-
-        emit(key, this.bad_qty)
+      function getWeek(isoDate) {
+        var date = isoDate.getDate();
+        var day = isoDate.getDay();
+        return Math.ceil((date - 1 - day) / 7) + 1;
       }
 
-      var reduceFunction = function (key, values) { return Array.sum(values); }
-
-      var outputControl = {
-        out: {inline: 1},
-        query: {
-          order_type: product,
-          emb_date: {$gte: startDate, $lt: endDate}
-        }
+      function dateFormatter(isoDate) {
+        return isoDate.getFullYear() + "-" + (isoDate.getMonth() + 1) + "-" + isoDate.getDate() ;
       }
 
-      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
+      return {
+        date: dateFormatter(data.emb_date),
+        week: getWeek(data.emb_date) 
+      }
+    }
 
-        if (err) { 
-          callback(err); 
-          return; 
-        }
+    var sortByDate = function (objA, objB) {
+      function strToDate(dateString) {
+        var columns = dateString.split("-");
+        var year = columns[0];
+        var month = +(columns[1]) - 1; // JSDate's month count from 0
+        var date = columns[2];
+        return new Date(+year, +month, +date);
+      }
 
-        var resultSet = [];
+      return strToDate(objA._id.date).getTime() - strToDate(objB._id.date).getTime();
+    }
 
-        for (var i = 0; i < result.length; i++) {
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: getWeekAndDate,
+      mongoFilters: {
+        order_type: product,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      customFilter: function (data) { return data._id["week"] == week; },
+      sorting: sortByDate,
+      converter: function (data) {
+        var dateString = data._id["date"].split("-")[2]
+        var currentWeek = data._id["week"]
 
-          var currentDate = result[i]._id["date"]
-          var currentWeek = result[i]._id["week"]
-          var dateString = currentDate.split("-")[2]
-
-          if (currentWeek == week) {
-            resultSet.push({
-              name: dateString + " 日",
-              value: result[i].value,
-              link: "/total/" + product + "/" + yearAndMonth + "/" + currentWeek + "/" + dateString
-            });
-          }
-
-        }
-
-        var sortedResult = resultSet.sort(function(objA, objB) {
-
-          function strToDate(dateString) {
-            var columns = dateString.split("-");
-            var year = columns[0];
-            var month = +(columns[1]) - 1; // JSDate's month count from 0
-            var date = columns[2];
-            return new Date(+year, +month, +date);
-          }
-
-          return strToDate(objA.name).getTime() - strToDate(objB.name).getTime();
-        });
-
-        callback(err, resultSet);
-      });
-
+        return {
+          name: dateString + " 日",
+          value: data.value,
+          link: "/total/" + product + "/" + yearAndMonth + "/" + currentWeek + "/" + dateString
+        };
+      }
     });
+
+    mapReducer(callback);
   },
 
   totalProductMonth: function(product, yearAndMonth, callback) {
@@ -218,72 +152,52 @@ module.exports = {
     var startDate = new Date(+year, +month, 1);
     var endDate = new Date(+year, (+month)+1, 1);
 
-    Log.native(function(err, logCollection) {
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: function (data) { 
 
-      var mapFunction = function() {
-
-        function dateFormatter(isoDate) {
+        function getWeek(isoDate) {
           var date = isoDate.getDate();
           var day = isoDate.getDay();
           return Math.ceil((date - 1 - day) / 7) + 1;
         }
 
-        emit(dateFormatter(this.emb_date), this.bad_qty)
-      }
-
-      var reduceFunction = function (key, values) { return Array.sum(values); }
-
-      var outputControl = {
-        out: {inline: 1},
-        query: {
-          order_type: product,
-          emb_date: {$gte: startDate, $lt: endDate}
+        return getWeek(data.emb_date) 
+      },
+      mongoFilters: {
+        order_type: product,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: "第 " + data._id + " 週", 
+          value: data.value,
+          link: "/total/" + product + "/" + yearAndMonth + "/" + data._id
         }
       }
-
-      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return; 
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-          resultSet[i] = {
-            name: "第 " + result[i]._id + " 週", 
-            value: result[i].value,
-            link: "/total/" + product + "/" + yearAndMonth + "/" + result[i]._id
-          }
-        }
-
-        callback(err, resultSet);
-      });
-
     });
+
+    mapReducer(callback);
   },
 
   totalProduct: function(product, callback) {
 
-    var groupingKey = function (data) { 
-      return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
-    }
-
-    var mongoFilters = {order_type: product}
-
-    var converter = function(data) {
-      return {
-        name: data._id, 
-        value: data.value,
-        link: "/total/" + product + "/" + data._id
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      mongoFilters: {order_type: product},
+      groupingFunction: function (data) { 
+        return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
+      },
+      converter: function (data) {
+        return {
+          name: data._id, 
+          value: data.value,
+          link: "/total/" + product + "/" + data._id
+        }
       }
-    }
+    });
 
-    var mapReducer = MapReducer.defineOn(Log, groupingKey, mongoFilters, undefined, converter)
-    console.log(mapReducer);
     mapReducer(callback);
-
   },
 
   overviewByOrderType: function(res, callback) {
