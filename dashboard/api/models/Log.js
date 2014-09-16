@@ -265,44 +265,25 @@ module.exports = {
   },
 
   totalProduct: function(product, callback) {
-    Log.native(function(err, logCollection) {
 
-      var mapFunction = function() {
-        function dateFormatter(date) {
-          return date.getFullYear() + "-" + (date.getMonth() + 1)
-        }
+    var groupingKey = function (data) { 
+      return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
+    }
 
-        emit(dateFormatter(this.emb_date), this.bad_qty)
+    var mongoFilters = {order_type: product}
+
+    var converter = function(data) {
+      return {
+        name: data._id, 
+        value: data.value,
+        link: "/total/" + product + "/" + data._id
       }
+    }
 
-      var reduceFunction = function (key, values) {
-        return Array.sum(values);
-      }
+    var mapReducer = MapReducer.defineOn(Log, groupingKey, mongoFilters, undefined, converter)
+    console.log(mapReducer);
+    mapReducer(callback);
 
-      var outputControl = {
-        out: {inline: 1},
-        query: {order_type: product}
-      }
-
-      logCollection.mapReduce(mapFunction, reduceFunction, outputControl, function (err, result) {
-        if (err) { 
-          callback(err); 
-          return; 
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-          resultSet[i] = {
-            name: result[i]._id, 
-            value: result[i].value,
-            link: "/total/" + product + "/" + result[i]._id
-          }
-        }
-
-        callback(err, resultSet);
-      });
-    });
   },
 
   overviewByOrderType: function(res, callback) {
