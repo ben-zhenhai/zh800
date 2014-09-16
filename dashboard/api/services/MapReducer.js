@@ -1,7 +1,5 @@
 exports.defineOn = function(options) {
 
-  console.log("In MapReducer....");
-
   var model = options.model
   var groupingFunction = options.groupingFunction
   var mongoFilters = options.mongoFilters

@@ -12,10 +12,8 @@ module.exports = {
   },
 
   create: function(req, res, next) {
-    console.log("I'm here!")
     User.create(req.params.all(), function userCreated(err, newUser) {
       if (err) {
-        console.log(err);
         req.session.flash = {
           'err': err
         }
@@ -26,7 +24,6 @@ module.exports = {
   },
 
   show: function(req, res, next) {
-    console.log(req.param("username"));
     User.findOne({username: req.param("username")}, function foundUser(err, user) {
 
       if (err) { return next(err) }
