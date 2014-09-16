@@ -39,18 +39,21 @@ module.exports.routes = {
   "POST /user/create": "User.create",
   "POST /user/login": "User.login",
   "GET /user/logout": "User.logout",
-  "GET /api/json/total/overview": "Dashboard.totalOverviewJSON",
-  "GET /api/json/total/:product": "Dashboard.totalProductJSON",
-  "GET /api/json/total/:product/:month": "Dashboard.totalProductMonthJSON",
-  "GET /api/json/total/:product/:month/:week": "Dashboard.totalProductMonthWeekJSON",
-  "GET /api/json/total/:product/:month/:week/:date": "Dashboard.totalProductMonthWeekDateJSON",
-  "GET /api/json/total/:product/:month/:week/:date/:machine": "Dashboard.totalMachineJSON",
   "GET /total": "Total.index",
   "GET /total/:product": "Total.product",
   "GET /total/:product/:month": "Total.productMonth",
   "GET /total/:product/:month/:week": "Total.productMonthWeek",
   "GET /total/:product/:month/:week/:date": "Total.productMonthWeekDate",
-  "GET /total/:product/:month/:week/:date/:machine": "Total.productMonthWeekDateMachine"
+  "GET /total/:product/:month/:week/:date/:machine": "Total.productMonthWeekDateMachine",
+
+  // Total Reivew JSON API
+  "GET /api/json/total/overview": "TotalJSON.overview",
+  "GET /api/json/total/:product": "TotalJSON.product",
+  "GET /api/json/total/:product/:month": "TotalJSON.productMonth",
+  "GET /api/json/total/:product/:month/:week": "TotalJSON.productMonthWeek",
+  "GET /api/json/total/:product/:month/:week/:date": "TotalJSON.productMonthWeekDate",
+  "GET /api/json/total/:product/:month/:week/:date/:machine": "TotalJSON.machineDetail"
+
 
 
   /***************************************************************************
