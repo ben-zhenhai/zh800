@@ -56,7 +56,7 @@
   </div>
   <div class="center aligned one column ui grid" style="padding-top:60px; padding-bottom:20px">
     <div class="column">
-      <div class="ui six steps">
+      <div class="ui five steps">
         <% for (var i = 0; i < steps.length; i++) { %>
           <div data-defaultName="<%= steps[i].title %>" id="<%= 'step' + i %>" class="ui <%= steps[i].active %> step"><%= steps[i].title %></div>
         <% } %>
@@ -143,9 +143,8 @@
         }
 
         var isoDate = strToDate(dateText);
-        var yearAndMonth = isoDate.getFullYear() + "-" + isoDate.getMonth();
 
-        var url = "/total/<%= productName %>/" + yearAndMonth +
+        var url = "/monthly/" + isoDate.getFullYear() + "/" + isoDate.getMonth() + 
                   "/" + getWeek(isoDate) + "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
 
         window.location = url;

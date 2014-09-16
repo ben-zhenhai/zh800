@@ -11,7 +11,7 @@ module.exports = {
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.overview(res, function(err, result) {
+    logTotal.overview(function(err, result) {
 
 
       if (err) {

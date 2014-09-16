@@ -1,46 +1,9 @@
 exports.jsonAPI = function() {
 
-  function overview (callback) {
+  function overview (year, callback) {
 
-    Log.native(function(err, logCollection) {
-
-      if (err) { 
-        callback(err) 
-        return;
-      }
-
-      var aggerateMethod = [ 
-        { $group: { _id: "$order_type", bad_qty: { $sum: "$bad_qty" } } },
-        { $sort: {_id: 1}}
-      ]
-
-      var onGetResultSet = function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return;
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-          resultSet[i] = {
-            name: result[i]._id, 
-            value: result[i].bad_qty,
-            link: "/total/" + result[i]._id
-          }
-        }
-
-        if (callback) {
-          callback(err, resultSet);
-        }
-      }
-
-      logCollection.aggregate(aggerateMethod, onGetResultSet);
-    });
-  }
-
-  function product (product, callback) {
+    var startDate = new Date(year, 0, 1);
+    var endDate = new Date(year, 12, 1);
 
     var sortByDate = function (objA, objB) {
       function strToDate(dateString) {
@@ -53,19 +16,21 @@ exports.jsonAPI = function() {
       return strToDate(objA._id).getTime() - strToDate(objB._id).getTime();
     }
 
-
     var mapReducer = MapReducer.defineOn({
       model: Log,
-      mongoFilters: {order_type: product},
       sorting: sortByDate,
+      mongoFilters: {
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
       groupingFunction: function (data) { 
         return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
       },
       converter: function (data) {
+        var month = data._id.split("-")[1];
         return {
-          name: data._id, 
+          name: month + " 月", 
           value: data.value,
-          link: "/total/" + product + "/" + data._id
+          link: "/monthly/" + year + "/" + month
         }
       }
     });
@@ -73,12 +38,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonth (product, yearAndMonth, callback) {
+  function yearMonth (year, month, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, 1);
-    var endDate = new Date(+year, (+month)+1, 1);
+    var startDate = new Date(year, (+month)-1, 1);
+    var endDate = new Date(year, +month, 1);
 
     var mapReducer = MapReducer.defineOn({
       model: Log,
@@ -93,14 +56,13 @@ exports.jsonAPI = function() {
         return getWeek(data.emb_date) 
       },
       mongoFilters: {
-        order_type: product,
         emb_date: {$gte: startDate, $lt: endDate}
       },
       converter: function (data) {
         return {
           name: "第 " + data._id + " 週", 
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + data._id
+          link: "/monthly/" + year + "/" + month + "/" + data._id
         }
       }
     });
@@ -108,12 +70,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonthWeek (product, yearAndMonth, week, callback) {
+  function yearMonthWeek (year, month, week, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, 1);
-    var endDate = new Date(+year, (+month)+1, 1);
+    var startDate = new Date(+year, (+month)-1, 1);
+    var endDate = new Date(+year, (+month), 1);
 
     var getWeekAndDate = function (data) {
 
@@ -149,11 +109,9 @@ exports.jsonAPI = function() {
       model: Log,
       groupingFunction: getWeekAndDate,
       mongoFilters: {
-        order_type: product,
         emb_date: {$gte: startDate, $lt: endDate}
       },
       customFilter: function (data) { return data._id["week"] == week; },
-      sorting: sortByDate,
       converter: function (data) {
         var dateString = data._id["date"].split("-")[2]
         var currentWeek = data._id["week"]
@@ -161,7 +119,7 @@ exports.jsonAPI = function() {
         return {
           name: dateString + " 日",
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + currentWeek + "/" + dateString
+          link: "/monthly/" + year + "/" + month + "/" + currentWeek + "/" + dateString
         };
       }
     });
@@ -169,13 +127,12 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonthWeekDate (product, yearAndMonth, week, date, callback) {
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var minDate = new Date(+year, (+month), 1);
-    var maxDate = new Date(+year, (+month)+1, 1);
+  function yearMonthWeekDate (year, month, week, date, callback) {
 
-    var targetStartDate = new Date(year, +month, +date);
+    var minDate = new Date(+year, (+month)-1, 1);
+    var maxDate = new Date(+year, (+month), 1);
+
+    var targetStartDate = new Date(year, (+month)-1, +date);
     var targetEndDate = new Date(year, +month, (+date)+1);
 
     var startDate = targetStartDate > minDate ? targetStartDate : minDate;
@@ -185,14 +142,13 @@ exports.jsonAPI = function() {
       model: Log,
       groupingFunction: function (data) { return data.mach_id; },
       mongoFilters: {
-        order_type: product,
         emb_date: {$gte: startDate, $lt: endDate}
       },
       converter: function (data) {
         return {
           name: data._id,
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + data._id
+          link: "/monthly/" + year + "/" + month + "/" + week + "/" + date + "/" + data._id
         };
       }
     });
@@ -200,12 +156,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function machineDetail (product, yearAndMonth, date, machine, callback) {
+  function machineDetail (year, month, date, machine, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, +date);
-    var endDate = new Date(+year, +month, (+date) + 1);
+    var startDate = new Date(+year, +(month-1), +date);
+    var endDate = new Date(+year, +(month-1), (+date) + 1);
 
     var mapReducer = MapReducer.defineOn({
       model: Log,
@@ -213,7 +167,6 @@ exports.jsonAPI = function() {
         return {date: data.emb_date, error: data.defact_id};
       },
       mongoFilters: {
-        order_type: product,
         mach_id: machine,
         emb_date: {$gte: startDate, $lt: endDate}
       },
@@ -230,10 +183,9 @@ exports.jsonAPI = function() {
 
   return {
     overview: overview,
-    product: product,
-    productMonth: productMonth,
-    productMonthWeek: productMonthWeek,
-    productMonthWeekDate: productMonthWeekDate,
+    yearMonth: yearMonth,
+    yearMonthWeek: yearMonthWeek,
+    yearMonthWeekDate: yearMonthWeekDate,
     machineDetail: machineDetail
   }
 }
