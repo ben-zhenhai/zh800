@@ -68,6 +68,9 @@
     <div class="column">
       <div class="ui right floated button">Export CSV File</div>
     </div>
+    <div class="column">
+      <div id="loadingIndicator">Loading....</div>
+    </div>
   </div>
   <div class="ui one column page grid" style="display: none;" id="notFoundBlock">
     <div class="column">
@@ -201,7 +204,7 @@
         }
       }
 
-      $.ajax("<%= dataURL %>").done(function(data) {
+      $.ajax("<%= dataURL %>", {timeout: 30 * 1000}).done(function(data) {
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();
@@ -239,8 +242,12 @@
 
         drawBarChart(".barChart", toBarChartData(data.dataSet));
 
+        $("#loadingIndicator").hide();
         $(".data").show();
 
+      }).error(function() {
+        $("#loadingIndicator").hide();
+        $('#notFoundBlock').show();
       });
     });
   </script>
