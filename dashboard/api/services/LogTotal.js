@@ -1,9 +1,12 @@
 exports.jsonAPI = function() {
 
   function overview (res, callback) {
+
     Log.native(function(err, logCollection) {
 
-      if (err) { return res.serverError(err); }
+      if (err) { 
+        return callback(err) 
+      }
 
       var aggerateMethod = [ 
         { $group: { _id: "$order_type", bad_qty: { $sum: "$bad_qty" } } },
@@ -25,7 +28,7 @@ exports.jsonAPI = function() {
         }
 
         if (callback) {
-          callback(resultSet);
+          callback(err, resultSet);
         }
       }
 

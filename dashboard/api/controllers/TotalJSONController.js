@@ -11,7 +11,14 @@ module.exports = {
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.overview(res, function(result) {
+    logTotal.overview(res, function(err, result) {
+
+
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
       var resultJSON = {dataSet: result}
       res.json(resultJSON);
     });
@@ -26,6 +33,7 @@ module.exports = {
 
       if (err) {
         res.serverError(err);
+        return;
       }
 
       var resultJSON = {
@@ -46,6 +54,7 @@ module.exports = {
 
       if (err) {
         res.serverError(err);
+        return;
       }
 
       var resultJSON = {
@@ -68,6 +77,7 @@ module.exports = {
 
       if (err) {
         res.serverError(err);
+        return;
       }
 
       var resultJSON = {
@@ -91,6 +101,7 @@ module.exports = {
 
       if (err) {
         res.serverError(err);
+        return;
       }
 
       var resultJSON = {
@@ -115,6 +126,7 @@ module.exports = {
 
       if (err) {
         res.serverError(err);
+        return;
       }
 
       var resultJSON = {
