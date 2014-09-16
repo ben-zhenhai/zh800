@@ -122,7 +122,9 @@ module.exports = {
     res.view("total/machine", {
       fullYear: year,
       month: month,
-      date: req.param("date"),
+      date: productDate,
+      productName: productName,
+      productMachine: productMachine,
       dataURL: productDataURL,
       steps: steps
     });

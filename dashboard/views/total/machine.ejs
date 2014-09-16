@@ -65,25 +65,11 @@
     <div class="column">
       <div class="ui right floated button">Export CSV File</div>
     </div>
-    <div class="column">
-      <div id="loadingIndicator">Loading....</div>
-    </div>
-  </div>
-  <div class="ui one column page grid" style="display: none;" id="notFoundBlock">
-    <div class="column">
-      <div class="ui icon error message">
-        <i class="inbox icon"></i>
-        <div class="content">
-          <div class="header">查無資料</div>
-          <p>無法查詢到相關資料，請確定網址是否正確。</p>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="ui grid">
 
-    <div class="four wide column data" style="display: none">
+    <div class="four wide column">
       <div id="datepicker"></div>
       <div class="ui vertical menu" style="width: 104%">
         <div class="header item">機器列表</div>
@@ -93,12 +79,30 @@
         <a href="#" class="item">B004</a>
       </div>
     </div>
-    <div class="twelve wide column data" style="display: none">
-      <div class="ui center aligned two column grid">
+
+    <div class="twelve wide column data">
+      <div class="ui center aligned one column grid" id="loadingIndicator">
+        <div class="column">
+          <div>Loading....</div>
+        </div>
+      </div>
+      <div class="ui one column page grid" style="display: none;" id="notFoundBlock">
+        <div class="column">
+          <div class="ui icon error message">
+            <i class="inbox icon"></i>
+            <div class="content">
+              <div class="header">查無資料</div>
+              <p>無法查詢到相關資料，請確定是否選擇了正確的日期與機器。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ui center aligned two column grid data" style="display: none">
         <div class="column"><svg class="barChart"></svg></div>
         <div class="column"><svg class="pieChart"></svg></div>
       </div>
-      <div>
+      <div class="data" style="display: none">
         <table class="ui celled table segment">
           <thead>
             <tr>
@@ -113,25 +117,37 @@
     </div>
   </div>
   <script>
-    $(function() {
+    
+    $("#datepicker").datepicker({
+      firstDay: 0,
+      onSelect: function(dateText, inst) {
 
-      function formatDate(date) {
-
-        function padding(orig) {
-          switch (orig.toString().length) {
-            case 0: return "00";
-            case 1: return "0" + orig;
-            default: return orig;
-          }
+        function strToDate(dateString) {
+          var columns = dateString.split("/");
+          return new Date(columns[0], columns[1], columns[2]);
         }
 
-        return date.getFullYear() + "-" + 
-               padding(date.getMonth()) + "-" + 
-               padding(date.getDate()) + " " +
-               padding(date.getHours()) + ":" + 
-               padding(date.getMinutes()) + ":" + 
-               padding(date.getSeconds());
+        function getWeek(isoDate) {
+          var date = isoDate.getDate();
+          var day = isoDate.getDay();
+          return Math.ceil((date - 1 - day) / 7) + 1;
+        }
+
+        var isoDate = strToDate(dateText);
+        var yearAndMonth = isoDate.getFullYear() + "-" + isoDate.getMonth();
+
+        var url = "/total/<%= productName %>/" + yearAndMonth + "/" + getWeek(isoDate) +
+                  "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
+
+        window.location = url;
       }
+    });
+
+    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= month %>, <%= date %>));
+  </script>
+  <script>
+    $(function() {
+
 
 
       function toPieChartData(dataJSON) {
@@ -212,9 +228,6 @@
           setStepsTitle("step", data.steps) 
         }
 
-        $("#datepicker").datepicker({firstDay: 0});
-        $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= month %>, <%= date %>));
-
         setTable("#table", toTableSchema(data));
 
         var drawPieChart = pieChart({
@@ -239,12 +252,13 @@
 
         drawBarChart(".barChart", toBarChartData(data.dataSet));
 
-        $("#loadingIndicator").hide();
         $(".data").show();
 
       }).error(function() {
-        $("#loadingIndicator").hide();
         $('#notFoundBlock').show();
+      }).always(function() {
+        $("#loadingIndicator").hide();
+
       });
     });
   </script>
