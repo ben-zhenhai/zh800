@@ -1,0 +1,501 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"mon",
+				"mongoose"
+			],
+			[
+				"body",
+				"bodyParser"
+			],
+			[
+				"sea",
+				"search"
+			],
+			[
+				"iniData.",
+				"iniData.pingTime"
+			],
+			[
+				"ini",
+				"iniData"
+			],
+			[
+				"module",
+				"module.exports"
+			],
+			[
+				"fs.crea",
+				"fs.createWriteStream"
+			],
+			[
+				"as",
+				"asyncPing"
+			],
+			[
+				"ji",
+				"justPing"
+			],
+			[
+				"retur",
+				"returnValue"
+			],
+			[
+				"err",
+				"errorAction"
+			],
+			[
+				"ping",
+				"pingSet"
+			],
+			[
+				"cen",
+				"center"
+			],
+			[
+				"displ",
+				"display"
+			],
+			[
+				"console.lo",
+				"console.log(message);"
+			],
+			[
+				"serv",
+				"server.listen"
+			],
+			[
+				"net.Create",
+				"net.createServer"
+			],
+			[
+				"butt",
+				"button	Tag"
+			],
+			[
+				"socket.broad",
+				"socket.broadcast.emit"
+			],
+			[
+				"sock",
+				"socket"
+			],
+			[
+				"exp",
+				"express"
+			],
+			[
+				"local",
+				"localhost:8080"
+			],
+			[
+				"upload",
+				"uploadFile"
+			],
+			[
+				"txt",
+				"txtHtml"
+			],
+			[
+				"wlk",
+				"walker"
+			],
+			[
+				"ex",
+				"extends"
+			],
+			[
+				"authenticate",
+				"authenticated"
+			],
+			[
+				"log",
+				"logger"
+			],
+			[
+				"fun",
+				"function"
+			],
+			[
+				".createR",
+				"fs.createReadStream(path, options);"
+			],
+			[
+				"seti",
+				"setTime  (function)"
+			],
+			[
+				"console",
+				"console.log(message);"
+			],
+			[
+				"res.write",
+				"res.writeHead"
+			],
+			[
+				"cont",
+				"content"
+			],
+			[
+				".createse",
+				"net.createServer();"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 362.0,
+		"selected_items":
+		[
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"in",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
+			[
+				"pci",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"SublimeCodeIntel: Disable Live Autocompletion"
+			],
+			[
+				"shell",
+				"Shell Command"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 530.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"1+2",
+			"2",
+			"1",
+			"help",
+			"?",
+			"help",
+			"ls",
+			"help",
+			"ls",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) "
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/Alex/mynode/zh800mirror/exec/child.js",
+		"/Users/Alex/mynode/zh800mirror/ping/config.ini",
+		"/Users/Alex/mynode/zh800mirror/ping/views/ping.html",
+		"/Applications/Sublime Text.app/Contents/MacOS/changelog.txt",
+		"/Users/Alex/mynode/zh800mirror/simpleHttp/simpleHttp.js",
+		"/Users/Alex/mynode/zh800mirror/mongodb/save2Mongo.js",
+		"/Users/Alex/mynode/zh800/ping/routes.js",
+		"/Users/Alex/mynode/zh800/ping/server.js",
+		"/Users/Alex/mynode/zh800/ping/README.md",
+		"/Users/Alex/mynode/zh800/ping/webSocket.html",
+		"/Users/Alex/mynode/zh800/ping/webSocket.js",
+		"/Users/Alex/mynode/zh800/ping/webSocketClient.js",
+		"/Users/Alex/mynode/zh800/ping/javascript/getresult.js",
+		"/Users/Alex/mynode/zh800/ping/views/index.html",
+		"/Users/Alex/mynode/socketio/examples/chat/public/style.css",
+		"/Users/Alex/mynode/socketio/examples/chat/index.js",
+		"/Users/Alex/mynode/socketio/examples/chat/public/index.html",
+		"/Users/Alex/mynode/socketio/examples/chat/public/main.js",
+		"/Users/Alex/mynode/ping/views/index.jade",
+		"/Users/Alex/mynode/ping/public/index.jade",
+		"/Users/Alex/mynode/ping/views/style.css",
+		"/Users/Alex/mynode/ping/iniTest.js",
+		"/Users/Alex/mynode/ping/routes.js",
+		"/Users/Alex/mynode/ping/iniRead.js",
+		"/Users/Alex/mynode/ping/expressServer.js",
+		"/Users/Alex/mynode/ping/views/index.html",
+		"/Users/Alex/mynode/ping/config.ini",
+		"/Users/Alex/mynode/ping/server.js",
+		"/Users/Alex/mynode/ping/javascript/main.js",
+		"/Users/Alex/mynode/ping/file.js",
+		"/Users/Alex/mynode/ping/file.jade",
+		"/Users/Alex/mynode/ping/jadeTest.html",
+		"/Users/Alex/Downloads/index (1).jade",
+		"/Users/Alex/Downloads/index.jade",
+		"/Users/Alex/mynode/net/server2.js",
+		"/Users/Alex/mynode/CcallNode/server.js",
+		"/Users/Alex/mynode/myD3/public/index.html",
+		"/Users/Alex/.bashrc",
+		"/Users/Alex/mynode/myD3/server.js",
+		"/Users/Alex/mynode/net/server.js",
+		"/Users/Alex/mynode/test/index.js",
+		"/Users/Alex/mynode/socketio/chat/server.js",
+		"/Users/Alex/mynode/socketio/chat/index.html",
+		"/Users/Alex/mynode/socketio/chat/package.json",
+		"/Users/Alex/mynode/socketio/package.json",
+		"/Users/Alex/mynode/ZH/aliveFrontEnd/server.js",
+		"/Users/Alex/mynode/ZH/aliveServer/connectServer.js",
+		"/Users/Alex/mynode/ZH/study/setTimeout.js",
+		"/Users/Alex/mynode/ZH/study/http.js",
+		"/Users/Alex/mynode/ZH/study/setTimeout2.js",
+		"/Users/Alex/mynode/ZH/testDb/server.js",
+		"/Users/Alex/mgdb.sc",
+		"/Users/Alex/mynode/ZH/aliveClient/simpleClient.js",
+		"/Users/Alex/mynode/ZH/aliveServer/simpleHttpServer.js",
+		"/Users/Alex/mynode/ZH/aliveServer/server.js",
+		"/Users/Alex/mynode/ZH/aliveServer/simpleSocketIO.html",
+		"/Users/Alex/mynode/hello2/simpleHttpServer.js",
+		"/Users/Alex/mynode/hello2/simpleClient.js",
+		"/Users/Alex/mynode/ZH/aliveServer/simpleSockIO.js",
+		"/Users/Alex/mynode/hello2/server.js",
+		"/Users/Alex/.dir_colors",
+		"/Users/Alex/.bash_profile",
+		"/Volumes/boot/cmdline.txt",
+		"/Users/Alex/mynode/mongo2/views/layout.jade",
+		"/Users/Alex/mynode/mongoExpress/views/layout.jade",
+		"/Users/Alex/mynode/mongoExpress/views/index.jade",
+		"/Users/Alex/mynode/mongo2/package.json",
+		"/Users/Alex/mynode/myJade/views/layout.jade",
+		"/Users/Alex/mynode/mongoExpress/views/login.jade",
+		"/Users/Alex/Music/iTunes/iTunes Media/Mobile Applications/jp.naver.line.plist",
+		"/Users/Alex/mynode/myFileServer/Server.js",
+		"/Users/Alex/mynode/myJade/views/index.jade",
+		"/Users/Alex/mynode/myJade/package.json",
+		"/Users/Alex/mynode/myJade/server.js",
+		"/Users/Alex/mynode/myFileServer/package.json",
+		"/Users/Alex/SIDC2/sidc/sidc_eagle/src/main.cpp",
+		"/Users/Alex/SIDC2/sidc/sidc_eagle/src/sidc_eagle.h",
+		"/Users/Alex/SIDC2/sidc/sidc_eagle/src/sidc_eagle.cc",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/CTags/Default.sublime-keymap",
+		"/Users/Alex/SIDC2/tags",
+		"/Users/Alex/SIDC2/sidc/sidc_eagle/sidc_eagle.pro",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/CTags/CTags.sublime-settings",
+		"/Users/Alex/mynode/mongoExpress/server.js",
+		"/Users/Alex/mynode/mongoExpress/index.jade",
+		"/Users/Alex/mynode/mongoExpress/signup.jade",
+		"/Users/Alex/mynode/mongoExpress/login.jade",
+		"/Users/Alex/mynode/myexpress/client.html",
+		"/Users/Alex/mynode/myexpress/expressRealtimeCanvas.js",
+		"/Users/Alex/mynode/hello2/connect.js",
+		"/Users/Alex/mynode/hello2/express.js",
+		"/Users/Alex/mynode/hello2/connectFile.js",
+		"/Users/Alex/mynode/hello2/connectCookie.js",
+		"/Users/Alex/mynode/hello2/views/search.ejs",
+		"/Users/Alex/mynode/hello2/static/index.html",
+		"/Users/Alex/mynode/hello2/index.ejs",
+		"/Users/Alex/SiDC/mrua_SMP8654F_3_11_1_dev.mips/Makefile",
+		"/Volumes/Data/windows software tool/source insight/sn.txt",
+		"/Users/Alex/mynode/myC/test2.c",
+		"/Users/Alex/SiDC/mrua_SMP8654F_3_11_1_dev.mips/MRUA_src/emhwlib_hal/i2c/src/i2c_hal.c",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/User/Tag Package.sublime-settings",
+		"/Users/Alex/SiDC/mrua_SMP8654F_3_11_1_dev.mips/MRUA_src/ios/kernel_src/ios_geometry.h",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/FileBrowser/Default.sublime-keymap",
+		"/Users/Alex/project_test/project_test.sublime-project",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Side Bar.sublime-settings",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Default (OSX).sublime-keymap",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/User/CTags.sublime-settings",
+		"/Users/Alex/mynode/hello2/myD3.html",
+		"/Users/Alex/mynode/hello2/hello2.js",
+		"/Users/Alex/mynode/talksite/server.js",
+		"/Users/Alex/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/Alex/mynode/helloworld/app.js",
+		"/Users/Alex/mynode/hello2/hello2.jade",
+		"/Users/Alex/mynode/file-explorer/index.js",
+		"/Users/Alex/mynode/helloworld/server.js",
+		"/Users/Alex/mynode/Hello2/microblog/app.js",
+		"/Users/Alex/mynode/Hello2/microblog/routes/index.js",
+		"/Users/Alex/mynode/Hello2/microblog/views/index.jade",
+		"/Users/Alex/mynode/Hello2/microblog/views/layout.jade",
+		"/Users/Alex/mynode/file-explorer/package.json",
+		"/Users/Alex/mynode/helloworld/package.json",
+		"/Users/Alex/mynode/talksite/www/index.html",
+		"/Users/Alex/mynode/talksite/node_modules/socket.io/Readme.md",
+		"/Users/Alex/mynode/helloworld/views/index2.html",
+		"/Users/Alex/mynode/helloworld/views/bullet.js",
+		"/Users/Alex/mynode/helloworld/views/bullets.json",
+		"/Users/Alex/mynode/helloworld/views/flare.json",
+		"/Users/Alex/mynode/helloworld/views/data/station_distances.json",
+		"/Users/Alex/mynode/helloworld/views/js/d3.js"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"|",
+			"addMessageElement",
+			"addChatMessage",
+			"socket",
+			"$messages",
+			"addMessageElement",
+			"el",
+			"addMessageElement",
+			"sendMessage",
+			"setUsername",
+			"$loginPage",
+			"chatPage",
+			"log",
+			"addIpNotice",
+			"checkIPfail",
+			"initPingSet",
+			"raw",
+			"remote",
+			"logfile",
+			"li",
+			"();\n",
+			"routes",
+			"http"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			" "
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "save2Mongo.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"",
+				"~/SIDC2/sidc/sidc_eagle/src/main.cpp"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
