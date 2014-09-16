@@ -16,7 +16,10 @@ module.exports = {
   },
 
   totalOverviewJSON: function(req, res) {
-    Log.overviewByOrderType(res, function(result) {
+
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.overview(res, function(result) {
       var resultJSON = {dataSet: result}
       res.json(resultJSON);
     });
@@ -25,7 +28,9 @@ module.exports = {
   totalProductJSON: function(req, res) {
     var product = req.param("product");
 
-    Log.totalProduct(product, function(err, data) {
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.product(product, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -43,7 +48,9 @@ module.exports = {
     var product = req.param("product");
     var month = req.param("month")
 
-    Log.totalProductMonth(product, month, function(err, data) {
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.productMonth(product, month, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -63,7 +70,9 @@ module.exports = {
     var month = req.param("month");
     var week = req.param("week");
 
-    Log.totalProductMonthWeek(product, month, week, function(err, data) {
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.productMonthWeek(product, month, week, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -84,7 +93,9 @@ module.exports = {
     var week = req.param("week");
     var date = req.param("date");
 
-    Log.totalProductMonthWeekDate(product, month, week, date, function(err, data) {
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.productMonthWeekDate(product, month, week, date, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -106,7 +117,9 @@ module.exports = {
     var date = req.param("date");
     var machine = req.param("machine");
 
-    Log.totalMachine(product, month, date, machine, function(err, data) {
+    var logTotal = LogTotal.jsonAPI();
+
+    logTotal.machineDetail(product, month, date, machine, function(err, data) {
 
       if (err) {
         res.serverError(err);
