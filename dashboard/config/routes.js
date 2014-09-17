@@ -55,6 +55,11 @@ module.exports.routes = {
   "GET /monthly/:year/:month/:week/:date": "MonthlyReport.yearMonthWeekDate",
   "GET /monthly/:year/:month/:week/:date/:machine": "MonthlyReport.machineDetail",
 
+  // Daily Dashboard
+  "GET /daily/:year/:month": "DailyReport.overview",
+  "GET /daily/:year/:month/:date": "DailyReport.yearMonthDate",
+  "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
+
   // Total Reivew JSON API
   "GET /api/json/total/overview": "TotalJSON.overview",
   "GET /api/json/total/:product": "TotalJSON.product",
@@ -63,11 +68,17 @@ module.exports.routes = {
   "GET /api/json/total/:product/:month/:week/:date": "TotalJSON.productMonthWeekDate",
   "GET /api/json/total/:product/:month/:week/:date/:machine": "TotalJSON.machineDetail",
 
+  // Monthly Review JSON API
   "GET /api/json/month/:year": "MonthlyJSON.overview",
   "GET /api/json/month/:year/:month": "MonthlyJSON.yearMonth",
   "GET /api/json/month/:year/:month/:week": "MonthlyJSON.yearMonthWeek",
   "GET /api/json/month/:year/:month/:week/:date": "MonthlyJSON.yearMonthWeekDate",
-  "GET /api/json/month/:year/:month/:week/:date/:machine": "MonthlyJSON.machineDetail"
+  "GET /api/json/month/:year/:month/:week/:date/:machine": "MonthlyJSON.machineDetail",
+
+  // Daily Review JSON API
+  "GET /api/json/daily/:year/:month": "DailyJSON.overview",
+  "GET /api/json/daily/:year/:month/:date": "DailyJSON.yearMonthDate",
+  "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
 
   /***************************************************************************
