@@ -39,12 +39,26 @@ module.exports.routes = {
   "POST /user/create": "User.create",
   "POST /user/login": "User.login",
   "GET /user/logout": "User.logout",
-  "GET /total": "Total.index",
-  "GET /total/:product": "Total.product",
-  "GET /total/:product/:month": "Total.productMonth",
-  "GET /total/:product/:month/:week": "Total.productMonthWeek",
-  "GET /total/:product/:month/:week/:date": "Total.productMonthWeekDate",
-  "GET /total/:product/:month/:week/:date/:machine": "Total.productMonthWeekDateMachine",
+
+  // Total Dashboard
+  "GET /total": "TotalReport.index",
+  "GET /total/:product": "TotalReport.product",
+  "GET /total/:product/:month": "TotalReport.productMonth",
+  "GET /total/:product/:month/:week": "TotalReport.productMonthWeek",
+  "GET /total/:product/:month/:week/:date": "TotalReport.productMonthWeekDate",
+  "GET /total/:product/:month/:week/:date/:machine": "TotalReport.productMonthWeekDateMachine",
+
+  // Monthly Dashboard
+  "GET /monthly/:year": "MonthlyReport.year",
+  "GET /monthly/:year/:month": "MonthlyReport.yearMonth",
+  "GET /monthly/:year/:month/:week": "MonthlyReport.yearMonthWeek",
+  "GET /monthly/:year/:month/:week/:date": "MonthlyReport.yearMonthWeekDate",
+  "GET /monthly/:year/:month/:week/:date/:machine": "MonthlyReport.machineDetail",
+
+  // Daily Dashboard
+  "GET /daily/:year/:month": "DailyReport.overview",
+  "GET /daily/:year/:month/:date": "DailyReport.yearMonthDate",
+  "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
   // Total Reivew JSON API
   "GET /api/json/total/overview": "TotalJSON.overview",
@@ -52,8 +66,19 @@ module.exports.routes = {
   "GET /api/json/total/:product/:month": "TotalJSON.productMonth",
   "GET /api/json/total/:product/:month/:week": "TotalJSON.productMonthWeek",
   "GET /api/json/total/:product/:month/:week/:date": "TotalJSON.productMonthWeekDate",
-  "GET /api/json/total/:product/:month/:week/:date/:machine": "TotalJSON.machineDetail"
+  "GET /api/json/total/:product/:month/:week/:date/:machine": "TotalJSON.machineDetail",
 
+  // Monthly Review JSON API
+  "GET /api/json/month/:year": "MonthlyJSON.overview",
+  "GET /api/json/month/:year/:month": "MonthlyJSON.yearMonth",
+  "GET /api/json/month/:year/:month/:week": "MonthlyJSON.yearMonthWeek",
+  "GET /api/json/month/:year/:month/:week/:date": "MonthlyJSON.yearMonthWeekDate",
+  "GET /api/json/month/:year/:month/:week/:date/:machine": "MonthlyJSON.machineDetail",
+
+  // Daily Review JSON API
+  "GET /api/json/daily/:year/:month": "DailyJSON.overview",
+  "GET /api/json/daily/:year/:month/:date": "DailyJSON.yearMonthDate",
+  "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
 
   /***************************************************************************
