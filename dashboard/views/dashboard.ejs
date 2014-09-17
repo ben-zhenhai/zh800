@@ -8,10 +8,14 @@
 
   <title>Zhenhai Dashboard</title>
 
-  <link rel="stylesheet" type="text/css" href="./assets/sementicUI/css/semantic.css">
-  <link rel="stylesheet" type="text/css" href="./assets/custom/css/custom.css">
+  <link rel="stylesheet" type="text/css" href="/assets/sementicUI/css/semantic.css">
+  <link rel="stylesheet" type="text/css" href="/assets/custom/css/custom.css">
+  <link rel="stylesheet" type="text/css" href="/assets/jQueryUI/jquery-ui.min.css">
 
-  <script src="./assets/sementicUI/javascript/semantic.js"></script>
+  <script src="/assets/sementicUI/javascript/semantic.js"></script>
+  <script src="/assets/lib/javascript/jquery-2.1.1.js"></script>
+  <script src="/assets/jQueryUI/jquery-ui.min.js"></script>
+  <script src="/assets/lib/javascript/jquery.mtz.monthpicker.js"></script>
 
 </head>
 <body>
@@ -33,16 +37,28 @@
           </a>
         </div>
         <div class="column">
-          <a href="monthly/overview.html" class="ui massive icon button" style="padding: 30px;">
+          <a href="/monthly/2013" class="ui massive icon button" style="padding: 30px;">
             <i class="huge calendar icon"></i>
             <div style="margin-top: 0.5em">月報表</div>
           </a>
+          <div style="margin-top: 1em">
+            請選擇年份：
+            <select>
+              <option type="text" value="2013" onclick="window.location='/monthly/2013'">2013</option>
+              <option type="text" value="2014" onclick="window.location='/monthly/2014'">2014</option>
+              <option type="text" value="2015" onclick="window.location='/monthly/2015'">2015</option>
+            </select>
+          </div>
         </div>
         <div class="column">
-          <a href="#" class="ui massive icon button" style="padding: 30px;">
+          <a href="/daily/2013/1" class="ui massive icon button" style="padding: 30px;">
             <i class="huge tasks icon"></i>
             <div style="margin-top: 0.5em">日報表</div>
           </a>
+          <div style="margin-top: 1em">
+            請選擇月份：<input type="text" id="monthPicker" size="10"/>
+          </div>
+
         </div>
       </div> 
     </div>
@@ -70,6 +86,26 @@
         </div>
       </div> 
     </div>
+  </div>
+  <div class="ui page grid">
+    <div class="column">
+    </div>
+    <script>
+      $('#monthPicker').monthpicker({
+        pattern: 'yyyy-mm',
+        monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+      });
+      $('#monthPicker').bind('monthpicker-click-month', function(e, month) {
+        var columns = $("#monthPicker").val().split("-");
+        var year = +(columns[0]);
+        var month = +(columns[1]);
+        window.location = "/daily/" + year + "/" + month
+      });
+      $('#chooseMonth').click(function() {
+        $('#monthPicker').monthpicker('show');
+      });
+
+    </script>
   </div>
 
 </body>
