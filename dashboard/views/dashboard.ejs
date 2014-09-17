@@ -44,9 +44,9 @@
           <div style="margin-top: 1em">
             請選擇年份：
             <select>
-              <option type="text" value="2013" onclick="window.location='/monthly/2013'">2013</option>
-              <option type="text" value="2014" onclick="window.location='/monthly/2014'">2014</option>
-              <option type="text" value="2015" onclick="window.location='/monthly/2015'">2015</option>
+              <% for (var i = minYear; i <= maxYear; i++) { %>
+                <option type="text" value="<%= i %>" onclick="window.location='/monthly/<%= i %>'"><%= i %></option>
+              <% } %>
             </select>
           </div>
         </div>
@@ -93,17 +93,55 @@
     <script>
       $('#monthPicker').monthpicker({
         pattern: 'yyyy-mm',
+        startYear: <%= minYear %>,
+        finalYear: <%= maxYear %>,
+        selectedYear: <%= minYear %>,
         monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
       });
+
+      $('#monthPicker').monthpicker().bind('monthpicker-change-year', function (e, year) {
+
+        // Enable all months
+        $('#monthPicker').monthpicker('disableMonths', []);
+
+        // Disable month before our first log
+        if (year === '<%= minYear %>') {
+          var disableMonths = [];
+          for (var i = 1; i < <%= minMonth %>; i++) {
+            disableMonths.push(i);
+          }
+          console.log(disableMonths);
+          $('#monthPicker').monthpicker('disableMonths', disableMonths);
+        }
+
+        // Disable month after our last log
+        if (year === '<%= maxYear %>') {
+          var disableMonths = [];
+          for (var i = (+<%= maxMonth %> + 1); i <= 12; i++) {
+            disableMonths.push(i);
+          }
+          $('#monthPicker').monthpicker('disableMonths', disableMonths);
+        }
+      });
+
+      
       $('#monthPicker').bind('monthpicker-click-month', function(e, month) {
         var columns = $("#monthPicker").val().split("-");
         var year = +(columns[0]);
         var month = +(columns[1]);
         window.location = "/daily/" + year + "/" + month
       });
-      $('#chooseMonth').click(function() {
-        $('#monthPicker').monthpicker('show');
-      });
+
+      disableMonths();
+
+      function disableMonths() {
+        var disableMonths = [];
+        for (var i = 1; i < <%= minMonth %>; i++) {
+          disableMonths.push(i);
+        }
+
+        $('#monthPicker').monthpicker('disableMonths', disableMonths);
+      }
 
     </script>
   </div>
