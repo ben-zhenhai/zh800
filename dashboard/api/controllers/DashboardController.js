@@ -12,7 +12,11 @@ module.exports = {
   },
 
   main: function(req, res) {
-    res.view("dashboard");
+    var variables = {
+      currentYear: (new Date()).getFullYear(),
+      currentMonth: (+(new Date()).getMonth()) + 1,
+    }
+    res.view("dashboard", variables);
   }
 
 

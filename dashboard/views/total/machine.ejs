@@ -153,7 +153,7 @@
       }
     });
 
-    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= month %>, <%= date %>));
+    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= (+month - 1) %>, <%= date %>));
   </script>
   <script>
     $(function() {
