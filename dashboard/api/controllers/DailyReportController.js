@@ -36,6 +36,30 @@ module.exports = {
     ];
 
     res.view("daily/overview", {dataURL: dataURL, steps: steps});
+  },
+
+  machineDetail: function(req, res) {
+
+    var year = req.param("year");
+    var month = req.param("month");
+    var date = req.param("date");
+    var machine = req.param("machine");
+    var dataURL = "/api/json/daily/" + year + "/" + month + "/" + date + "/" + machine;
+
+    var steps = [
+      {active: "active", title: year + " 年 " + month + " 月" },
+      {active: "active", title: date + " 日"},
+      {active: "active", title: machine }
+    ];
+
+    res.view("daily/machine", {
+      fullYear: year,
+      month: month,
+      date: date,
+      productMachine: machine,
+      dataURL: dataURL,
+      steps: steps
+    });
   }
 
 

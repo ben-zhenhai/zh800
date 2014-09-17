@@ -44,7 +44,26 @@ module.exports = {
       res.json(resultJSON);
     });
 
-  }
-            
+  },
+
+  machineDetail: function(req, res) {
+    var logDaily = LogDaily.jsonAPI();
+    var year = req.param("year");
+    var month = req.param("month");
+    var date = req.param("date");
+    var machine = req.param("machine");
+
+    logDaily.machineDetail(year, month, date, machine, function(err, result) {
+
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
+      var resultJSON = {dataSet: result}
+
+      res.json(resultJSON);
+    });
+  }         
 };
 

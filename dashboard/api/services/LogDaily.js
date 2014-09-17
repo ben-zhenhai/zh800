@@ -50,8 +50,34 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
+  function machineDetail (year, month, date, machine, callback) {
+
+    var startDate = new Date(+year, +(month-1), +date);
+    var endDate = new Date(+year, +(month-1), (+date) + 1);
+
+    var mapReducer = MapReducer.defineOn({
+      model: Log,
+      groupingFunction: function(data) {
+        return {date: data.emb_date, error: data.defact_id};
+      },
+      mongoFilters: {
+        mach_id: machine,
+        emb_date: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+        };
+      }
+    });
+
+    mapReducer(callback);
+  }
+
   return {
     overview: overview,
-    yearMonthDate: yearMonthDate
+    yearMonthDate: yearMonthDate,
+    machineDetail: machineDetail
   }
 }

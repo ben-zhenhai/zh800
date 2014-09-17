@@ -58,6 +58,7 @@ module.exports.routes = {
   // Daily Dashboard
   "GET /daily/:year/:month": "DailyReport.overview",
   "GET /daily/:year/:month/:date": "DailyReport.yearMonthDate",
+  "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
   // Total Reivew JSON API
   "GET /api/json/total/overview": "TotalJSON.overview",
@@ -77,6 +78,7 @@ module.exports.routes = {
   // Daily Review JSON API
   "GET /api/json/daily/:year/:month": "DailyJSON.overview",
   "GET /api/json/daily/:year/:month/:date": "DailyJSON.yearMonthDate",
+  "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
 
   /***************************************************************************
