@@ -62,14 +62,14 @@ module.exports.routes = {
 
   // By Reason Dashboard
   "GET /reason": "ReasonReport.overview",
-  "GET /reason/:reasonID": "ReasonReport.reasonDetail",
+  "GET /reason/:reasonID": "ReasonReport.detail",
 
   // By Machine Dashboard
   "GET /machine": "MachineReport.overview",
   "GET /machine/:machineID": "MachineReport.detail",
 
   // Total Reivew JSON API
-  "GET /api/json/total/overview": "TotalJSON.overview",
+  "GET /api/json/total": "TotalJSON.overview",
   "GET /api/json/total/:product": "TotalJSON.product",
   "GET /api/json/total/:product/:month": "TotalJSON.productMonth",
   "GET /api/json/total/:product/:month/:week": "TotalJSON.productMonthWeek",
@@ -90,7 +90,7 @@ module.exports.routes = {
 
   // By reason JSON API
   "GET /api/json/reason": "ReasonJSON.overview",
-  "GET /api/json/reason/:reasonID": "ReasonJSON.reasonDetail",
+  "GET /api/json/reason/:reasonID/pie": "ReasonJSON.detailPie",
   "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
 
   // By machine JSON API

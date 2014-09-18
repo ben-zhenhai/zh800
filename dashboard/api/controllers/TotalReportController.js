@@ -18,7 +18,7 @@ module.exports = {
       {active: "", title: "機器"}
     ];
 
-    res.view("total/overview", {dataURL: "/api/json/total/overview", steps: steps});
+    res.view("total/overview", {dataURL: "/api/json/total", steps: steps});
   },
 
   product: function(req, res) {

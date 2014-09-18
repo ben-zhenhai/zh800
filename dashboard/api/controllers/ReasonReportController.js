@@ -11,9 +11,9 @@ module.exports = {
     res.view("reason/overview")
   },
 
-  reasonDetail: function(req, res) {
+  detail: function(req, res) {
     var reasonID = req.param("reasonID");
-    var pieChartDataURL = "/api/json/reason/" + reasonID;
+    var pieChartDataURL = "/api/json/reason/" + reasonID + "/pie";
     var tableDataURL = "/api/json/reason/" + reasonID + "/table"
 
     var steps = [

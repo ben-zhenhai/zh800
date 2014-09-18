@@ -2,42 +2,26 @@ exports.jsonAPI = function() {
 
   function overview (callback) {
 
-    Log.native(function(err, logCollection) {
+    var aggeration = [ 
+      { $group: { _id: "$order_type", bad_qty: { $sum: "$bad_qty" } } },
+      { $sort: {_id: 1}}
+    ]
 
-      if (err) { 
-        callback(err) 
-        return;
+    var converter = function (data) {
+      return {
+        name: data._id, 
+        value: data.bad_qty,
+        link: "/total/" + data._id
       }
+    }
 
-      var aggerateMethod = [ 
-        { $group: { _id: "$order_type", bad_qty: { $sum: "$bad_qty" } } },
-        { $sort: {_id: 1}}
-      ]
-
-      var onGetResultSet = function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return;
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-          resultSet[i] = {
-            name: result[i]._id, 
-            value: result[i].bad_qty,
-            link: "/total/" + result[i]._id
-          }
-        }
-
-        if (callback) {
-          callback(err, resultSet);
-        }
-      }
-
-      logCollection.aggregate(aggerateMethod, onGetResultSet);
+    var aggerator = Aggerator.defineOn({
+      model: Log,
+      aggeration: aggeration,
+      converter: converter
     });
+
+    aggerator(callback);
   }
 
   function product (product, callback) {
@@ -230,38 +214,30 @@ exports.jsonAPI = function() {
 
   function getDateRange(callback) {
 
-     Log.native(function(err, logCollection) {
-
-      if (err) { 
-        callback(err) 
-        return;
+    var converter = function (data) { return {minDate: data.min, maxDate: data.max} }
+    var aggeration = {
+      $group: {
+        _id: "$log", 
+        min: {$min: "$emb_date"}, 
+        max: {$max: "$emb_date"}
       }
+    }
 
-      var aggerateMethod = {
-        $group: {
-          _id: "$log", 
-          min: {$min: "$emb_date"}, 
-          max: {$max: "$emb_date"}
-        }
+    function checkResult(err, result) {
+      if (result && result.length == 1) {
+        callback(err, result[0].minDate, result[0].maxDate);
+      } else {
+        callback({error: "Cannot get correct date range from MongoDB"});
       }
+    }
 
-      var onGetResultSet = function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return;
-        }
-
-        if (callback && result.length == 1) {
-          callback(err, result[0].min, result[0].max);
-        } else {
-          callback({error: "Cannot get correct date range from MongoDB"});
-        }
-      }
-
-      logCollection.aggregate(aggerateMethod, onGetResultSet);
+    var aggerator = Aggerator.defineOn({
+      model: Log,
+      aggeration: aggeration,
+      converter: converter
     });
-   
+
+    aggerator(checkResult);
   }
 
   return {
