@@ -17,6 +17,11 @@ module.exports = {
 
     logTotal.getDateRange(function(err, minDate, maxDate) {
 
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
       var variables = {
         currentYear: (new Date()).getFullYear(),
         currentMonth: (+(new Date()).getMonth()) + 1,

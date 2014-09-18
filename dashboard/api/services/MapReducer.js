@@ -8,6 +8,14 @@ exports.defineOn = function(options) {
   var sorting = options.sorting
 
   return function(callback) {
+
+    // Schedule to send error if we got timeout, so we 
+    // could prevent being blocked if MongoDB is crashed.
+    var timeoutProtect = setTimeout(function() {
+      timeoutProtect = null;
+      callback({error:'MongoDB connection timeout'});
+    }, sails.config.timeout.mongoDB);
+
     model.native(function(err, collection) {
       var mapFunction = function() { emit(groupingFunction(this), this.bad_qty) }
       var reduceFunction = function(key, values) { return Array.sum(values); }
@@ -42,7 +50,18 @@ exports.defineOn = function(options) {
           }
         }
 
-        callback(err, resultSet);
+        // If timeoutPreotect has triggered, it will set itself to
+        // null, so our real callback will not executed.
+        if (timeoutProtect) {
+
+          // We have to clear scheduled timeoutProetect to avoid it
+          // being called if we have result before timeout.
+          clearTimeout(timeoutProtect);
+
+          if (callback) {
+            callback(err, resultSet);
+          } 
+        }
       }
 
       collection.mapReduce(mapFunction, reduceFunction, mapReduceOptions, processCallback);
