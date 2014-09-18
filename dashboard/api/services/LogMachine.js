@@ -1,43 +1,27 @@
 exports.jsonAPI = function() {
 
-  function overview(callback) {
+  function overview(convert, callback) {
 
-     Log.native(function(err, logCollection) {
+    var aggeration = [
+      { $group: { _id: "$mach_id", bad_qty: { $sum: "$bad_qty" } } },
+      { $sort: {_id: 1}}
+    ]
 
-      if (err) { 
-        callback(err) 
-        return;
+    var converter = function(data) {
+      return {
+        name: data._id, 
+        value: data.bad_qty,
+        link: "/machine/" + data._id
       }
+    }
 
-      var aggerateMethod = [ 
-        { $group: { _id: "$mach_id", bad_qty: { $sum: "$bad_qty" } } },
-        { $sort: {_id: 1}}
-      ]
-
-      var onGetResultSet = function (err, result) {
-
-        if (err) { 
-          callback(err); 
-          return;
-        }
-
-        var resultSet = [];
-
-        for (var i = 0; i < result.length; i++) {
-          resultSet[i] = {
-            name: result[i]._id, 
-            value: result[i].bad_qty,
-            link: "/machine/" + result[i]._id
-          }
-        }
-
-        if (callback) {
-          callback(err, resultSet);
-        }
-      }
-
-      logCollection.aggregate(aggerateMethod, onGetResultSet);
+    var aggerator = Aggerator.defineOn({
+      model: Log,
+      aggeration: aggeration,
+      converter: converter
     });
+
+    aggerator(callback);
   }
 
   function detailPie (machineID, callback) {

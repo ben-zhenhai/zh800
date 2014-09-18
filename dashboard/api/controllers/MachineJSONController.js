@@ -11,7 +11,15 @@ module.exports = {
 
     var logMachine = LogMachine.jsonAPI();
 
-    logMachine.overview(function(err, result) {
+    function convert(data) {
+      return {
+        name: data._id, 
+        value: data.bad_qty,
+        link: "/machine/" + data._id
+      }
+    }
+
+    logMachine.overview(convert, function(err, result) {
 
       if (err) {
         res.serverError(err);
