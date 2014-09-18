@@ -62,6 +62,7 @@ module.exports.routes = {
 
   // By Reason Dashboard
   "GET /reason": "ReasonReport.overview",
+  "GET /reason/:reasonID": "ReasonReport.reasonDetail",
 
   // Total Reivew JSON API
   "GET /api/json/total/overview": "TotalJSON.overview",
@@ -85,7 +86,8 @@ module.exports.routes = {
 
   // By reason JSON API
   "GET /api/json/reason": "ReasonJSON.overview",
-
+  "GET /api/json/reason/:reasonID": "ReasonJSON.reasonDetail",
+  "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
 
   /***************************************************************************
   *                                                                          *
