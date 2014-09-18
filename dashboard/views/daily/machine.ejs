@@ -83,7 +83,8 @@
     <div class="twelve wide column data">
       <div class="ui center aligned one column grid" id="loadingIndicator">
         <div class="column">
-          <div>Loading....</div>
+          <div><i class="huge circular loading icon"></i></div>
+          <div style="margin-top: 1em">讀取中……</div>
         </div>
       </div>
       <div class="ui one column page grid" style="display: none;" id="notFoundBlock">
@@ -151,7 +152,7 @@
       }
     });
 
-    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= month %>, <%= date %>));
+    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= (+month - 1) %>, <%= date %>));
   </script>
   <script>
     $(function() {

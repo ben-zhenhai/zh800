@@ -228,12 +228,49 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
+  function getDateRange(callback) {
+
+     Log.native(function(err, logCollection) {
+
+      if (err) { 
+        callback(err) 
+        return;
+      }
+
+      var aggerateMethod = {
+        $group: {
+          _id: "$log", 
+          min: {$min: "$emb_date"}, 
+          max: {$max: "$emb_date"}
+        }
+      }
+
+      var onGetResultSet = function (err, result) {
+
+        if (err) { 
+          callback(err); 
+          return;
+        }
+
+        if (callback && result.length == 1) {
+          callback(err, result[0].min, result[0].max);
+        } else {
+          callback({error: "Cannot get correct date range from MongoDB"});
+        }
+      }
+
+      logCollection.aggregate(aggerateMethod, onGetResultSet);
+    });
+   
+  }
+
   return {
     overview: overview,
     product: product,
     productMonth: productMonth,
     productMonthWeek: productMonthWeek,
     productMonthWeekDate: productMonthWeekDate,
-    machineDetail: machineDetail
+    machineDetail: machineDetail,
+    getDateRange: getDateRange
   }
 }

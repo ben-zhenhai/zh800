@@ -46,7 +46,8 @@ module.exports.connections = {
     port: 27017,
     // user: 'username',
     // password: 'password',
-    database: 'test'
+    database: 'test',
+    connectTimeoutMS: 1000
   }
 
 };

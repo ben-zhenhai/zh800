@@ -9,7 +9,7 @@ module.exports = {
 
   overview: function(req, res) {
 
-    var logMonth = LogMonth.jsonAPI();
+    var logMonth = LogMonthly.jsonAPI();
     var year = req.param("year");
 
     logMonth.overview(year, function(err, result) {
@@ -27,7 +27,7 @@ module.exports = {
 
   yearMonth: function(req, res) {
 
-    var logMonth = LogMonth.jsonAPI();
+    var logMonth = LogMonthly.jsonAPI();
     var year = req.param("year");
     var month = req.param("month");
 
@@ -49,7 +49,7 @@ module.exports = {
 
   yearMonthWeek: function(req, res) {
 
-    var logMonth = LogMonth.jsonAPI();
+    var logMonth = LogMonthly.jsonAPI();
     var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
@@ -73,7 +73,7 @@ module.exports = {
 
   yearMonthWeekDate: function(req, res) {
 
-    var logMonth = LogMonth.jsonAPI();
+    var logMonth = LogMonthly.jsonAPI();
     var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
@@ -97,7 +97,7 @@ module.exports = {
 
   machineDetail: function(req, res) {
 
-    var logMonth = LogMonth.jsonAPI();
+    var logMonth = LogMonthly.jsonAPI();
     var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
