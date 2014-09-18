@@ -24,7 +24,7 @@ module.exports = {
     });
   },
 
-  reasonDetail: function(req, res) {
+  detailPie: function(req, res) {
 
     var logReason = LogReason.jsonAPI();
     var reasonID = req.param("reasonID");
