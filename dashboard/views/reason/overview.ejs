@@ -20,21 +20,6 @@
   <script src="../assets/lib/javascript/d3.v3.min.js"></script>
 
   <style>
-.chart rect {
-  fill: steelblue;
-}
-
-.chart text {
-  fill: black;
-  font: 16px sans-serif;
-  text-anchor: middle;
-}
-
-.chart rect:hover {
-  fill: brown;
-     cursor: pointer;
-}
-
 .slice path:hover {
   fill: brown;
 }
@@ -62,29 +47,44 @@
       <div class="ui right floated button">Export CSV File</div>
     </div>
     <div class="column">
+
+      <div class="ui one column page grid" style="display: none" id="notFoundBlock">
+        <div class="column">
+          <div class="ui icon error message">
+            <i class="inbox icon"></i>
+            <div class="content">
+              <div class="header">查無資料</div>
+              <p>無法查詢到相關資料，請確定網址是否正確。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loadingIndicator">
+        <div><i class="huge circular loading icon"></i></div>
+        <div style="margin-top: 1em">讀取中……</div>
+      </div>
+
       <svg class="pieChart"></svg>
     </div>
 
     <script>
 
-    var pieData = [
-      {"label":"Error1", "value":10}, 
-      {"label":"Error2", "value":30},
-      {"label":"Error3", "value":30},
-      {"label":"Error4", "value":15}
+      $.ajax("/api/json/reason", {timeout: 30 * 1000}).done(function(data) {
+        var drawPieChart = pieChart({
+          width: 400,
+          height: 400,
+          radius: 180,
+          extractValue: function(data) { return data.value; },
+          extractName: function(data) { return data.name; }
+        })
 
-    ];
-
-    var drawPieChart = pieChart({
-      width: 400,
-      height: 400,
-      radius: 180,
-      extractValue: function(data) { return data.value; },
-      extractName: function(data) { return data.label; }
-    })
-
-    drawPieChart(".pieChart", pieData);
-
+        drawPieChart(".pieChart", data.dataSet);
+      }).always(function() {
+        $('#loadingIndicator').hide();
+      }).error(function() {
+        $('#notFoundBlock').show();
+      });
 
     </script>
 

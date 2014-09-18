@@ -60,6 +60,10 @@ module.exports.routes = {
   "GET /daily/:year/:month/:date": "DailyReport.yearMonthDate",
   "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
+  // By Reason Dashboard
+  "GET /reason": "ReasonReport.overview",
+  "GET /reason/:reasonID": "ReasonReport.reasonDetail",
+
   // Total Reivew JSON API
   "GET /api/json/total/overview": "TotalJSON.overview",
   "GET /api/json/total/:product": "TotalJSON.product",
@@ -80,6 +84,10 @@ module.exports.routes = {
   "GET /api/json/daily/:year/:month/:date": "DailyJSON.yearMonthDate",
   "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
+  // By reason JSON API
+  "GET /api/json/reason": "ReasonJSON.overview",
+  "GET /api/json/reason/:reasonID": "ReasonJSON.reasonDetail",
+  "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
 
   /***************************************************************************
   *                                                                          *

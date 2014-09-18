@@ -161,12 +161,19 @@ function pieChart(options) {
 
     arcs.append("path")
       .attr("fill", function(d, i) { return color(i); } )
-      .attr("d", arc);
+      .attr("d", arc)
+      .attr("onclick", function(d) { 
+        if (d.data.link) {
+          return "window.location.href='" + d.data.link + "'" 
+        } else {
+          return "void(0);"
+        }
+      })
 
     arcs.append("text")
         .attr("transform", calculateArcCenter)
         .attr("text-anchor", "middle")
-        .text(function(d,i) { return d.data.label; });
+        .text(function(d) { return options.extractName(d.data); });
   }
 
   return draw;
