@@ -27,7 +27,7 @@ module.exports = {
       steps: steps
     }
 
-    res.view("reason/detail", variables)
+    res.view("machine/detail", variables)
   }
 
 };

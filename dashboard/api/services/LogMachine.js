@@ -62,7 +62,7 @@ exports.jsonAPI = function() {
         var dateString = 
           data.emb_date.getFullYear() + "-" + month
 
-        return {name: data.mach_id, time: dateString}; 
+        return {name: data.defact_id, time: dateString}; 
       },
       mongoFilters: {mach_id: machineID},
       converter: function (data) {
