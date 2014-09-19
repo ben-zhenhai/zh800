@@ -98,6 +98,14 @@ module.exports.routes = {
   "GET /api/json/machine/:machineID/pie": "MachineJSON.detailPie",
   "GET /api/json/machine/:machineID/table": "MachineJSON.detailTable",
 
+  // Total Reivew JSON API
+  "GET /api/csv/total": "TotalCSV.overview",
+  "GET /api/csv/total/:product": "TotalCSV.product",
+  "GET /api/csv/total/:product/:month": "TotalCSV.productMonth",
+  "GET /api/csv/total/:product/:month/:week": "TotalCSV.productMonthWeek",
+  "GET /api/csv/total/:product/:month/:week/:date": "TotalCSV.productMonthWeekDate",
+  "GET /api/csv/total/:product/:month/:week/:date/:machine": "TotalCSV.machineDetail",
+
 
   /***************************************************************************
   *                                                                          *
