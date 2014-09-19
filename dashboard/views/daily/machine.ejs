@@ -159,11 +159,11 @@
     });
 
     $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= (+month - 1) %>, <%= date %>));
-    $('#machineList').select2({width: "100%"}).on('change', function(e) {
-      var url = "/daily/" + <%= fullYear %> + "/" + <%= month %> + "/" + <%= date %> + "/" + e.val;
-      window.location = url
-    });
-    $('#machineList').select2('val', "<%= productMachine %>");
+
+    setupMachineList(
+      '#machineList', '<%= productMachine %>',
+      "/daily/" + <%= fullYear %> + "/" + <%= month %> + "/" + <%= date %>
+    );
   </script>
   <script>
     $(function() {

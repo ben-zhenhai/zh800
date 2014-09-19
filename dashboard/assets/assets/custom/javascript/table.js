@@ -12,4 +12,10 @@ function setTable(selection, tableSchema) {
   }
 }
 
+function setupMachineList(id, productMachine, urlPrefix) {
+  $(id).select2({width: "100%"}).on('change', function(e) {
+    window.location = urlPrefix + "/" + productMachine;
+  });
+  $(id).select2('val', productMachine);
+}
 
