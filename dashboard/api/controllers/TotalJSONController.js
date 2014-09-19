@@ -46,11 +46,12 @@ module.exports = {
 
   productMonth: function(req, res) {
     var product = req.param("product");
+    var year = req.param("year");
     var month = req.param("month")
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.productMonth(product, month, function(err, data) {
+    logTotal.productMonth(product, year, month, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -58,7 +59,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month],
+        steps: [product, year + "-" + month],
         dataSet: data
       }
 
@@ -68,12 +69,13 @@ module.exports = {
 
   productMonthWeek: function(req, res) {
     var product = req.param("product");
+    var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.productMonthWeek(product, month, week, function(err, data) {
+    logTotal.productMonthWeek(product, year, month, week, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -81,7 +83,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週"],
+        steps: [product, year + "-" + month, "第 " + week + " 週"],
         dataSet: data
       }
 
@@ -91,13 +93,14 @@ module.exports = {
 
   productMonthWeekDate: function(req, res) {
     var product = req.param("product");
+    var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
     var date = req.param("date");
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.productMonthWeekDate(product, month, week, date, function(err, data) {
+    logTotal.productMonthWeekDate(product, year, month, week, date, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -105,7 +108,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週", date + " 日"],
+        steps: [product, year + "-" + month, "第 " + week + " 週", date + " 日"],
         dataSet: data
       }
 
@@ -115,6 +118,7 @@ module.exports = {
 
   machineDetail: function(req, res) {
     var product = req.param("product");
+    var year = req.param("year");
     var month = req.param("month");
     var week = req.param("week");
     var date = req.param("date");
@@ -122,7 +126,7 @@ module.exports = {
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.machineDetail(product, month, date, machine, function(err, data) {
+    logTotal.machineDetail(product, year, month, date, machine, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -130,7 +134,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週", date + " 日", machine],
+        steps: [product, year + "-" + month, "第 " + week + " 週", date + " 日", machine],
         dataSet: data
       }
 

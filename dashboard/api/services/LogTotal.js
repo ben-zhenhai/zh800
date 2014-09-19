@@ -49,7 +49,7 @@ exports.jsonAPI = function() {
         return {
           name: data._id, 
           value: data.value,
-          link: "/total/" + product + "/" + data._id
+          link: "/total/" + product + "/" + data._id.replace("-", "/")
         }
       }
     });
@@ -57,12 +57,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonth (product, yearAndMonth, callback) {
+  function productMonth (product, year, month, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, 1);
-    var endDate = new Date(+year, (+month)+1, 1);
+    var startDate = new Date(+year, (+month-1), 1); // JS Month start from 0
+    var endDate = new Date(+year, +month, 1);
 
     var mapReducer = MapReducer.defineOn({
       model: Log,
@@ -84,7 +82,7 @@ exports.jsonAPI = function() {
         return {
           name: "第 " + data._id + " 週", 
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + data._id
+          link: "/total/" + product + "/" + year + "/" + month + "/" + data._id
         }
       }
     });
@@ -92,12 +90,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonthWeek (product, yearAndMonth, week, callback) {
+  function productMonthWeek (product, year, month, week, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, 1);
-    var endDate = new Date(+year, (+month)+1, 1);
+    var startDate = new Date(+year, (+month-1), 1);
+    var endDate = new Date(+year, +month, 1);
 
     var getWeekAndDate = function (data) {
 
@@ -145,7 +141,7 @@ exports.jsonAPI = function() {
         return {
           name: dateString + " 日",
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + currentWeek + "/" + dateString
+          link: "/total/" + product + "/" + year + "/" + month + "/" + currentWeek + "/" + dateString
         };
       }
     });
@@ -153,17 +149,10 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function productMonthWeekDate (product, yearAndMonth, week, date, callback) {
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var minDate = new Date(+year, (+month), 1);
-    var maxDate = new Date(+year, (+month)+1, 1);
+  function productMonthWeekDate (product, year, month, week, date, callback) {
 
-    var targetStartDate = new Date(year, +month, +date);
-    var targetEndDate = new Date(year, +month, (+date)+1);
-
-    var startDate = targetStartDate > minDate ? targetStartDate : minDate;
-    var endDate = targetEndDate < maxDate ? targetEndDate : maxDate;
+    var startDate = new Date(+year, (+month-1), 1);
+    var endDate = new Date(+year, (+month), 1);
 
     var mapReducer = MapReducer.defineOn({
       model: Log,
@@ -176,7 +165,7 @@ exports.jsonAPI = function() {
         return {
           name: data._id,
           value: data.value,
-          link: "/total/" + product + "/" + yearAndMonth + "/" + week + "/" + date + "/" + data._id
+          link: "/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date + "/" + data._id
         };
       }
     });
@@ -184,11 +173,9 @@ exports.jsonAPI = function() {
     mapReducer(callback);
   }
 
-  function machineDetail (product, yearAndMonth, date, machine, callback) {
+  function machineDetail (product, year, month, date, machine, callback) {
 
-    var year = yearAndMonth.split("-")[0];
-    var month = +(yearAndMonth.split("-")[1]) - 1; // JSDate's month count from 0
-    var startDate = new Date(+year, +month, +date);
+    var startDate = new Date(+year, (+month-1), +date);
     var endDate = new Date(+year, +month, (+date) + 1);
 
     var mapReducer = MapReducer.defineOn({
