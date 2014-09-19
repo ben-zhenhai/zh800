@@ -93,10 +93,12 @@ module.exports = {
     res.view("monthly/machine", {
       fullYear: year,
       month: month,
+      week: week,
       date: date,
       productMachine: machine,
       dataURL: dataURL,
-      steps: steps
+      steps: steps,
+      machineList: sails.config.machineList
     });
   }
 

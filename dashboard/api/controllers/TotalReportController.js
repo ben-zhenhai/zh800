@@ -118,15 +118,18 @@ module.exports = {
 
     var year = req.param("month").split("-")[0];
     var month = +(req.param("month").split("-")[1]) - 1;
+    var week = req.param("week");
 
     res.view("total/machine", {
       fullYear: year,
       month: month,
+      week: week,
       date: productDate,
       productName: productName,
       productMachine: productMachine,
       dataURL: productDataURL,
-      steps: steps
+      steps: steps,
+      machineList: sails.config.machineList
     });
   }
 

@@ -58,7 +58,8 @@ module.exports = {
       date: date,
       productMachine: machine,
       dataURL: dataURL,
-      steps: steps
+      steps: steps,
+      machineList: sails.config.machineList
     });
   }
 
