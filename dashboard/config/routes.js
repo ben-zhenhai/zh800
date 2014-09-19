@@ -122,6 +122,11 @@ module.exports.routes = {
   "GET /api/csv/reason": "ReasonCSV.overview",
   "GET /api/csv/reason/:reasonID": "ReasonCSV.detailTable",
 
+  // By machine CSV API
+  "GET /api/csv/machine": "MachineCSV.overview",
+  "GET /api/csv/machine/:machineID": "MachineCSV.detailTable",
+
+
   /***************************************************************************
   *                                                                          *
   * Custom routes here...                                                    *
