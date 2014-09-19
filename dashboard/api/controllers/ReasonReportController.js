@@ -15,6 +15,7 @@ module.exports = {
     var reasonID = req.param("reasonID");
     var pieChartDataURL = "/api/json/reason/" + reasonID + "/pie";
     var tableDataURL = "/api/json/reason/" + reasonID + "/table"
+    var csvURL = "/api/csv/reason/" + reasonID;
 
     var steps = [
       {active: "active", title: "總覽"},
@@ -24,6 +25,7 @@ module.exports = {
     var variables = {
       pieChartDataURL: pieChartDataURL,
       tableDataURL: tableDataURL,
+      csvURL: csvURL,
       steps: steps
     }
 

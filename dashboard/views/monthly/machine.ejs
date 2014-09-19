@@ -11,6 +11,7 @@
   <link rel="stylesheet" type="text/css" href="/assets/sementicUI/css/semantic.css">
   <link rel="stylesheet" type="text/css" href="/assets/custom/css/custom.css">
   <link rel="stylesheet" type="text/css" href="/assets/jQueryUI/jquery-ui.min.css">
+  <link rel="stylesheet" type="text/css" href="/assets/select2-3.5.1/select2.css">
 
   <script src="/assets/sementicUI/javascript/semantic.js"></script>
 
@@ -22,6 +23,8 @@
   <script src="/assets/lib/javascript/d3.v3.min.js"></script>
   <script src="/assets/jQueryUI/jquery-ui.min.js"></script>
   <script src="/assets/jQueryUI/datepicker-zh-TW.js"></script>
+  <script src="/assets/select2-3.5.1/select2.min.js"></script>
+  <script src="/assets/select2-3.5.1/select2_locale_zh-TW.js"></script>
 
   <style>
 .barChart rect {
@@ -50,7 +53,7 @@
     <div class="container">
       <a href="/" class="item"><div class="ui header">Zhenhai Dashboard</div></a>
       <div class="right menu">
-        <div class="item">Total Review</div>
+        <div class="item">每月報表</div>
       </div>
     </div>
   </div>
@@ -63,7 +66,7 @@
       </div>
     </div>
     <div class="column">
-      <div class="ui right floated button">Export CSV File</div>
+      <a href="<%= csvURL %>" class="ui right floated button">Export CSV File</a>
     </div>
   </div>
 
@@ -73,10 +76,13 @@
       <div id="datepicker"></div>
       <div class="ui vertical menu" style="width: 104%">
         <div class="header item">機器列表</div>
-        <a href="#" class="active item">A001</a>
-        <a href="#" class="item">A002</a>
-        <a href="#" class="item">B003</a>
-        <a href="#" class="item">B004</a>
+        <div class="item">
+          <select id="machineList">
+            <% for (var i = 0; i < machineList.length; i++) { %>
+              <option><%= machineList[i] %></option>
+            <% } %>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -153,6 +159,12 @@
     });
 
     $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= (+month - 1) %>, <%= date %>));
+
+    setupMachineList(
+      '#machineList', '<%= productMachine %>',
+      "/monthly/" + <%= fullYear %> + "/" + <%= month %> + "/" + <%= week %> + "/" + <%= date %>
+    );
+
   </script>
   <script>
     $(function() {

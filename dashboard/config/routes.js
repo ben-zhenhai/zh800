@@ -98,6 +98,34 @@ module.exports.routes = {
   "GET /api/json/machine/:machineID/pie": "MachineJSON.detailPie",
   "GET /api/json/machine/:machineID/table": "MachineJSON.detailTable",
 
+  // Total Reivew JSON API
+  "GET /api/csv/total": "TotalCSV.overview",
+  "GET /api/csv/total/:product": "TotalCSV.product",
+  "GET /api/csv/total/:product/:month": "TotalCSV.productMonth",
+  "GET /api/csv/total/:product/:month/:week": "TotalCSV.productMonthWeek",
+  "GET /api/csv/total/:product/:month/:week/:date": "TotalCSV.productMonthWeekDate",
+  "GET /api/csv/total/:product/:month/:week/:date/:machine": "TotalCSV.machineDetail",
+
+  // Monthly Review CSV API
+  "GET /api/csv/monthly/:year": "MonthlyCSV.overview",
+  "GET /api/csv/monthly/:year/:month": "MonthlyCSV.yearMonth",
+  "GET /api/csv/monthly/:year/:month/:week": "MonthlyCSV.yearMonthWeek",
+  "GET /api/csv/monthly/:year/:month/:week/:date": "MonthlyCSV.yearMonthWeekDate",
+  "GET /api/csv/monthly/:year/:month/:week/:date/:machine": "MonthlyCSV.machineDetail",
+
+  // Daily Review CSV API
+  "GET /api/csv/daily/:year/:month": "DailyCSV.overview",
+  "GET /api/csv/daily/:year/:month/:date": "DailyCSV.yearMonthDate",
+  "GET /api/csv/daily/:year/:month/:date/:machine": "DailyCSV.machineDetail",
+
+  // By reason CSV API
+  "GET /api/csv/reason": "ReasonCSV.overview",
+  "GET /api/csv/reason/:reasonID": "ReasonCSV.detailTable",
+
+  // By machine CSV API
+  "GET /api/csv/machine": "MachineCSV.overview",
+  "GET /api/csv/machine/:machineID": "MachineCSV.detailTable",
+
 
   /***************************************************************************
   *                                                                          *

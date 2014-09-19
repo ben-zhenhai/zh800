@@ -18,7 +18,12 @@ module.exports = {
       {active: "", title: "機器"}
     ];
 
-    res.view("total/overview", {dataURL: "/api/json/total", steps: steps});
+    res.view(
+      "total/overview", 
+      {dataURL: "/api/json/total", 
+       steps: steps,
+       csvURL: "/api/csv/total"}
+    );
   },
 
   product: function(req, res) {
@@ -34,7 +39,12 @@ module.exports = {
       {active: "", title: "機器"}
     ];
 
-    res.view("total/overview", {dataURL: productDataURL, steps: steps});
+    res.view(
+      "total/overview", 
+      {dataURL: productDataURL, 
+       steps: steps, 
+       csvURL: "/api/csv/total/" + productName}
+    );
   },
 
   productMonth: function(req, res) {
@@ -51,7 +61,15 @@ module.exports = {
     ];
 
     var productDataURL = "/api/json/total/" + productName + "/" + productMonth;
-    res.view("total/overview", {dataURL: productDataURL, steps: steps});
+    var csvURL = "/api/csv/total/" + productName + "/" + productMonth;
+
+    res.view(
+      "total/overview", 
+      {dataURL: productDataURL, 
+       steps: steps, 
+       csvURL: csvURL}
+    );
+
   },
 
   productMonthWeek: function(req, res) {
@@ -71,7 +89,14 @@ module.exports = {
 
 
     var productDataURL = "/api/json/total/" + productName + "/" + productMonth + "/" + productWeek;
-    res.view("total/overview", {dataURL: productDataURL, steps: steps});
+    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + "/" + productWeek;
+
+    res.view(
+      "total/overview", 
+      {dataURL: productDataURL, 
+       steps: steps, 
+       csvURL: csvURL}
+    );
   },
 
   productMonthWeekDate: function(req, res) {
@@ -92,8 +117,16 @@ module.exports = {
 
     var productDataURL = "/api/json/total/" + productName + "/" + productMonth + 
                          "/" + productWeek + "/" + productDate;
+    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + 
+                 "/" + productWeek + "/" + productDate;
 
-    res.view("total/overview", {dataURL: productDataURL, steps: steps});
+    res.view(
+      "total/overview", 
+      {dataURL: productDataURL, 
+       steps: steps, 
+       csvURL: csvURL}
+    );
+
   },
 
   productMonthWeekDateMachine: function(req, res) {
@@ -115,23 +148,25 @@ module.exports = {
 
     var productDataURL = "/api/json/total/" + productName + "/" + productMonth + 
                          "/" + productWeek + "/" + productDate + "/" + productMachine;
+    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + 
+                 "/" + productWeek + "/" + productDate + "/" + productMachine;
 
     var year = req.param("month").split("-")[0];
     var month = +(req.param("month").split("-")[1]) - 1;
+    var week = req.param("week");
 
     res.view("total/machine", {
       fullYear: year,
       month: month,
+      week: week,
       date: productDate,
       productName: productName,
       productMachine: productMachine,
       dataURL: productDataURL,
-      steps: steps
+      steps: steps,
+      machineList: sails.config.machineList,
+      csvURL: csvURL
     });
   }
-
-
-
-
 };
 
