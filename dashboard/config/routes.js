@@ -43,10 +43,10 @@ module.exports.routes = {
   // Total Dashboard
   "GET /total": "TotalReport.index",
   "GET /total/:product": "TotalReport.product",
-  "GET /total/:product/:month": "TotalReport.productMonth",
-  "GET /total/:product/:month/:week": "TotalReport.productMonthWeek",
-  "GET /total/:product/:month/:week/:date": "TotalReport.productMonthWeekDate",
-  "GET /total/:product/:month/:week/:date/:machine": "TotalReport.productMonthWeekDateMachine",
+  "GET /total/:product/:year/:month": "TotalReport.productMonth",
+  "GET /total/:product/:year/:month/:week": "TotalReport.productMonthWeek",
+  "GET /total/:product/:year/:month/:week/:date": "TotalReport.productMonthWeekDate",
+  "GET /total/:product/:year/:month/:week/:date/:machine": "TotalReport.productMonthWeekDateMachine",
 
   // Monthly Dashboard
   "GET /monthly/:year": "MonthlyReport.year",
@@ -71,10 +71,10 @@ module.exports.routes = {
   // Total Reivew JSON API
   "GET /api/json/total": "TotalJSON.overview",
   "GET /api/json/total/:product": "TotalJSON.product",
-  "GET /api/json/total/:product/:month": "TotalJSON.productMonth",
-  "GET /api/json/total/:product/:month/:week": "TotalJSON.productMonthWeek",
-  "GET /api/json/total/:product/:month/:week/:date": "TotalJSON.productMonthWeekDate",
-  "GET /api/json/total/:product/:month/:week/:date/:machine": "TotalJSON.machineDetail",
+  "GET /api/json/total/:product/:year/:month": "TotalJSON.productMonth",
+  "GET /api/json/total/:product/:year/:month/:week": "TotalJSON.productMonthWeek",
+  "GET /api/json/total/:product/:year/:month/:week/:date": "TotalJSON.productMonthWeekDate",
+  "GET /api/json/total/:product/:year/:month/:week/:date/:machine": "TotalJSON.machineDetail",
 
   // Monthly Review JSON API
   "GET /api/json/monthly/:year": "MonthlyJSON.overview",
@@ -98,13 +98,13 @@ module.exports.routes = {
   "GET /api/json/machine/:machineID/pie": "MachineJSON.detailPie",
   "GET /api/json/machine/:machineID/table": "MachineJSON.detailTable",
 
-  // Total Reivew JSON API
+  // Total Reivew CSV API
   "GET /api/csv/total": "TotalCSV.overview",
   "GET /api/csv/total/:product": "TotalCSV.product",
-  "GET /api/csv/total/:product/:month": "TotalCSV.productMonth",
-  "GET /api/csv/total/:product/:month/:week": "TotalCSV.productMonthWeek",
-  "GET /api/csv/total/:product/:month/:week/:date": "TotalCSV.productMonthWeekDate",
-  "GET /api/csv/total/:product/:month/:week/:date/:machine": "TotalCSV.machineDetail",
+  "GET /api/csv/total/:product/:year/:month": "TotalCSV.productMonth",
+  "GET /api/csv/total/:product/:year/:month/:week": "TotalCSV.productMonthWeek",
+  "GET /api/csv/total/:product/:year/:month/:week/:date": "TotalCSV.productMonthWeekDate",
+  "GET /api/csv/total/:product/:year/:month/:week/:date/:machine": "TotalCSV.machineDetail",
 
   // Monthly Review CSV API
   "GET /api/csv/monthly/:year": "MonthlyCSV.overview",

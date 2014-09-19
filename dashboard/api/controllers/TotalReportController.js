@@ -27,12 +27,12 @@ module.exports = {
   },
 
   product: function(req, res) {
-    var productName = req.param("product");
-    var productDataURL = "/api/json/total/" + productName;
+    var product = req.param("product");
+    var productDataURL = "/api/json/total/" + product;
 
     var steps = [
       {active: "active", title: "總覽"},
-      {active: "active", title: productName},
+      {active: "active", title: product},
       {active: "", title: "月份"},
       {active: "", title: "週"},
       {active: "", title: "日期"},
@@ -43,25 +43,26 @@ module.exports = {
       "total/overview", 
       {dataURL: productDataURL, 
        steps: steps, 
-       csvURL: "/api/csv/total/" + productName}
+       csvURL: "/api/csv/total/" + product}
     );
   },
 
   productMonth: function(req, res) {
-    var productName = req.param("product");
-    var productMonth = req.param("month");
+    var product = req.param("product");
+    var year = req.param("year");
+    var month = req.param("month");
 
     var steps = [
       {active: "active", title: "總覽"},
-      {active: "active", title: productName},
-      {active: "active", title: productMonth},
+      {active: "active", title: product},
+      {active: "active", title: year + "-" + month},
       {active: "", title: "週"},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
     ];
 
-    var productDataURL = "/api/json/total/" + productName + "/" + productMonth;
-    var csvURL = "/api/csv/total/" + productName + "/" + productMonth;
+    var productDataURL = "/api/json/total/" + product + "/" + year + "/" + month;
+    var csvURL = "/api/csv/total/" + product + "/" + year + "/" + month;
 
     res.view(
       "total/overview", 
@@ -74,22 +75,23 @@ module.exports = {
 
   productMonthWeek: function(req, res) {
 
-    var productName = req.param("product");
-    var productMonth = req.param("month");
-    var productWeek = req.param("week");
+    var product = req.param("product");
+    var year = req.param("year");
+    var month = req.param("month");
+    var week = req.param("week");
 
     var steps = [
       {active: "active", title: "總覽"},
-      {active: "active", title: productName},
-      {active: "active", title: productMonth},
-      {active: "active", title: "第 " + productWeek + " 週"},
+      {active: "active", title: product},
+      {active: "active", title: year + "-" + month},
+      {active: "active", title: "第 " + week + " 週"},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
     ];
 
 
-    var productDataURL = "/api/json/total/" + productName + "/" + productMonth + "/" + productWeek;
-    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + "/" + productWeek;
+    var productDataURL = "/api/json/total/" + product + "/" + year + "/" + month + "/" + week;
+    var csvURL = "/api/csv/total/" + product + "/" + year + "/" + month + "/" + week;
 
     res.view(
       "total/overview", 
@@ -101,24 +103,23 @@ module.exports = {
 
   productMonthWeekDate: function(req, res) {
 
-    var productName = req.param("product");
-    var productMonth = req.param("month");
-    var productWeek = req.param("week");
-    var productDate = req.param("date");
+    var product = req.param("product");
+    var year = req.param("year");
+    var month = req.param("month");
+    var week = req.param("week");
+    var date = req.param("date");
 
     var steps = [
       {active: "active", title: "總覽"},
-      {active: "active", title: productName},
-      {active: "active", title: productMonth},
-      {active: "active", title: "第 " + productWeek + " 週"},
-      {active: "active", title: productDate + " 日"},
+      {active: "active", title: product},
+      {active: "active", title: year + "-" + month},
+      {active: "active", title: "第 " + week + " 週"},
+      {active: "active", title: date + " 日"},
       {active: "", title: "機器"}
     ];
 
-    var productDataURL = "/api/json/total/" + productName + "/" + productMonth + 
-                         "/" + productWeek + "/" + productDate;
-    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + 
-                 "/" + productWeek + "/" + productDate;
+    var productDataURL = "/api/json/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date;
+    var csvURL = "/api/csv/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date;
 
     res.view(
       "total/overview", 
@@ -131,25 +132,26 @@ module.exports = {
 
   productMonthWeekDateMachine: function(req, res) {
 
-    var productName = req.param("product");
-    var productMonth = req.param("month");
-    var productWeek = req.param("week");
-    var productDate = req.param("date");
-    var productMachine = req.param("machine");
+    var product = req.param("product");
+    var year = req.param("year");
+    var month = req.param("month");
+    var week = req.param("week");
+    var date = req.param("date");
+    var machine = req.param("machine");
 
     var steps = [
       {active: "active", title: "總覽"},
-      {active: "active", title: productName},
-      {active: "active", title: productMonth},
-      {active: "active", title: "第 " + productWeek + " 週"},
-      {active: "active", title: productDate + " 日"},
-      {active: "active", title: productMachine }
+      {active: "active", title: product},
+      {active: "active", title: year + "-" + month},
+      {active: "active", title: "第 " + week + " 週"},
+      {active: "active", title: date + " 日"},
+      {active: "active", title: machine }
     ];
 
-    var productDataURL = "/api/json/total/" + productName + "/" + productMonth + 
-                         "/" + productWeek + "/" + productDate + "/" + productMachine;
-    var csvURL = "/api/csv/total/" + productName + "/" + productMonth + 
-                 "/" + productWeek + "/" + productDate + "/" + productMachine;
+    var productDataURL = "/api/json/total/" + product + "/" + year + "/" + month + 
+                         "/" + week + "/" + date + "/" + machine;
+    var csvURL = "/api/csv/total/" + product + "/" + year + "/" + month + 
+                 "/" + week + "/" + date + "/" + machine;
 
     var year = req.param("month").split("-")[0];
     var month = +(req.param("month").split("-")[1]) - 1;
@@ -159,9 +161,9 @@ module.exports = {
       fullYear: year,
       month: month,
       week: week,
-      date: productDate,
-      productName: productName,
-      productMachine: productMachine,
+      date: date,
+      productName: product,
+      productMachine: machine,
       dataURL: productDataURL,
       steps: steps,
       machineList: sails.config.machineList,

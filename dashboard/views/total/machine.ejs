@@ -151,10 +151,9 @@
         }
 
         var isoDate = strToDate(dateText);
-        var yearAndMonth = isoDate.getFullYear() + "-" + isoDate.getMonth();
 
-        var url = "/total/<%= productName %>/" + yearAndMonth +
-                  "/" + getWeek(isoDate) + "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
+        var url = "/total/<%= productName %>/<%= fullYear %>/<%= month %>/" +
+                  getWeek(isoDate) + "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
 
         window.location = url;
       }
