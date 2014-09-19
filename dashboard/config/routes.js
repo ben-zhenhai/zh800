@@ -106,6 +106,13 @@ module.exports.routes = {
   "GET /api/csv/total/:product/:month/:week/:date": "TotalCSV.productMonthWeekDate",
   "GET /api/csv/total/:product/:month/:week/:date/:machine": "TotalCSV.machineDetail",
 
+  // Monthly Review CSV API
+  "GET /api/csv/monthly/:year": "MonthlyCSV.overview",
+  "GET /api/csv/monthly/:year/:month": "MonthlyCSV.yearMonth",
+  "GET /api/csv/monthly/:year/:month/:week": "MonthlyCSV.yearMonthWeek",
+  "GET /api/csv/monthly/:year/:month/:week/:date": "MonthlyCSV.yearMonthWeekDate",
+  "GET /api/csv/monthly/:year/:month/:week/:date/:machine": "MonthlyCSV.machineDetail",
+
 
   /***************************************************************************
   *                                                                          *
