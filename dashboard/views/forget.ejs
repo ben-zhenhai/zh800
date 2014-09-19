@@ -11,6 +11,7 @@
   <link rel="stylesheet" type="text/css" href="./assets/sementicUI/css/semantic.css">
   <link rel="stylesheet" type="text/css" href="./assets/custom/css/custom.css">
 
+  <script src="/assets/lib/javascript/jquery-2.1.1.js"></script>
   <script src="./assets/sementicUI/javascript/semantic.js"></script>
 
 </head>
@@ -30,20 +31,37 @@
         </div>
       </div>
       <div>
-        <div class="ui form segment">
+        <form class="ui form segment" action="/user/sendRestEmail" method="POST" id="sendForm">
           <div class="field">
             <label>電子郵件地址</label>
             <div class="ui left labeld icon input">
-              <input placeholder="電子郵件地址" type="email">
+              <input placeholder="電子郵件地址" type="email" name="email">
               <i class="mail icon"></i>
             </div>
           </div>
-          <div class="ui right floated blue submit button">確認</div>
-        </div> 
+          <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+          <input type="submit" class="ui right floated blue submit button" value="確認" />
+        </form> 
       </div>
 
     </div>
   </div>
+  <script>
+    $(function() {
+      var validations = {
+        "email": {
+          "identifier": "email",
+          "rules": [{
+            "type": "empty",
+            "prompt": "請輸入您的電子郵件信箱"
+          }]
+        }
+      }
+
+      $("#sendForm").form(validations, {on: "blur", inline: true})
+    })
+
+  </script>
 </body>
 
 </html>

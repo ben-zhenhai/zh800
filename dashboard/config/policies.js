@@ -26,6 +26,6 @@ module.exports.policies = {
   },
   user: {
     "signup": "flash",
-    "login": true
+    "*": true
   }
 };

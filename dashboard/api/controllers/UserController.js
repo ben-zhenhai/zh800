@@ -79,6 +79,17 @@ module.exports = {
   logout: function(req, res, next) {
     req.session.destroy();
     res.redirect("/");
+  },
+
+  sendResetEmail: function(req, res) {
+
+    var email = req.param("email");
+
+    if (email && email.length > 0) {
+      console.log("email:" + email);
+    }
+
+    res.view('user/sendResetEmail');
   }
 };
 
