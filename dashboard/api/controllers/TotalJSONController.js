@@ -59,7 +59,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month],
+        steps: [product, year + "-" + month],
         dataSet: data
       }
 
@@ -83,7 +83,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週"],
+        steps: [product, year + "-" + month, "第 " + week + " 週"],
         dataSet: data
       }
 
@@ -108,7 +108,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週", date + " 日"],
+        steps: [product, year + "-" + month, "第 " + week + " 週", date + " 日"],
         dataSet: data
       }
 
@@ -134,7 +134,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [product, month, "第 " + week + " 週", date + " 日", machine],
+        steps: [product, year + "-" + month, "第 " + week + " 週", date + " 日", machine],
         dataSet: data
       }
 
