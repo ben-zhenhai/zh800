@@ -12,6 +12,7 @@ module.exports = {
     var year = req.param("year");
     var month = req.param("month");
     var dataURL = "/api/json/daily/" + year + "/" + month
+    var csvURL = "/api/csv/daily/" + year + "/" + month
 
     var steps = [
       {active: "active", title: year + " 年 " + month + " 月"},
@@ -19,7 +20,10 @@ module.exports = {
       {active: "", title: "機器"}
     ];
 
-    res.view("daily/overview", {dataURL: dataURL, steps: steps});
+    res.view(
+      "daily/overview", 
+      {dataURL: dataURL, steps: steps, csvURL: csvURL}
+    );
   },
 
   yearMonthDate: function(req, res) {
@@ -28,6 +32,7 @@ module.exports = {
     var month = req.param("month");
     var date = req.param("date");
     var dataURL = "/api/json/daily/" + year + "/" + month + "/" + date
+    var csvURL = "/api/csv/daily/" + year + "/" + month + "/" + date
 
     var steps = [
       {active: "active", title: year + " 年 " + month + " 月"},
@@ -35,7 +40,10 @@ module.exports = {
       {active: "", title: "機器"}
     ];
 
-    res.view("daily/overview", {dataURL: dataURL, steps: steps});
+    res.view(
+      "daily/overview", 
+      {dataURL: dataURL, steps: steps, csvURL: csvURL}
+    );
   },
 
   machineDetail: function(req, res) {
@@ -45,6 +53,7 @@ module.exports = {
     var date = req.param("date");
     var machine = req.param("machine");
     var dataURL = "/api/json/daily/" + year + "/" + month + "/" + date + "/" + machine;
+    var csvURL = "/api/csv/daily/" + year + "/" + month + "/" + date + "/" + machine;
 
     var steps = [
       {active: "active", title: year + " 年 " + month + " 月" },
@@ -59,7 +68,8 @@ module.exports = {
       productMachine: machine,
       dataURL: dataURL,
       steps: steps,
-      machineList: sails.config.machineList
+      machineList: sails.config.machineList,
+      csvURL: csvURL
     });
   }
 
