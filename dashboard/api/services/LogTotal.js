@@ -43,13 +43,13 @@ exports.jsonAPI = function() {
       mongoFilters: {order_type: product},
       sorting: sortByDate,
       groupingFunction: function (data) { 
-        return data.emb_date.getFullYear() + "/" + (data.emb_date.getMonth() + 1) 
+        return data.emb_date.getFullYear() + "-" + (data.emb_date.getMonth() + 1) 
       },
       converter: function (data) {
         return {
           name: data._id, 
           value: data.value,
-          link: "/total/" + product + "/" + data._id
+          link: "/total/" + product + "/" + data._id.replace("-", "/")
         }
       }
     });
