@@ -39,7 +39,7 @@
 <body>
   <div class="ui fixed transparent inverted main menu">
     <div class="container">
-      <a href="/" class="item"><div class="ui header">Zhenhai Dashboard</div></a>
+      <a href="../dashboard.html" class="item"><div class="ui header">Zhenhai Dashboard</div></a>
       <div class="right menu">
         <div class="item">Total Review</div>
       </div>
@@ -84,6 +84,26 @@
         {name: '第三週', value: 10}
       ];
 
+      var dayData = [
+        {name: '1 號', value: 30},
+        {name: '2 號', value: 81},
+        {name: '3 號', value: 82},
+        {name: '4 號', value: 8},
+        {name: '5 號', value: 28},
+        {name: '6 號', value: 18},
+        {name: '7 號', value: 48},
+      ]
+
+      var machineData = [
+        {name: 'A001', value: 20},
+        {name: 'A002', value: 31},
+        {name: 'A003', value: 12},
+        {name: 'A004', value: 38},
+        {name: 'A005', value: 48},
+        {name: 'A006', value: 58},
+        {name: 'A007', value: 18},
+      ]
+
 
       var drawBarChart = barChart({
         totalHeight: 350,
@@ -96,9 +116,24 @@
       })
 
       function onOverviewClickProduct(productData) {
+
         function onOverviewClickMonth(monthData) {
+          function onOverviewClickWeek(weekData) {
+
+            function onOverviewClickDay(dayData) {
+              function onOverviewClickMachine(machineData) {
+                window.location = 'machine.html';
+              }
+              setStepsTitle("step", [productData.name, monthData.name, weekData.name, dayData.name])
+              drawBarChart(".chart", machineData, onOverviewClickMachine);
+            }
+
+            setStepsTitle("step", [productData.name, monthData.name, weekData.name])
+            drawBarChart(".chart", dayData, onOverviewClickDay);
+          }
+
           setStepsTitle("step", [productData.name, monthData.name]);
-          drawBarChart(".chart", data3);
+          drawBarChart(".chart", data3, onOverviewClickWeek);
         }
 
         setStepsTitle("step", [productData.name]);

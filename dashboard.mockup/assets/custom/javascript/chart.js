@@ -153,7 +153,14 @@ function pieChart(options) {
         .data(pieData)
         .enter()
         .append("g")
-        .attr("class", "slice");
+        .attr("class", "slice")
+        .attr("onclick", function(d) { 
+          if (d.data.link) {
+            return "window.location='" + d.data.link + "'"; 
+          } else {
+            return "void(0);"
+          }
+        });
 
     arcs.append("path")
       .attr("fill", function(d, i) { return color(i); } )
