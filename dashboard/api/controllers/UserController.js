@@ -86,10 +86,32 @@ module.exports = {
     var email = req.param("email");
 
     if (email && email.length > 0) {
-      console.log("email:" + email);
-    }
+      User.findOneByEmail(email, function (err, user) {
 
-    res.view('user/sendResetEmail');
+        if (err) {
+          res.serverError(err);
+        }
+
+        if (user) {
+          var crypto = require('crypto');
+          var token = crypto.randomBytes(16).toString('hex');
+          var newLink = {
+            username: user.username,
+            email: user.email,
+            randomString: token,
+            timestamp: new Date()
+          }
+
+          ResetLink.create(newLink, function(err, newLink) {
+            if (err) {
+              res.serverError(err);
+            }
+            console.log("Add user link....");
+            res.view('user/sendResetEmail');
+          });
+        }
+      });
+    }
   }
 };
 
