@@ -214,7 +214,7 @@ exports.jsonAPI = function() {
       if (result && result.length == 1) {
         callback(err, result[0].minDate, result[0].maxDate);
       } else {
-        callback({error: "Cannot get correct date range from MongoDB"});
+        callback(undefined, new Date(), new Date());
       }
     }
 
