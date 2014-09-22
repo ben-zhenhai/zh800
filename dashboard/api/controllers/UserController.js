@@ -12,20 +12,37 @@ module.exports = {
   },
 
   create: function(req, res, next) {
-    User.create(req.params.all(), function userCreated(err, newUser) {
-      if (err) {
-        req.session.flash = {
-          'err': err
-        }
-        return res.redirect("/user/singup");
+
+    function redirectWithErrorMessage(message) {
+      var errorMessage = [{name: "reqiured", message: message}]
+      req.session.flash = {err: errorMessage};
+      res.redirect("/user/signup");
+    }
+
+    var username = req.param("username");
+    User.findOneByUsername(username, function (err, user) {
+      if (err) { return next(err); }
+
+      if (user) { 
+        redirectWithErrorMessage("此使用者名稱已存在");
+        return;
       }
-      res.redirect("/user/show/" + newUser.username);
-    })
+
+      User.create(req.params.all(), function userCreated(err, newUser) {
+        if (err) {
+          redirectWithErrorMessage("所有欄位均為必填，且兩次輸入的密碼需相同，請再次檢查。");
+          return;
+        }
+
+        req.session.authenticated = true;
+        req.session.user = user;
+        res.redirect("/dashboard");
+      });
+    });
   },
 
   show: function(req, res, next) {
     User.findOne({username: req.param("username")}, function foundUser(err, user) {
-
       if (err) { return next(err) }
       if (!user) { return next() }
       res.view({user: user});

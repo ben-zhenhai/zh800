@@ -26,15 +26,11 @@
       <div>
         <% if (flash && flash.err) { %>
           <div class="ui error message">
-            <div class="header">請檢查表單，以下的欄位有問題，請再次確認：</div>
-            <ul class="list">
-              <% Object.keys(flash.err["invalidAttributes"]).forEach(function(error) { %>
-                <li><%= error %></li>
-              <% }) %>
-            </ul>
+            <div><%= flash.err[0]["message"] %></div>
           </div>
         <% } %>
-        <form class="ui form segment" action="/user/create" method="POST" id="singupForm">
+
+        <form class="ui form segment" action="/user/create" method="POST" id="signupForm">
           <div class="field">
             <label>使用者帳號</label>
             <div class="ui left labeld icon input">
@@ -118,7 +114,7 @@
         }
       }
 
-      $("#singupForm").form(validations, {on: "blur", inline: true})
+      // $("#signupForm").form(validations, {on: "blur", inline: true})
     })
   </script>
 </body>
