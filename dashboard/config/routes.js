@@ -44,7 +44,8 @@ module.exports.routes = {
   "POST /user/login": "User.login",
   "GET /user/logout": "User.logout",
   "POST /user/sendRestEmail": "User.sendResetEmail",
-
+  "GET /user/resetPassword/:confirmCode": "User.resetPasswordForm",
+  "POST /user/resetPassword/reset": "User.resetPassword",
 
   // Total Dashboard
   "GET /total": "TotalReport.index",

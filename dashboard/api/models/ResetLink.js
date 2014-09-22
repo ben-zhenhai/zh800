@@ -19,7 +19,7 @@ module.exports = {
       required: true,
       unique: true,
     },
-    randomString: {
+    confirmCode: {
       "type": "string",
       "required": true
     },
