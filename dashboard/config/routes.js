@@ -22,6 +22,7 @@
 
 module.exports.routes = {
 
+  
   /***************************************************************************
   *                                                                          *
   * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
@@ -32,6 +33,9 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+  "/forget": {
+    view: 'forget'
+  },
   "GET /": "Dashboard.index",
   "GET /dashboard": "Dashboard.main",
   "GET /user/show/:username": "User.show",
@@ -39,6 +43,9 @@ module.exports.routes = {
   "POST /user/create": "User.create",
   "POST /user/login": "User.login",
   "GET /user/logout": "User.logout",
+  "POST /user/sendRestEmail": "User.sendResetEmail",
+  "GET /user/resetPassword/:confirmCode": "User.resetPasswordForm",
+  "POST /user/resetPassword/reset": "User.resetPassword",
 
   // Total Dashboard
   "GET /total": "TotalReport.index",

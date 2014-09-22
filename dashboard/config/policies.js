@@ -26,6 +26,7 @@ module.exports.policies = {
   },
   user: {
     "signup": "flash",
-    "login": true
+    "resetPasswordForm": "flash",
+    "*": true
   }
 };
