@@ -189,6 +189,12 @@ module.exports = {
             console.log("Add user link....");
             console.log("Send email.....");
 
+            var resetURL = "請至 http://[RealURL]/user/resetPassword/" + newLink.confirmCode;
+            var plainTextBody = "請至 " + resetURL + " 重設您的密碼，此網址將在 24 小時候失效。";
+            var htmlBody = "請至 <a href=\"" + resetURL + "\">" + resetURL + "</a> 重設您的密碼，此網址將在 24 小時候失效。";
+
+            Mailer.sendMail(user.email, "Zhenhai Dashboard 密碼重設網址", plainTextBody, htmlBody);
+
             res.view('user/sendResetEmail');
           });
         }
