@@ -140,6 +140,16 @@ function pieChart(options) {
       return "translate(" + arc.centroid(data) + ")";
     }
 
+    var total = 0;
+
+    for (var i = 0; i < data.length; i++) {
+      total += data[i].value;
+    }
+
+    function getPercentage(sliceValue) {
+      return ((sliceValue / total) * 100).toFixed(2) + "%";
+    }
+
     var color = d3.scale.category20c();
 
     var pieData = d3.layout.pie().value(options.extractValue)(data);
@@ -162,6 +172,8 @@ function pieChart(options) {
     arcs.append("path")
       .attr("fill", function(d, i) { return color(i); } )
       .attr("d", arc)
+      .attr("id", function(d, i) { return "pieBlock" + i; } )
+      .attr("data-content", function(d, i) { return getPercentage(d.value); })
       .attr("onclick", function(d) { 
         if (d.data.link) {
           return "window.location.href='" + d.data.link + "'" 
@@ -173,7 +185,16 @@ function pieChart(options) {
     arcs.append("text")
         .attr("transform", calculateArcCenter)
         .attr("text-anchor", "middle")
+        .attr("id", function(d, i) { return "pieText" + i; })
         .text(function(d) { return options.extractName(d.data); });
+
+
+    for (var i = 0; i < data.length; i++) {
+      var slice = '#pieBlock' + i;
+      var target = '#pieText' + i;
+      $(slice).popup({target: target});
+    }
+
   }
 
   return draw;

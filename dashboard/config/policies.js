@@ -20,6 +20,9 @@
 module.exports.policies = {
 
   '*': "sessionAuth",
+  totalCSV: {
+    "*": true
+  },
   dashboard: {
     "index": ["flash", "redirectToDashboardIfLogin"],
     "*": "sessionAuth"

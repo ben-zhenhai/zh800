@@ -18,15 +18,15 @@ module.exports = {
         return;
       }
 
-      var lines = '"錯誤種類","數量"\n'
 
       res.type('text/csv');
+      res.write(new Buffer('"錯誤種類","數量"\n'));
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
-        lines += '"' + record.name + '",' + record.value + "\n";
+        res.write(new Buffer('"' + record.name + '",' + record.value + "\n"));
       }
 
-      res.end(lines);
+      res.end();
 
     });
   },
@@ -43,15 +43,16 @@ module.exports = {
         return;
       }
 
-      var lines = '"日期","機器","數量"\n'
 
       res.type('text/csv');
+      res.write(new Buffer('"日期","機器","數量"\n'));
+
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
-        lines += '"' + record.time + '", "' + record.name +'",' +  record.value + "\n";
+        res.write(new Buffer('"' + record.time + '", "' + record.name +'",' +  record.value + "\n"));
       }
 
-      res.end(lines);
+      res.end();
 
     });
   }

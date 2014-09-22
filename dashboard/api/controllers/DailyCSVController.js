@@ -20,15 +20,15 @@ module.exports = {
         return;
       }
 
-      var lines = '"日","數量"\n'
 
       res.type('text/csv');
+      res.write(new Buffer('"日","數量"\n'));
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
-        lines += '"' + record.name + '",' + record.value + "\n";
+        res.write(new Buffer('"' + record.name + '",' + record.value + "\n"));
       }
 
-      res.end(lines);
+      res.end();
 
     });
   },
@@ -46,16 +46,16 @@ module.exports = {
         return;
       }
 
-      var lines = '"機器","數量"\n'
 
       res.type('text/csv');
+      res.write(new Buffer('"機器","數量"\n'));
+
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
-        lines += '"' + record.name + '",' + record.value + "\n";
+        res.write(new Buffer('"' + record.name + '",' + record.value + "\n"));;
       }
 
-      res.end(lines);
-
+      res.end();
     });
 
   },
@@ -77,6 +77,7 @@ module.exports = {
       var lines = '"日期","錯誤種類","數量"\n'
 
       res.type('text/csv');
+      res.write(new Buffer('"日期","錯誤種類","數量"\n'));
 
       for (var i = 0; i < data.length; i++) {
         var record = data[i];
@@ -85,11 +86,10 @@ module.exports = {
           record.name.date.getDate() + " " + record.name.date.getHours() + ":" +
           record.name.date.getMinutes() + ":" + record.name.date.getSeconds();
 
-        lines += '"' + time + '","' + record.name.error + '",' + record.value + "\n";
+        res.write(new Buffer('"' + time + '","' + record.name.error + '",' + record.value + "\n"));;
       }
 
-      res.end(lines);
-
+      res.end();
     });
   }         
 };
