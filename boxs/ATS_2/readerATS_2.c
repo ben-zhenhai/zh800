@@ -1078,7 +1078,7 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 usleep(100000);
-                if(PINCount[1][7] >= goodCount)
+                if(PINCount[1][7]+PINCount[2][7] >= goodCount)
                 //if(PINCount[0][6] >= 0)
                 {
                     sleep(10);
@@ -1156,14 +1156,14 @@ int main(int argc ,char *argv[])
             if(MasterFlag == 0)
             {
                 pfile = fopen(UPLoadFile, "a");
-                fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7], (long)now.tv_sec,
+                fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], (long)now.tv_sec,
                                                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                           MachineCode, UserNo, MechEND, MechSTOP);
                 fclose(pfile);
             }else
             {
                pfile = fopen(UPLoadFile, "a");
-               fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7], (long)now.tv_sec,
+               fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], (long)now.tv_sec,
                                                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                          MachineCode, UserNo, MechLOCK, MechSTOP);
                fclose(pfile);
@@ -1211,7 +1211,7 @@ int main(int argc ,char *argv[])
                         digitalWrite (WiringPiPIN_18, LOW);
 
                         pfile = fopen(UPLoadFile, "a");
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7], 
+                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], 
                                                                                                   (long)now.tv_sec,
                                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                                   MachineCode, UserNo, MechHUMAN, MechSTOP);
@@ -1226,7 +1226,7 @@ int main(int argc ,char *argv[])
                         tempPtr = tempString + 3;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-2);
                         pfile = fopen(UPLoadFile, "a");
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7], 
+                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], 
                                                                                                   (long)now.tv_sec,
                                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                                   MachineCode, FixerNo, MechREPAIR, MechSTOP);
@@ -1258,7 +1258,7 @@ int main(int argc ,char *argv[])
                                 memcpy(FixerNo, tempPtr, sizeof(tempString)-2);
                                 pfile = fopen(UPLoadFile, "a");
                                 fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", 
-                                                                                                ISNo, ManagerCard, CountNo, PINCount[1][7], (long)now.tv_sec,
+                                                                                                ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], (long)now.tv_sec,
                                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                                 MachineCode, FixerNo, MechREPAIR, MechSTOP);
                                 fclose(pfile);
@@ -1284,7 +1284,7 @@ int main(int argc ,char *argv[])
                     printf("UserNo scan error code\n");
                 }
                 pfile = fopen(UPLoadFile, "a");
-                fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7], (long)now.tv_sec,
+                fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t8\t%s\t%s\t0\t0\t0\t%02d\t%02d\n", ISNo, ManagerCard, CountNo, PINCount[1][7]+PINCount[2][7], (long)now.tv_sec,
                                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                               MachineCode, UserNo, MechUNLOCK, MechSTOP);
                 fclose(pfile);
