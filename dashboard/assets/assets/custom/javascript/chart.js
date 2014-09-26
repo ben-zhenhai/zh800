@@ -173,7 +173,11 @@ function pieChart(options) {
       .attr("fill", function(d, i) { return color(i); } )
       .attr("d", arc)
       .attr("id", function(d, i) { return "pieBlock" + i; } )
-      .attr("data-content", function(d, i) { return getPercentage(d.value); })
+      .attr("data-content", function(d, i) { 
+        var percentage = getPercentage(d.value)
+        var title = options.extractName(d.data);
+        return "[" + title + "] " + percentage; 
+      })
       .attr("onclick", function(d) { 
         if (d.data.link) {
           return "window.location.href='" + d.data.link + "'" 

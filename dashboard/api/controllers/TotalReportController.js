@@ -153,10 +153,6 @@ module.exports = {
     var csvURL = "/api/csv/total/" + product + "/" + year + "/" + month + 
                  "/" + week + "/" + date + "/" + machine;
 
-    var year = req.param("month").split("-")[0];
-    var month = +(req.param("month").split("-")[1]) - 1;
-    var week = req.param("week");
-
     res.view("total/machine", {
       fullYear: year,
       month: month,
