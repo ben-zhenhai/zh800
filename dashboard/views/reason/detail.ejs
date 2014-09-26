@@ -13,6 +13,7 @@
 
   <script src="../assets/lib/javascript/jquery-2.1.1.js"></script>
   <script src="../assets/lib/javascript/d3.v3.min.js"></script>
+  <script src="/assets/lib/javascript/stupidtable.min.js"></script>
 
   <script src="../assets/sementicUI/javascript/semantic.js"></script>
 
@@ -102,9 +103,9 @@
           <table class="ui celled table segment" style="display: none" id="detailTable">
             <thead>
               <tr>
-                <th>時間</th>
-                <th>機器</th>
-                <th>數量</th>
+                <th data-sort="date">時間 <i id="arrow0" class="ui sort icon" style="float: right"></i></th>
+                <th data-sort="string">機器 <i id="arrow1" class="ui sort icon" style="float: right"></i></th>
+                <th data-sort="int">數量 <i id="arrow2" class="ui sort icon" style="float: right"></i></th>
               </tr>
             </thead>
             <tbody id="table">
@@ -123,9 +124,6 @@
     <script>
       $.ajax("<%= pieChartDataURL %>", {timeout: 30 * 1000}).done(function(data) {
 
-
-        console.log(data.dataSet);
-        console.log(data.dataSet.length);
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();
@@ -159,7 +157,9 @@
           };
 
           setTable("#table", tableSchema);
+
           $('#detailTable').show();
+          sortTable('#detailTable', 3);
 
         }).always(function() {
           $('#tableLoadingIndicator').hide();
