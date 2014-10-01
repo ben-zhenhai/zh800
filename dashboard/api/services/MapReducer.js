@@ -1,3 +1,29 @@
+/**
+ *  This define a generic wrapper function for mongoDB's MapReduce function,
+ *  it will issue a timeout error to Sails.js HTTP server if the mongoDB server
+ *  crashed.
+ *
+ *  The `options` arguement must have the following attributes:
+ *
+ *    - model: Which Sails.js ORM model should this aggerator operates.
+ *    - groupingFunction: An function that group the data (the 'Map' part of mapReduce).
+ *    - conveter: To convert mongoDB's response object to custom JS object.
+ *
+ *  The following attributes in `options` is optional:
+ *
+ *    - mongoFilters: MongoDB's built-in query language, which will pass to mapReduce function to limit
+ *                    which records should be processed.
+ *    - customFilters: A arbitrary function which accepts one arguement of JS object and return a boolean,
+ *                     indicate should we contain the responded record to final result.
+ *    - sorting: A javascript array sorting function helper, help us to sort
+ *
+ *  After calling this function, it will return a function that accepts a callback of
+ *   `function callback(err, data)`, which this callback will handle the response after
+ *  MongoDB returned the data or error has occured.
+ *
+ */
+
+
 exports.defineOn = function(options) {
 
   var model = options.model

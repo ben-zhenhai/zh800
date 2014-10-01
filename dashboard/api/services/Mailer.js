@@ -1,7 +1,9 @@
 exports.sendMail = function(to, subject, plainTextContent, htmlContent) {
   var nodemailer = require('nodemailer');
   var transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    host: sails.config.mail.host,
+    port: sails.config.mail.port,
+    secure: sails.config.mail.secure,
     auth: {
       user: sails.config.mail.username,
       pass: sails.config.mail.password

@@ -9,24 +9,10 @@ module.exports = {
 
   schema: true,
   attributes: {
-    username: {
-      type: "string",
-      required: true,
-      unique: true
-    },
-    email: {
-      "type": "email",
-      required: true,
-      unique: true,
-    },
-    confirmCode: {
-      "type": "string",
-      "required": true
-    },
-    timestamp: {
-      "type": "date",
-      "required": true
-    }
+    username: {type: "string", required: true, unique: true},
+    email:    {type: "email",  required: true, unique: true},
+    confirmCode: {type: "string", required: true},
+    timestamp: {type: "date", required: true}
   }
 };
 

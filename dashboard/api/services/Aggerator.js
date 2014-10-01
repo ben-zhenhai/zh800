@@ -1,3 +1,19 @@
+/**
+ *  This define a generic wrapper function for mongoDB's aggerator function,
+ *  it will issue a timeout error to Sails.js HTTP server if the mongoDB server
+ *  crashed.
+ *
+ *  The `options` arguement should have the following attributes:
+ *
+ *    - model: Which Sails.js ORM model should this aggerator operates.
+ *    - aggeration: The mongoDB aggeration setting array that will passed to mongoDB
+ *    - conveter: To convert mongoDB's response object to custom JS object.
+ *
+ *  After calling this function, it will return a function that accepts a callback of
+ *   `function callback(err, data)`, which this callback will handle the response after
+ *  MongoDB returned the data or error has occured.
+ *
+ */
 exports.defineOn = function(options) {
 
   var model = options.model
