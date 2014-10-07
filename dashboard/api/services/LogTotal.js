@@ -1,5 +1,4 @@
-exports.jsonAPI = function() {
-
+exports.realtimeJSON = function () {
   function overview (callback) {
 
     var aggeration = [ 
@@ -226,7 +225,6 @@ exports.jsonAPI = function() {
 
     aggerator(checkResult);
   }
-
   return {
     overview: overview,
     product: product,
@@ -235,5 +233,13 @@ exports.jsonAPI = function() {
     productMonthWeekDate: productMonthWeekDate,
     machineDetail: machineDetail,
     getDateRange: getDateRange
+  }
+
+}
+
+exports.jsonAPI = function() {
+  switch (sails.config.models.fetch) {
+    case "realtime": return LogTotal.realtimeJSON();
+    case "cached": return LogTotal.realtimeJSON();
   }
 }

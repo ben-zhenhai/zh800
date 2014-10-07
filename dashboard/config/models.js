@@ -27,6 +27,16 @@ module.exports.models = {
   * See http://sailsjs.org/#/documentation/concepts/ORM/model-settings.html  *
   *                                                                          *
   ***************************************************************************/
-  migrate: 'safe'
+  migrate: 'safe',
 
+  /***************************************************************************
+   *
+   * Where do we pull our log data from? 
+   *
+   *   - realtime -- Fetch realtime data from MongoDB in factory server.
+   *   - cached -- Fetch cached data in Taipei Server
+   *
+   *************************************************************************/
+
+  fetch: 'realtime'
 };

@@ -1,5 +1,4 @@
-exports.jsonAPI = function() {
-
+exports.realtimeJSON = function() {
   function overview(callback) {
 
     var aggeration = [ 
@@ -81,5 +80,13 @@ exports.jsonAPI = function() {
     overview: overview,
     reasonDetail: reasonDetail,
     detailTable: detailTable
+  }
+
+}
+
+exports.jsonAPI = function() {
+  switch (sails.config.models.fetch) {
+    case "realtime": return LogReason.realtimeJSON();
+    case "cached": return LogReason.realtimeJSON();
   }
 }

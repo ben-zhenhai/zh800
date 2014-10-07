@@ -1,5 +1,4 @@
-exports.jsonAPI = function() {
-
+exports.realtimeJSON = function() {
   function overview (year, callback) {
 
     var startDate = new Date(year, 0, 1);
@@ -187,5 +186,13 @@ exports.jsonAPI = function() {
     yearMonthWeek: yearMonthWeek,
     yearMonthWeekDate: yearMonthWeekDate,
     machineDetail: machineDetail
+  }
+
+}
+
+exports.jsonAPI = function() {
+  switch (sails.config.models.fetch) {
+    case "realtime": return LogMonthly.realtimeJSON();
+    case "cached": return LogMonthly.realtimeJSON();
   }
 }
