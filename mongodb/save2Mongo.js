@@ -1,5 +1,5 @@
 var mongoose = require('mongoose')
-var conn = mongoose.createConnection('mongodb://mongo_server/zhenhai')
+var conn = mongoose.createConnection('mongodb://localhost/zhenhai')
 var Data = require(__dirname + '/data_model').getModel(conn)
 
 var net = require('net')

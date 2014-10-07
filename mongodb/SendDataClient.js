@@ -2,7 +2,7 @@ var net = require('net')
 var tcpClient = new net.Socket()
 
 var PORT = 5566
-var HOST = 'mongo_server'
+var HOST = '192.168.1.30'
 
 var args = process.argv.slice(2)
 
