@@ -9,21 +9,20 @@
         "url" : "https://github.com/ZH8000/zh800.git"
     },
     "dependencies" : {
-        "net-ping" : "",
-        "express" : "",
-        "connect" : "",
-        "socket.io" : "",
-        "morgan" : "",
-        "body-parser" : "",
-        "base64id" : "",
-        "ejs" : "",
-        "engine.io-parser" : "",
-        "ini" : "",
-        "jade" : "",
-        "net-ping" : "",
-        "node-ini" : "",
-        "stylus" : "",
-        "ws" : "",
-        "mongoose" : ""
+        "express" : "~4.8.5",
+        "connect" : "~2.25.7",
+        "socket.io" : "~1.0.6",
+        "morgan" : "~1.2.3",
+        "body-parser" : "~1.6.5",
+        "base64id" : "~0.1.0",
+        "ejs" : "~1.0.0",
+        "engine.io-parser" : "~1.1.0",
+        "ini" : "~1.2.1",
+        "jade" : "~1.5.0",
+        "net-ping" : "~1.1.11",
+        "node-ini" : "~1.0.0",
+        "stylus" : "~0.48.1",
+        "ws" : "~0.4.32",
+        "mongoose" : "~3.8.15"
     }
 }
