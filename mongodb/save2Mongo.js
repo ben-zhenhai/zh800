@@ -49,6 +49,7 @@ function parseData(data) {
 function startServer(mongoDB) {
 
     var urlMapper = require("./URLMapper");
+    var count = 0;
 
     server.on('connection', function(client) {
         client.setEncoding('utf8')
@@ -65,6 +66,10 @@ function startServer(mongoDB) {
         })
     
         client.on('close', function() {
+            if (count % 100 == 0) {
+                urlMapper.saveCache(mongoDB);
+            }
+            count++;
             console.log('close')
         })
     

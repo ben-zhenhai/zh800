@@ -1,4 +1,5 @@
 var cacheTableName = 'cached';
+var stats = {};
 
 function getProduct(record) {
   return record.lot_no;
@@ -25,78 +26,131 @@ function getDate(record) {
   }
 }
 
-function getURLs(record) {
+function getTotalURLs(record) {
   var date = getDate(record);
 
   return [
-    "/total", 
-    "/total/" + getProduct(record), 
-    "/total/" + getProduct(record) + "/" + date.year,
-    "/total/" + getProduct(record) + "/" + date.year + "/" + date.month,
-    "/total/" + getProduct(record) + "/" + date.year + "/" + date.month + "/" + date.week,
-    "/total/" + getProduct(record) + "/" + date.year + "/" + date.month + "/" + date.week + "/" + date.date,
-    "/total/" + getProduct(record) + "/" + date.year + "/" + date.month + "/" + date.week + "/" + date.date + "/" + record.mach_id
+    "total", getProduct(record), date.year, date.month, date.week, date.date, record.mach_id
   ];
 }
 
-function updateMaxTime(cacheTable, record) {
+function getMonthlyURLs(record) {
+  var date = getDate(record);
 
-  function dummyCallback(err, result) { }
-
-  cacheTable.find({url: "maxTime"}).toArray(function(err, docs) {
-
-    var dateInRecord = getJSDate(record)
-
-    if (err) { 
-      console.log("database error:" + err);
-      return;
-    }
-
-    if (docs.length == 0) {
-      cacheTable.insert({url: "maxTime", value: dateInRecord}, dummyCallback);
-    } else {
-      if (docs[0].value.getTime() < dateInRecord.getTime()) {
-        console.log("update maxTime to " + dateInRecord);
-        cacheTable.update({url: "maxTime"}, {$set: {value: dateInRecord}}, dummyCallback);
-      }
-    }
-
-  });
+  return [
+    "monthly", date.year, date.month, date.week, date.date, record.mach_id
+  ];
 }
 
-function updateMinTime(cacheTable, record) {
+function getDailyURLs(record) {
+  var date = getDate(record);
 
-  function dummyCallback(err, result) { }
+  return [
+    "daily", date.year, date.month, date.date, record.mach_id
+  ];
+}
 
-  cacheTable.find({url: "minTime"}).toArray(function(err, docs) {
+function getReasonURLs(record) {
+  var date = getDate(record);
+  var detail = date.year + "-" + date.month + " " + record.mach_id;
 
-    var dateInRecord = getJSDate(record)
+  return [
+    "reason", record.defact_id, detail
+  ];
+}
 
-    if (err) { 
-      console.log("database error:" + err);
-      return;
-    }
+function getMachineURLs(record) {
+  var date = getDate(record);
+  var detail = date.year + "-" + date.month + " " + record.defact_id;
 
-    if (docs.length == 0) {
-      cacheTable.insert({url: "minTime", value: dateInRecord}, dummyCallback);
-    } else {
-      if (docs[0].value.getTime() > dateInRecord.getTime()) {
-        cacheTable.update({url: "minTime"}, {$set: {value: dateInRecord}}, dummyCallback);
-      }
-    }
-  });
+  return [
+    "machine", record.mach_id, detail
+  ];
+}
+
+function updateMaxTime(record) {
+
+  var dateInRecord = new Date(record.emb_date * 1000);
+  var maxTime = stats['maxTime'] ? stats['maxTime'] : dateInRecord;
+
+  if (maxTime.getTime() < dateInRecord.getTime()) {
+    maxTime = dateInRecord;
+  }
+
+  stats['maxTime'] = maxTime;
+}
+
+function updateMinTime(record) {
+
+  var dateInRecord = new Date(record.emb_date * 1000);
+  var minTime = stats['minTime'] ? stats['minTime'] : dateInRecord;
+
+  if (minTime.getTime() > dateInRecord.getTime()) {
+    minTime = dateInRecord;
+  }
+
+  stats['minTime'] = minTime;
+}
+
+function updateStats(urlComponets, previousURL, level, record) {
+
+  if (urlComponets.length == level + 1) {
+    return;
+  }
+
+  var url = previousURL + "/" + urlComponets[level];
+  var title = urlComponets[level+1];
+
+  var cachedData = stats[url] ? stats[url] : {};
+  var data = cachedData[title] ? cachedData[title] : {bad_qty: +0, count_qty: +0};
+
+  cachedData[title] = { 
+    bad_qty: data.bad_qty + +record.bad_qty,
+    count_qty: data.count_qty + +record.count_qty
+  }
+
+  stats[url] = cachedData;
+  updateStats(urlComponets, url, level + 1, record);
 }
 
 
 function addToCache(mongoDB, record) {
-  console.log("Add record to cache...");
+  var recordDate = getDate(record);
+  var cacheTable = mongoDB.collection(cacheTableName)
+  var dailyTableName = recordDate.year + "-" + recordDate.month + "-" + recordDate.date;
+  var dailyTable = mongoDB.collection(dailyTableName);
+  updateMaxTime(record);
+  updateMinTime(record);
 
+  var totalURLComponets = getTotalURLs(record);
+  var monthlyURLComponets = getMonthlyURLs(record);
+  var dailyURLComponets = getDailyURLs(record);
+  var reasonURLComponets = getReasonURLs(record);
+  var machineURLComponets = getMachineURLs(record);
+
+  dailyTable.insert(record, function(err, record) {});
+
+  updateStats(totalURLComponets, "", 0, record);
+  updateStats(monthlyURLComponets, "", 0, record);
+  updateStats(dailyURLComponets, "", 0, record);
+  updateStats(reasonURLComponets, "", 0, record);
+  updateStats(machineURLComponets, "", 0, record);
+}
+
+function saveCache(mongoDB) {
   var cacheTable = mongoDB.collection(cacheTableName)
 
-  updateMaxTime(cacheTable, record);
-  updateMinTime(cacheTable, record);
+  for (var url in stats) {
+    if (stats.hasOwnProperty(url)) {
+      cacheTable.update(
+        {url: url}, {url: url, value: stats[url]}, 
+        {upsert: true}, function(err, data){}
+      );
+    }
+  }
 }
 
 module.exports = {
-  addToCache: addToCache
+  addToCache: addToCache,
+  saveCache: saveCache
 }
