@@ -2,7 +2,7 @@ var net = require('net')
 var tcpClient =  net.Socket()
 
 var PORT = 5566
-var HOST = '192.168.0.181'
+var HOST = 'localhost'
 
 var args = process.argv.slice(2)
 var fs = require('fs')
@@ -15,7 +15,6 @@ var hihi = 0
 
 function xyz(input, func) {
 
-    console.log('HI archer');
     input.on('data', function(data) {
         remaining += data;
         readLine(input, func)
@@ -32,7 +31,7 @@ function readLine(input, func) {
     //var remaining = ''
 
         //remaining += data;
-        console.log('remaining:::' + remaining)
+        //console.log('remaining:::' + remaining)
         index = remaining.indexOf('\n');
         //var index = remaining.indexOf('\n');
         last  = 0;
@@ -40,7 +39,7 @@ function readLine(input, func) {
         //while (index > -1) {
         if (index > -1) {
             //var line = remaining.substring(last, index);
-            console.log('hihi: ' +hihi++)
+            //console.log('hihi: ' +hihi++)
             line = remaining.substring(last, index);
             last = index + 1;
             func(line);
@@ -53,7 +52,6 @@ function readLine(input, func) {
 }
 
 function func(data) {
-    console.log('HI' + data);
     tcpClient.connect(
         PORT, HOST,
         function() {
@@ -61,7 +59,6 @@ function func(data) {
             console.log('Start to send data: ' + data)
             tcpClient.write(data,function(){
                 console.log('callback~~~~~~~')
-                console.log('inputFile: ' + inputFile)
                 readLine(inputFile, func)
             })
             tcpClient.destroy()
