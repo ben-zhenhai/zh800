@@ -5,7 +5,8 @@ var Data = require(__dirname + '/data_model').getModel(conn)
 
 var net = require('net')
 var server = net.createServer()
-
+var statisticCache = require(__dirname + "/StatisticCache");
+ 
 var array = []
 
 function parseData(data) {
@@ -15,12 +16,6 @@ function parseData(data) {
   
     console.log('size: ' + array.length)
 
-    /*
-    array.forEach(function(data) {
-        console.log('hi: ' + data)
-    })
-    */
-  
     var record = {
        order_type: array[0],
        lot_no: array[1],
@@ -48,47 +43,36 @@ function parseData(data) {
 
 function startServer(mongoDB) {
 
-    var urlMapper = require("./URLMapper");
-    var count = 0;
+   var count = 0;
 
     server.on('connection', function(client) {
         client.setEncoding('utf8')
     
         client.on('data', function(data) {
-            var record = parseData(data);
-            record.mongoose.save(function(error) {
-                if (error) console.error(error)
 
-                console.log('add data ok.')
-                urlMapper.addToCache(mongoDB, record.raw);
-            })
-            console.log('test')
+            if (data == "saveData") {
+                console.log("Receive save data command");
+                statisticCache.saveCache(mongoDB);
+            } else {
+                var record = parseData(data);
+                record.mongoose.save(function(error) {
+                    if (error) console.error(error)
+                    console.log('add data ok.')
+                    statisticCache.addToCache(mongoDB, record.raw);
+                })
+            }
         })
     
         client.on('close', function() {
-            if (count % 100 == 0) {
-                urlMapper.saveCache(mongoDB);
-            }
-            count++;
-            console.log('close')
+            //console.log('close')
         })
     
         client.on('end', function() {
-            console.log('end')
+            //console.log('end')
         })
     })
     
     server.listen(5566)
 }
 
-var mongoClient = require('mongodb').MongoClient
-
-mongoClient.connect(mongoURL, function(err, mongoDB) {
-
-    if (err) {
-      console.log("Cannot cannto to mongoDB:" + err);
-      return;
-    }
-
-    startServer(mongoDB);
-});
+statisticCache.initCache(mongoURL, startServer)

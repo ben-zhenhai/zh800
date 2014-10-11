@@ -30,7 +30,7 @@ function getTotalURLs(record) {
   var date = getDate(record);
 
   return [
-    "total", getProduct(record), date.year, date.month, date.week, date.date, record.mach_id
+    "total", getProduct(record) //, date.year, date.month, date.week, date.date, record.mach_id
   ];
 }
 
@@ -99,14 +99,14 @@ function updateStats(urlComponets, previousURL, level, record) {
   }
 
   var url = previousURL + "/" + urlComponets[level];
-  var title = urlComponets[level+1];
+  var title = (urlComponets[level+1] + "").replace(".", "__DOT__"); // Mongo cannot save field name with dot (.)
 
   var cachedData = stats[url] ? stats[url] : {};
   var data = cachedData[title] ? cachedData[title] : {bad_qty: +0, count_qty: +0};
 
   cachedData[title] = { 
-    bad_qty: data.bad_qty + +record.bad_qty,
-    count_qty: data.count_qty + +record.count_qty
+    bad_qty: data.bad_qty + (+record.bad_qty),
+    count_qty: data.count_qty + (+record.count_qty)
   }
 
   stats[url] = cachedData;
@@ -144,13 +144,43 @@ function saveCache(mongoDB) {
     if (stats.hasOwnProperty(url)) {
       cacheTable.update(
         {url: url}, {url: url, value: stats[url]}, 
-        {upsert: true}, function(err, data){}
+        {upsert: true}, function(err, data){
+          if (err) {
+            console.log("save error:" + err);
+            return;
+          }
+        }
       );
     }
   }
 }
 
+function initCache(mongoURL, callback) {
+
+  var mongoClient = require('mongodb').MongoClient
+  
+  mongoClient.connect(mongoURL, function(err, mongoDB) {
+  
+    if (err) {
+      console.log("Cannot cannto to mongoDB:" + err);
+      return;
+    }
+
+    var cacheTable = mongoDB.collection(cacheTableName)
+    cacheTable.find({}).toArray(function(err, docs) {
+      for (var i = 0; i < docs.length; i++) {
+        var url = docs[i].url;
+        var value = docs[i].value;
+        stats[url] = value;
+      }
+      callback(mongoDB);
+    });
+ 
+  });
+}
+
 module.exports = {
   addToCache: addToCache,
-  saveCache: saveCache
+  saveCache: saveCache,
+  initCache: initCache
 }

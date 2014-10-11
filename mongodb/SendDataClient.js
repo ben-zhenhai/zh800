@@ -11,47 +11,55 @@ var remaining = ''
 var line = ''
 var index = 0
 var last = 0
-var hihi = 0
+var lineCount = 0;
 
-function xyz(input, func) {
+
+function setupListener(input, func) {
 
     input.on('data', function(data) {
         remaining += data;
         readLine(input, func)
     });
-    input.on('end', function() {
-        if (remaining.length > 0) {
-            func_two(remaining);
-        }
-    })
+
+    input.on('end', function() {})
 }
 
 
 function readLine(input, func) {
-    //var remaining = ''
+    index = remaining.indexOf('\n');
+    last  = 0;
 
-        //remaining += data;
-        //console.log('remaining:::' + remaining)
-        index = remaining.indexOf('\n');
-        //var index = remaining.indexOf('\n');
-        last  = 0;
-        //var last  = 0;
-        //while (index > -1) {
-        if (index > -1) {
-            //var line = remaining.substring(last, index);
-            //console.log('hihi: ' +hihi++)
-            line = remaining.substring(last, index);
-            last = index + 1;
-            func(line);
-            index = remaining.indexOf('\n', last);
+    if (index > -1) {
+        line = remaining.substring(last, index);
+        last = index + 1;
+        func(line);
+        index = remaining.indexOf('\n', last);
+    } else {
+        sendSaveCommand();
+    }
+
+    remaining = remaining.substring(last);
+}
+
+function sendSaveCommand() {
+    var tcpClient =  net.Socket()
+
+    tcpClient.connect(
+        PORT, HOST,
+        function() {
+            tcpClient.write("saveData",function(){})
+            tcpClient.destroy()
         }
-        //}
-        remaining = remaining.substring(last);
-   // });
-
+    )
 }
 
 function func(data) {
+    lineCount++;
+
+    if (lineCount % 100 == 0) {
+      sendSaveCommand();
+    }
+
     tcpClient.connect(
         PORT, HOST,
         function() {
@@ -77,62 +85,6 @@ tcpClient.on('end', function() {
 )
 
 
-function func_two(data) {
-    //console.log(data)
-}
-
 var inputFile = fs.createReadStream(args.toString())
-//readLine(inputFile, func)
-xyz(inputFile, func)
-/*
-tcpClient.connect(
-    PORT, HOST, 
-    function() {
-        console.log('Connected to ' + HOST + ':' + PORT)
-        console.log('Start to send data: ' + args)
-        tcpClient.write(args.toString())
-        tcpClient.destroy()
-    }
-)
-/*
 
-tcpClient.on(
-    'data', 
-    function(data) {
-        console.log('Received: ' + data.toString())
-    }
-)
-
-
-tcpClient.on(
-    'close', 
-    function() {
-        console.log('Connection closed')
-        //reConnect()
-    }
-)
-
-tcpClient.on(
-    'error', 
-    function(e) {
-       if (e.code == 'ECONNREFUSED') {
-            console.log('error code: ' + e.code)
-            reConnect()
-        }
-    }
-)
-
-function reConnect() {
-    tcpClient.setTimeout(1000,
-        function() {
-            tcpClient.connect(PORT, HOST,
-                function() {
-                    console.log('Connected to ' + HOST + ':' + PORT)
-                }
-            )
-        }
-    )
-
-    console.log('will try to reconnect to ' + HOST + ':' + PORT)
-}
-*/
+setupListener(inputFile, func)
