@@ -1,5 +1,4 @@
 var net = require('net')
-var tcpClient =  net.Socket()
 
 var PORT = 5566
 var HOST = 'localhost'
@@ -34,31 +33,15 @@ function readLine(input, func) {
         last = index + 1;
         func(line);
         index = remaining.indexOf('\n', last);
-    } else {
-        sendSaveCommand();
     }
 
     remaining = remaining.substring(last);
 }
 
-function sendSaveCommand() {
-    var tcpClient =  net.Socket()
-
-    tcpClient.connect(
-        PORT, HOST,
-        function() {
-            tcpClient.write("saveData",function(){})
-            tcpClient.destroy()
-        }
-    )
-}
 
 function func(data) {
-    lineCount++;
 
-    if (lineCount % 100 == 0) {
-      sendSaveCommand();
-    }
+    var tcpClient =  net.Socket()
 
     tcpClient.connect(
         PORT, HOST,
@@ -68,21 +51,13 @@ function func(data) {
             tcpClient.write(data,function(){
                 console.log('callback~~~~~~~')
                 readLine(inputFile, func)
+                console.log('destroy')
+                tcpClient.destroy()
             })
-            tcpClient.destroy()
-            console.log('destroy')
         }
     )
-}
-tcpClient.on('data', function() {
-        console.log('data')
-    }
-)
 
-tcpClient.on('end', function() {
-        console.log('test')
-    }
-)
+}
 
 
 var inputFile = fs.createReadStream(args.toString())

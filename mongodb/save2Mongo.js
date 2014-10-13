@@ -8,13 +8,11 @@ var server = net.createServer()
 var statisticCache = require(__dirname + "/StatisticCache");
  
 var array = []
+var recordCount = 0;
 
 function parseData(data) {
     var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
     array = tmp.toString().split(" ")
-    //array = tmp.toString().split(',')
-  
-    console.log('size: ' + array.length)
 
     var record = {
        order_type: array[0],
@@ -43,32 +41,26 @@ function parseData(data) {
 
 function startServer(mongoDB) {
 
-   var count = 0;
-
     server.on('connection', function(client) {
         client.setEncoding('utf8')
     
         client.on('data', function(data) {
 
-            if (data == "saveData") {
-                console.log("Receive save data command");
-                statisticCache.saveCache(mongoDB);
-            } else {
-                var record = parseData(data);
-                record.mongoose.save(function(error) {
-                    if (error) console.error(error)
-                    console.log('add data ok.')
-                    statisticCache.addToCache(mongoDB, record.raw);
-                })
-            }
-        })
-    
-        client.on('close', function() {
-            //console.log('close')
-        })
-    
-        client.on('end', function() {
-            //console.log('end')
+            var record = parseData(data);
+            record.mongoose.save(function(error) {
+                if (error) {
+                    console.error(error)
+                }
+                console.log('add data ' + data + '...OK.')
+                statisticCache.addToCache(mongoDB, record.raw);
+
+                recordCount++;
+
+                if (recordCount % 100 == 0) {
+                   console.log("save statistic data...OK");
+                   statisticCache.saveCache(mongoDB);                
+                }
+            })
         })
     })
     
