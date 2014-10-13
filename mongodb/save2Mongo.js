@@ -46,21 +46,26 @@ function startServer(mongoDB) {
     
         client.on('data', function(data) {
 
-            var record = parseData(data);
-            record.mongoose.save(function(error) {
-                if (error) {
-                    console.error(error)
-                }
-                console.log('add data ' + data + '...OK.')
-                statisticCache.addToCache(mongoDB, record.raw);
+            if (data == "saveData") {
+                console.log("Receive save command...");
+                statisticCache.saveCache(mongoDB);                
+            } else {
+                var record = parseData(data);
+                record.mongoose.save(function(error) {
+                    if (error) {
+                        console.error(error)
+                    }
+                    console.log('add data ' + data + '...OK.')
+                    statisticCache.addToCache(mongoDB, record.raw);
 
-                recordCount++;
+                    recordCount++;
 
-                if (recordCount % 100 == 0) {
-                   console.log("save statistic data...OK");
-                   statisticCache.saveCache(mongoDB);                
-                }
-            })
+                    if (recordCount % 10000 == 0) {
+                       console.log("save statistic data...OK");
+                       statisticCache.saveCache(mongoDB);                
+                    }
+                })
+            }
         })
     })
     

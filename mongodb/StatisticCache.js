@@ -28,9 +28,10 @@ function getDate(record) {
 
 function getTotalURLs(record) {
   var date = getDate(record);
+  var dateMonth = (+date.year) + "-" + (+date.month);
 
   return [
-    "total", getProduct(record) //, date.year, date.month, date.week, date.date, record.mach_id
+    "total", getProduct(record), dateMonth, date.week, date.date, record.mach_id
   ];
 }
 
@@ -70,10 +71,10 @@ function getMachineURLs(record) {
 
 function updateMaxTime(record) {
 
-  var dateInRecord = new Date(record.emb_date * 1000);
+  var dateInRecord = record.emb_date;
   var maxTime = stats['maxTime'] ? stats['maxTime'] : dateInRecord;
 
-  if (maxTime.getTime() < dateInRecord.getTime()) {
+  if (maxTime < dateInRecord) {
     maxTime = dateInRecord;
   }
 
@@ -82,10 +83,10 @@ function updateMaxTime(record) {
 
 function updateMinTime(record) {
 
-  var dateInRecord = new Date(record.emb_date * 1000);
+  var dateInRecord = record.emb_date;
   var minTime = stats['minTime'] ? stats['minTime'] : dateInRecord;
 
-  if (minTime.getTime() > dateInRecord.getTime()) {
+  if (minTime > dateInRecord) {
     minTime = dateInRecord;
   }
 

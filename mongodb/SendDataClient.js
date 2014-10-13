@@ -33,9 +33,25 @@ function readLine(input, func) {
         last = index + 1;
         func(line);
         index = remaining.indexOf('\n', last);
+    } else {
+        sendSaveCommand();
     }
 
     remaining = remaining.substring(last);
+}
+
+function sendSaveCommand() {
+
+    var tcpClient =  net.Socket()
+
+    tcpClient.connect(
+        PORT, HOST,
+        function() {
+            tcpClient.write("saveData",function(){
+                tcpClient.destroy()
+            })
+        }
+    )
 }
 
 
@@ -46,12 +62,9 @@ function func(data) {
     tcpClient.connect(
         PORT, HOST,
         function() {
-            console.log('Connected to ' + HOST + ':' + PORT)
             console.log('Start to send data: ' + data)
             tcpClient.write(data,function(){
-                console.log('callback~~~~~~~')
                 readLine(inputFile, func)
-                console.log('destroy')
                 tcpClient.destroy()
             })
         }
