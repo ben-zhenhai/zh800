@@ -1,6 +1,14 @@
 var cacheTableName = 'cached';
 var stats = {};
 
+function paddingZero(number) {
+  if (number < 10) {
+    return "0" + number;
+  } else {
+    return number;
+  }
+}
+
 function getProduct(record) {
   return record.lot_no;
 }
@@ -30,7 +38,7 @@ function getDate(record) {
 
 function getTotalURLs(record) {
   var date = getDate(record);
-  var dateMonth = (+date.year) + "-" + (+date.month);
+  var dateMonth = (+date.year) + "-" + paddingZero(+date.month);
 
   return [
     "total", getProduct(record), dateMonth, date.week, date.date, record.mach_id
@@ -41,7 +49,7 @@ function getMonthlyURLs(record) {
   var date = getDate(record);
 
   return [
-    "monthly", date.year, date.month, date.week, date.date, record.mach_id
+    "monthly", date.year, paddingZero(date.month), date.week, paddingZero(date.date), record.mach_id
   ];
 }
 
@@ -49,13 +57,13 @@ function getDailyURLs(record) {
   var date = getDate(record);
 
   return [
-    "daily", date.year, date.month, date.date, record.mach_id
+    "daily", date.year, paddingZero(date.month), paddingZero(date.date), record.mach_id
   ];
 }
 
 function getReasonURLs(record) {
   var date = getDate(record);
-  var detail = date.year + "-" + date.month + " " + record.mach_id;
+  var detail = date.year + "-" + paddingZero(date.month) + "-" + paddingZero(date.date) + " " + record.mach_id;
 
   return [
     "reason", record.defact_id, detail
@@ -64,7 +72,7 @@ function getReasonURLs(record) {
 
 function getMachineURLs(record) {
   var date = getDate(record);
-  var detail = date.year + "-" + date.month + " " + record.defact_id;
+  var detail = date.year + "-" + paddingZero(date.month) + "-" + paddingZero(date.date) + " " + record.defact_id;
 
   return [
     "machine", record.mach_id, detail
@@ -118,16 +126,8 @@ function updateStats(urlComponets, previousURL, level, record) {
 
 function insertToDailyTable(mongoDB, record) {
 
-  function paddingZero(number) {
-    if (number < 10) {
-      return "0" + number;
-    } else {
-      return number;
-    }
-  }
-
   var recordDate = getDate(record);
-  var dailyTableName = recordDate.year + "-" + recordDate.month + "-" + recordDate.date;
+  var dailyTableName = recordDate.year + "-" + paddingZero(recordDate.month) + "-" + paddingZero(recordDate.date);
   var dailyTable = mongoDB.collection(dailyTableName);
 
   var timestamp = recordDate.year + "-" + recordDate.month + "-" + recordDate.date + " " + paddingZero(+recordDate.hour) + ":" + paddingZero(+recordDate.minute)
