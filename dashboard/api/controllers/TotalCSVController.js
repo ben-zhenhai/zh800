@@ -156,7 +156,7 @@ module.exports = {
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.machineDetail(product, year, month, date, machine, function(err, data) {
+    logTotal.machineDetail(product, year, month, week, date, machine, function(err, data) {
 
       if (err) {
         res.serverError(err);
@@ -164,16 +164,11 @@ module.exports = {
       }
 
       res.type('text/csv');
-      res.write(new Buffer('"日期","錯誤種類","數量"\n'));
+      res.write(new Buffer('"日期","生產數量","錯誤數量","錯誤種類"\n'));
 
       for (var i = 0; i < data.length; i++) {
         var record = data[i];
-        var time = 
-          record.name.date.getFullYear() + "-" + (+record.name.date.getMonth() + 1) + "-" +
-          record.name.date.getDate() + " " + record.name.date.getHours() + ":" +
-          record.name.date.getMinutes() + ":" + record.name.date.getSeconds();
-
-        res.write(new Buffer('"' + time + '","' + record.name.error + '",' + record.value + "\n"));
+        res.write(new Buffer('"' + record.timestamp + '",' + record.count_qty + ',' + record.bad_qty + ',' + record.defact_id + "\n"));
       }
 
       res.end();

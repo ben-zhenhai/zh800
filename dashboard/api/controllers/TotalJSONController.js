@@ -126,7 +126,7 @@ module.exports = {
 
     var logTotal = LogTotal.jsonAPI();
 
-    logTotal.machineDetail(product, year, month, date, machine, function(err, data) {
+    logTotal.machineDetail(product, year, month, week, date, machine, function(err, data) {
 
       if (err) {
         res.serverError(err);
