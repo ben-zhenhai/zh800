@@ -115,10 +115,10 @@ exports.cachedJSON = function() {
 
       for (var i = 0; i < dataSet.length; i++) {
         var data = dataSet[i];
-        var defactID = dataSet[i].name.split(" ")[1];
+        var machineID = dataSet[i].name.split(" ")[1];
         var value = dataSet[i].value;
-        var currentValue = tmpData[defactID] ? tmpData[defactID] : 0;
-        tmpData[defactID] = currentValue + value;
+        var currentValue = tmpData[machineID] ? tmpData[machineID] : 0;
+        tmpData[machineID] = currentValue + value;
       }
 
       for (var machineID in tmpData) {
