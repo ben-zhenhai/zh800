@@ -131,8 +131,9 @@
           <thead>
             <tr>
               <th>時間</th>
-              <th>數量</th>
-              <th>錯誤</th>
+              <th>生產數量</th>
+              <th>錯誤數量</th>
+              <th>錯誤種類</th>
             </tr>
           </thead>
           <tbody id="table"></tbody>
@@ -191,7 +192,7 @@
         } 
 
         for (var i = 0; i < dataJSON.length; i++) {
-          addToData(dataJSON[i].name.error, dataJSON[i].value);
+          addToData(dataJSON[i].defact_id, dataJSON[i].bad_qty);
         }
 
         var pieChartData = [];
@@ -218,8 +219,8 @@
         } 
 
         for (var i = 0; i < dataJSON.length; i++) {
-          var hours = formatDate(new Date(dataJSON[i].name.date)).substring(11, 13);
-          addToData(hours + ":00", dataJSON[i].value);
+          var hours = dataJSON[i].timestamp.substring(11, 13);
+          addToData(hours + ":00", dataJSON[i].count_qty);
         }
 
         var barChartData = [];
@@ -239,9 +240,10 @@
         return {
           data: dataJSON.dataSet,
           extractors: [
-            function (data) { return formatDate(new Date(data.name.date)); },
-            function (data) { return data.value; },
-            function (data) { return data.name.error; }
+            function (data) { return data.timestamp; },
+            function (data) { return data.count_qty; },
+            function (data) { return data.bad_qty; },
+            function (data) { return data.defact_id; },
           ]
         }
       }

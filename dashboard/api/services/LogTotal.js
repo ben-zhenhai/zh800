@@ -239,41 +239,6 @@ exports.realtimeJSON = function () {
 
 exports.cachedJSON = function () {
 
-  function cacheQuery(url, converter, callback) {
-    var bars = [];
-
-    Cached.native(function(err, collection) {
-      if (err) {
-        console.log("database error:" + err);
-        return;
-      }
-      console.log("findOne:" + url);
-
-      collection.findOne({url: url}, function(err, data) {
-
-        if (err) {
-          callback(err, undefined);
-          return;
-        }
-
-        var records = data.value;
-
-        for (var title in records) {
-          var processedTitle = title.replace("__DOT__", ".");
-          bars.push(converter(url, processedTitle, records[title]));
-        }
-
-        bars.sort(function(objA, objB) {
-          if (objA.name < objB.name) { return -1; }
-          if (objA.name > objB.name) { return 1; }
-          if (objA.name == objB.name) { return 0; }
-        });
-
-        callback(undefined, bars);
-      });
-    });
-  }
-
   function overview (callback) {
     var converter = function(url, title, record) {
       return {
@@ -283,7 +248,7 @@ exports.cachedJSON = function () {
       }
     }
 
-    cacheQuery("/total", converter, callback);
+    CacheQuery.query("/total", converter, callback);
   }
 
   function product (product, callback) {
@@ -307,7 +272,7 @@ exports.cachedJSON = function () {
       }
     }
 
-    cacheQuery("/total/" + product, converter, callback);
+    CacheQuery.query("/total/" + product, converter, callback);
   }
 
   function productMonth (product, year, month, callback) {
@@ -321,7 +286,7 @@ exports.cachedJSON = function () {
       }
     }
 
-    cacheQuery("/total/" + product + "/" + yearMonth, converter, callback);
+    CacheQuery.query("/total/" + product + "/" + yearMonth, converter, callback);
   }
 
   function productMonthWeek (product, year, month, week, callback) {
@@ -336,7 +301,7 @@ exports.cachedJSON = function () {
       }
     }
 
-    cacheQuery("/total/" + product + "/" + yearMonth + "/" + week, converter, callback);
+    CacheQuery.query("/total/" + product + "/" + yearMonth + "/" + week, converter, callback);
   }
 
   function productMonthWeekDate (product, year, month, week, date, callback) {
@@ -351,80 +316,21 @@ exports.cachedJSON = function () {
       }
     }
 
-    cacheQuery("/total/" + product + "/" + yearMonth + "/" + week + "/" + date, converter, callback);
+    CacheQuery.query("/total/" + product + "/" + yearMonth + "/" + week + "/" + date, converter, callback);
   }
 
+
   function machineDetail (product, year, month, week, date, machine, callback) {
-
-    var mongoClient = require('mongodb').MongoClient
-    var mongoURL = 'mongodb://localhost/zhenhai'
-    var data = [];
-
-    mongoClient.connect(mongoURL, function(err, mongoDB) {
-      
-      if (err) {
-        console.log("Cannot cannto to mongoDB:" + err);
-        callback(err, undefined);
-        return;
-      }
-
-      var cacheTableName = year + "-" + month + "-" + date;
-      var cacheTable = mongoDB.collection(cacheTableName)
-
-      var mapFunction = function() {
-        var tenMinute = this.timestamp.substring(0, 15) + "0";
-        emit(tenMinute + "|" + this.defact_id, {bad_qty: +this.bad_qty, count_qty: +this.count_qty} ) 
-      }
-
-      var reduceFunction = function(key, values) { 
-        reducedVal = { bad_qty: 0, count_qty: 0 };
-        for (var idx = 0; idx < values.length; idx++) {
-          reducedVal.bad_qty += values[idx].bad_qty;
-          reducedVal.count_qty += values[idx].count_qty;
-        }
-        return reducedVal;
-      }
-
-      var mapReduceOptions = {
-        query: {lot_no: product, mach_id: machine},
-        out: {inline: 1}
-      }
-
-      cacheTable.mapReduce(mapFunction, reduceFunction, mapReduceOptions, function(err, result) {
-
-        if (err) {
-          callback(err, undefined);
-          return;
-        }
-
-        var resultData = [];
-
-        for (var i = 0; i < result.length; i++) {
-          var data = result[i];
-          var timestamp = data._id.split("|")[0];
-          var defactID = data._id.split("|")[1];
-          var countQty = data.value.count_qty;
-          var badQty = data.value.bad_qty;
-          resultData.push({timestamp: timestamp, defact_id: defactID, count_qty: countQty, bad_qty: badQty});
-        }
-
-        resultData.sort(function(objA, objB) {
-          var timestampA = objA.timestamp;
-          var timestampB = objB.timestamp;
-          if (timestampA < timestampB) { return -1; }
-          if (timestampA > timestampB) { return 1; }
-          if (timestampA == timestampB) { return 0; }
-        });
-
-        callback(undefined, resultData);
-      });
-    });
+    var cacheTableName = year + "-" + month + "-" + date;
+    var query = {lot_no: product, mach_id: machine}
+    CacheQuery.daily(cacheTableName, query, callback);
   }
 
   function getDateRange(callback) {
 
     var maxTime = new Date();
     var minTime = new Date();
+
     Cached.native(function(err, collection) {
       if (err) {
         console.log("database error:" + err);
