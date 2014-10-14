@@ -131,18 +131,12 @@ module.exports = {
         return;
       }
 
-
       res.type('text/csv');
-      res.write(new Buffer('"日期","錯誤種類","數量"\n'));
+      res.write(new Buffer('"日期","生產數量","錯誤數量","錯誤種類"\n'));
 
       for (var i = 0; i < data.length; i++) {
         var record = data[i];
-        var time = 
-          record.name.date.getFullYear() + "-" + (+record.name.date.getMonth() + 1) + "-" +
-          record.name.date.getDate() + " " + record.name.date.getHours() + ":" +
-          record.name.date.getMinutes() + ":" + record.name.date.getSeconds();
-
-        res.write(new Buffer('"' + time + '","' + record.name.error + '",' + record.value + "\n"));
+        res.write(new Buffer('"' + record.timestamp + '",' + record.count_qty + ',' + record.bad_qty + ',' + record.defact_id + "\n"));
       }
 
       res.end();
