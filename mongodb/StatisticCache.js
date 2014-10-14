@@ -22,7 +22,9 @@ function getDate(record) {
     year: jsDate.getFullYear(),
     month: +(jsDate.getMonth()) + 1,
     week: getWeek(jsDate),
-    date: jsDate.getDate()
+    date: jsDate.getDate(),
+    hour: jsDate.getHours(),
+    minute: jsDate.getMinutes()
   }
 }
 
@@ -114,12 +116,51 @@ function updateStats(urlComponets, previousURL, level, record) {
   updateStats(urlComponets, url, level + 1, record);
 }
 
+function insertToDailyTable(mongoDB, record) {
 
-function addToCache(mongoDB, record) {
+  function paddingZero(number) {
+    if (number < 10) {
+      return "0" + number;
+    } else {
+      return number;
+    }
+  }
+
   var recordDate = getDate(record);
-  var cacheTable = mongoDB.collection(cacheTableName)
   var dailyTableName = recordDate.year + "-" + recordDate.month + "-" + recordDate.date;
   var dailyTable = mongoDB.collection(dailyTableName);
+
+  var timestamp = recordDate.year + "-" + recordDate.month + "-" + recordDate.date + " " + paddingZero(+recordDate.hour) + ":" + paddingZero(+recordDate.minute)
+  var errorKind = record.defact_id;
+  var lotNo = record.lot_no;
+  var machineID = record.mach_id;
+
+  var query = {timestamp: timestamp, defact_id: errorKind, lot_no: lotNo, mach_id: machineID};
+
+  dailyTable.findOne(query, function(err, data) {
+    
+    var newRecord = {
+      timestamp: timestamp, defact_id: errorKind, lot_no: lotNo, mach_id: machineID, 
+      bad_qty: +record.bad_qty, count_qty: +record.count_qty
+    }
+
+    if (!data) {
+      dailyTable.insert(newRecord, function(err, data) {})
+    } else {
+      newRecord.bad_qty = newRecord.bad_qty + data.bad_qty;
+      newRecord.count_qty = newRecord.count_qty + data.count_qty;
+
+      // console.log(query);
+      // console.log(newRecord.bad_qty + " / " + newRecord.count_qty);
+
+      dailyTable.update(query, newRecord,function(err, record) {});
+    }
+  });
+
+}
+
+function addToCache(mongoDB, record) {
+
   updateMaxTime(record);
   updateMinTime(record);
 
@@ -129,13 +170,13 @@ function addToCache(mongoDB, record) {
   var reasonURLComponets = getReasonURLs(record);
   var machineURLComponets = getMachineURLs(record);
 
-  dailyTable.insert(record, function(err, record) {});
-
   updateStats(totalURLComponets, "", 0, record);
   updateStats(monthlyURLComponets, "", 0, record);
   updateStats(dailyURLComponets, "", 0, record);
   updateStats(reasonURLComponets, "", 0, record);
   updateStats(machineURLComponets, "", 0, record);
+
+  insertToDailyTable(mongoDB, record);
 }
 
 function saveCache(mongoDB) {

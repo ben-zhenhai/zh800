@@ -54,6 +54,7 @@ function sendSaveCommand() {
     )
 }
 
+var count = 0;
 
 function func(data) {
 
@@ -62,10 +63,11 @@ function func(data) {
     tcpClient.connect(
         PORT, HOST,
         function() {
-            console.log('Start to send data: ' + data)
+            console.log('Start to send data: ' + count + " / " + data)
             tcpClient.write(data,function(){
                 readLine(inputFile, func)
                 tcpClient.destroy()
+                count++;
             })
         }
     )

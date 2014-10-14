@@ -48,7 +48,7 @@ function startServer(mongoDB) {
 
             if (data == "saveData") {
                 console.log("Receive save command...");
-                statisticCache.saveCache(mongoDB);                
+                statisticCache.saveCache(mongoDB);
             } else {
                 var record = parseData(data);
                 record.mongoose.save(function(error) {
@@ -62,7 +62,7 @@ function startServer(mongoDB) {
 
                     if (recordCount % 10000 == 0) {
                        console.log("save statistic data...OK");
-                       statisticCache.saveCache(mongoDB);                
+                       statisticCache.saveCache(mongoDB);
                     }
                 })
             }
