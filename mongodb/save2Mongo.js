@@ -69,13 +69,11 @@ function startServer(mongoDB) {
                    recordCount = 0;
                 }
 
-                /*
                 record.mongoose.save(function(error) {
                     if (error) {
                         console.error(error)
                     }
                 })
-                */
             }
         })
     })
