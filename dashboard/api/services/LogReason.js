@@ -9,7 +9,23 @@ exports.cachedJSON = function() {
       }
     }
 
-    CacheQuery.query("/reason", converter, callback);
+    CacheQuery.query("/reason", converter, function(err, dataSet) {
+
+      if (err) {
+        callback(err, undefined);
+        return;
+      }
+
+      var resultData = [];
+
+      for (var i = 0; i < dataSet.length; i++) {
+        if (+(dataSet[i].name) > 0) {
+          resultData.push(dataSet[i]);
+        }
+      }
+
+      callback(err, resultData);
+    });
   }
 
   function reasonDetail (reasonID, callback) {
@@ -57,7 +73,23 @@ exports.cachedJSON = function() {
       }
     }
 
-    CacheQuery.query("/reason/" + reasonID, converter, callback);
+    CacheQuery.query("/reason/" + reasonID, converter, function(err, dataSet) {
+
+      if (err) {
+        callback(err, undefined);
+        return;
+      }
+
+      dataSet.sort(function(objA, objB) {
+        if (objA.time < objB.time) { return -1; }
+        if (objA.time > objB.time) { return 1; }
+        if (objA.time == objB.time) { return 1; }
+      });
+
+      callback(undefined, dataSet);
+
+    });
+    
   }
 
   return {

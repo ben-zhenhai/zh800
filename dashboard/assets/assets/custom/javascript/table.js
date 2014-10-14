@@ -20,14 +20,7 @@ function setupMachineList(id, productMachine, urlPrefix) {
 }
 
 function sortTable(tableID, totalColumn) {
-  $(tableID).stupidtable({
-    date: function(a, b) {
-      function strToDate(dateString) {
-        return new Date(dateString.split("-")[0], dateString.split("-")[1]);
-      }
-      return strToDate(a).getTime() - strToDate(b).getTime();
-    }
-  }).bind('aftertablesort', function(event, data) {
+  $(tableID).stupidtable().bind('aftertablesort', function(event, data) {
     for (var i = 0; i < totalColumn; i++) {
       $('#arrow' + i).attr('class', 'ui sort icon');
     }

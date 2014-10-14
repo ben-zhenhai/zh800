@@ -192,7 +192,9 @@
         } 
 
         for (var i = 0; i < dataJSON.length; i++) {
-          addToData(dataJSON[i].defact_id, dataJSON[i].bad_qty);
+          if (+(dataJSON[i].defact_id > 0)) {
+            addToData(dataJSON[i].defact_id, dataJSON[i].bad_qty);
+          }
         }
 
         var pieChartData = [];

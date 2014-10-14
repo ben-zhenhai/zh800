@@ -37,7 +37,9 @@ exports.cachedJSON = function() {
 
       for (var defactID in tmpData) {
         if (tmpData.hasOwnProperty(defactID)) {
-          resultData.push({name: defactID, value: tmpData[defactID]});
+          if (+defactID > 0) {
+            resultData.push({name: defactID, value: tmpData[defactID]});
+          }
         }
       }
 
@@ -58,7 +60,21 @@ exports.cachedJSON = function() {
       }
     }
 
-    CacheQuery.query("/machine/" + machineID, converter, callback);
+    CacheQuery.query("/machine/" + machineID, converter, function(err, dataSet) {
+
+      if (err) {
+        callback(err, undefined);
+        return;
+      }
+
+      dataSet.sort(function(objA, objB) {
+        if (objA.time < objB.time) { return -1; }
+        if (objA.time > objB.time) { return 1; }
+        if (objA.time == objB.time) { return 1; }
+      });
+
+      callback(undefined, dataSet);
+    });
 
   }
 
