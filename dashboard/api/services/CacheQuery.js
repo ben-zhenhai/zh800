@@ -1,12 +1,13 @@
 function query(url, converter, callback) {
-  var bars = [];
+  var resultData = [];
 
   Cached.native(function(err, collection) {
+
     if (err) {
-      console.log("database error:" + err);
+      console.error("database error:" + err);
+      callback(err, undefined);
       return;
     }
-    console.log("findOne:" + url);
 
     collection.findOne({url: url}, function(err, data) {
 
@@ -15,19 +16,22 @@ function query(url, converter, callback) {
         return;
       }
 
-      var records = data.value;
+      if (data) {
+        var records = data.value;
 
-      for (var title in records) {
-        var processedTitle = title.replace("__DOT__", ".");
-        bars.push(converter(url, processedTitle, records[title]));
+        for (var title in records) {
+          var processedTitle = title.replace("__DOT__", ".");
+          resultData.push(converter(url, processedTitle, records[title]));
+        }
+
+        resultData.sort(function(objA, objB) {
+          if (objA.name < objB.name) { return -1; }
+          if (objA.name > objB.name) { return 1; }
+          if (objA.name == objB.name) { return 0; }
+        });
       }
-      bars.sort(function(objA, objB) {
-        if (objA.name < objB.name) { return -1; }
-        if (objA.name > objB.name) { return 1; }
-        if (objA.name == objB.name) { return 0; }
-      });
 
-      callback(undefined, bars);
+      callback(undefined, resultData);
     });
   });
 
@@ -98,7 +102,6 @@ function daily(tableName, query, callback) {
   });
 
 }
-
 
 exports.query = query
 exports.daily = daily
