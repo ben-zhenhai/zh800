@@ -130,7 +130,10 @@ function insertToDailyTable(mongoDB, record) {
   var dailyTableName = recordDate.year + "-" + paddingZero(recordDate.month) + "-" + paddingZero(recordDate.date);
   var dailyTable = mongoDB.collection(dailyTableName);
 
-  var timestamp = recordDate.year + "-" + recordDate.month + "-" + recordDate.date + " " + paddingZero(+recordDate.hour) + ":" + paddingZero(+recordDate.minute)
+  var timeString =recordDate.year + "-" + recordDate.month + "-" + recordDate.date + " " + paddingZero(+recordDate.hour) + ":" + paddingZero(+recordDate.minute)
+ 
+  var timestamp = timeString.substring(0, 15) + "0";
+
   var errorKind = record.defact_id;
   var lotNo = record.lot_no;
   var machineID = record.mach_id;
