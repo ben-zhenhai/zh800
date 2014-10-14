@@ -84,9 +84,79 @@ exports.realtimeJSON = function() {
 
 }
 
+exports.cachedJSON = function() {
+  function overview(callback) {
+
+    var converter = function (url, title, record) {
+      return {
+        name: title,
+        value: record.bad_qty,
+        link: "/reason/" + title
+      }
+    }
+
+    CacheQuery.query("/reason", converter, callback);
+  }
+
+  function reasonDetail (reasonID, callback) {
+
+    
+    var converter = function (url, title, record) {
+      return {
+        name: title,
+        value: record.bad_qty
+      }
+    }
+
+    CacheQuery.query("/reason/" + reasonID, converter, function(err, dataSet) {
+
+      var tmpData = {};
+      var resultData = [];
+
+      for (var i = 0; i < dataSet.length; i++) {
+        var data = dataSet[i];
+        var defactID = dataSet[i].name.split(" ")[1];
+        var value = dataSet[i].value;
+        var currentValue = tmpData[defactID] ? tmpData[defactID] : 0;
+        tmpData[defactID] = currentValue + value;
+      }
+
+      for (var machineID in tmpData) {
+        if (tmpData.hasOwnProperty(machineID)) {
+          resultData.push({name: machineID, value: tmpData[machineID]});
+        }
+      }
+
+      callback(undefined, resultData);
+    })
+  }
+
+  function detailTable (reasonID, callback) {
+
+    var converter = function (url, title, record) {
+      var machineID = title.split(" ")[1];
+      var date = title.split(" ")[0];
+      return {
+        name: machineID,
+        time: date,
+        value: record.bad_qty
+      }
+    }
+
+    CacheQuery.query("/reason/" + reasonID, converter, callback);
+  }
+
+  return {
+    overview: overview,
+    reasonDetail: reasonDetail,
+    detailTable: detailTable
+  }
+
+}
+
 exports.jsonAPI = function() {
   switch (sails.config.models.fetch) {
     case "realtime": return LogReason.realtimeJSON();
-    case "cached": return LogReason.realtimeJSON();
+    case "cached": return LogReason.cachedJSON();
   }
 }
