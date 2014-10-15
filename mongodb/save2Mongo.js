@@ -55,11 +55,9 @@ function startServer(mongoDB) {
                 var record = parseData(data);
 
                 console.log('add data [' + recordCount + "] / " + data + '...OK.')
-
-                statisticCache.addToCache(mongoDB, record.raw);
-
                 recordCount++;
 
+                statisticCache.addToCache(mongoDB, record.raw);
                 if (recordCount % BATCH_SAVE_POINT == 0) {
                    console.log("save statistic data...OK");
                    statisticCache.saveCache(mongoDB);

@@ -12,6 +12,7 @@ var index = 0
 var last = 0
 var lineCount = 0;
 
+var isLastChunk = false;
 
 function setupListener(input, func) {
 
@@ -20,7 +21,9 @@ function setupListener(input, func) {
         readLine(input, func)
     });
 
-    input.on('end', function() {})
+    input.on('end', function() {
+        isLastChunk = true;
+    })
 }
 
 
@@ -33,7 +36,7 @@ function readLine(input, func) {
         last = index + 1;
         func(line);
         index = remaining.indexOf('\n', last);
-    } else {
+    } else if (isLastChunk) {
         sendSaveCommand();
     }
 
