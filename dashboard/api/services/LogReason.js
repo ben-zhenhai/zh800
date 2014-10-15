@@ -18,13 +18,7 @@ exports.cachedJSON = function() {
 
       var resultData = [];
 
-      for (var i = 0; i < dataSet.length; i++) {
-        if (+(dataSet[i].name) > 0) {
-          resultData.push(dataSet[i]);
-        }
-      }
-
-      callback(err, resultData);
+      callback(err, dataSet);
     });
   }
 

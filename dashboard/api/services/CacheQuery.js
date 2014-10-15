@@ -9,19 +9,18 @@ function query(url, converter, callback) {
       return;
     }
 
-    collection.findOne({url: url}, function(err, data) {
+    collection.find({url: url}).toArray(function(err, dataSet) {
 
       if (err) {
         callback(err, undefined);
         return;
       }
 
-      if (data) {
-        var records = data.value;
+      if (dataSet) {
 
-        for (var title in records) {
-          var processedTitle = title.replace("__DOT__", ".");
-          resultData.push(converter(url, processedTitle, records[title]));
+        for (var i = 0; i < dataSet.length; i++) {
+          var record = dataSet[i];
+          resultData.push(converter(url, record.title, record));
         }
 
         resultData.sort(function(objA, objB) {

@@ -9,7 +9,7 @@ var statisticCache = require(__dirname + "/StatisticCache");
  
 var array = []
 var recordCount = 0;
-var BATCH_SAVE_POINT = 5000;
+var BATCH_SAVE_POINT = 100;
 var BATCH_LIMIT = 1000000;
 
 function parseData(data) {

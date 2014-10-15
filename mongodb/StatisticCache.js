@@ -1,5 +1,7 @@
 var cacheTableName = 'cached';
-var stats = {};
+var maxTime;
+var minTime;
+var cacheTable;
 
 function paddingZero(number) {
   if (number < 10) {
@@ -64,9 +66,10 @@ function getDailyURLs(record) {
 function getReasonURLs(record) {
   var date = getDate(record);
   var detail = date.year + "-" + paddingZero(date.month) + "-" + paddingZero(date.date) + " " + record.mach_id;
+  var defactIDWithMachine = record.mach_id + "-" + record.defact_id;
 
   return [
-    "reason", record.defact_id, detail
+    "reason", defactIDWithMachine, detail
   ];
 }
 
@@ -82,25 +85,29 @@ function getMachineURLs(record) {
 function updateMaxTime(record) {
 
   var dateInRecord = record.emb_date;
-  var maxTime = stats['maxTime'] ? stats['maxTime'] : dateInRecord;
 
-  if (maxTime < dateInRecord) {
-    maxTime = dateInRecord;
+  if (!maxTime) {
+    console.log("here...");
+    maxTime = +dateInRecord;
   }
 
-  stats['maxTime'] = maxTime;
+  if (maxTime < dateInRecord) {
+    maxTime = +dateInRecord;
+  }
+
 }
 
 function updateMinTime(record) {
 
   var dateInRecord = record.emb_date;
-  var minTime = stats['minTime'] ? stats['minTime'] : dateInRecord;
 
-  if (minTime > dateInRecord) {
-    minTime = dateInRecord;
+  if (!minTime) {
+    minTime = +dateInRecord;
   }
 
-  stats['minTime'] = minTime;
+  if (minTime > dateInRecord) {
+    minTime = +dateInRecord;
+  }
 }
 
 function updateStats(urlComponets, previousURL, level, record) {
@@ -110,17 +117,19 @@ function updateStats(urlComponets, previousURL, level, record) {
   }
 
   var url = previousURL + "/" + urlComponets[level];
-  var title = (urlComponets[level+1] + "").replace(".", "__DOT__"); // Mongo cannot save field name with dot (.)
+  var title = (urlComponets[level+1] + "");
 
-  var cachedData = stats[url] ? stats[url] : {};
-  var data = cachedData[title] ? cachedData[title] : {bad_qty: +0, count_qty: +0};
+  cacheTable.update(
+    {url: url, title: title }, 
+    {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}, 
+    {upsert: true}, function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
 
-  cachedData[title] = { 
-    bad_qty: data.bad_qty + (+record.bad_qty),
-    count_qty: data.count_qty + (+record.count_qty)
-  }
-
-  stats[url] = cachedData;
   updateStats(urlComponets, url, level + 1, record);
 }
 
@@ -137,7 +146,6 @@ function insertToDailyTable(mongoDB, record) {
   var errorKind = record.defact_id;
   var lotNo = record.lot_no;
   var machineID = record.mach_id;
-  console.log(timestamp);
 
   var query = {timestamp: timestamp, defact_id: errorKind, lot_no: lotNo, mach_id: machineID};
 
@@ -174,6 +182,7 @@ function addToCache(mongoDB, record) {
   var reasonURLComponets = getReasonURLs(record);
   var machineURLComponets = getMachineURLs(record);
 
+
   updateStats(totalURLComponets, "", 0, record);
   updateStats(monthlyURLComponets, "", 0, record);
   updateStats(dailyURLComponets, "", 0, record);
@@ -184,21 +193,29 @@ function addToCache(mongoDB, record) {
 }
 
 function saveCache(mongoDB) {
-  var cacheTable = mongoDB.collection(cacheTableName)
 
-  for (var url in stats) {
-    if (stats.hasOwnProperty(url)) {
-      cacheTable.update(
-        {url: url}, {url: url, value: stats[url]}, 
-        {upsert: true}, function(err, data){
-          if (err) {
-            console.log("save error:" + err);
-            return;
-          }
-        }
-      );
+  cacheTable.update(
+    {url: "maxTime"}, {$set: {value: +maxTime}}, 
+    {upsert: true}, 
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
     }
-  }
+  );
+
+  cacheTable.update(
+    {url: "minTime"}, {$set: {value: +minTime}}, 
+    {upsert: true}, 
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+
 }
 
 function initCache(mongoURL, callback) {
@@ -212,15 +229,8 @@ function initCache(mongoURL, callback) {
       return;
     }
 
-    var cacheTable = mongoDB.collection(cacheTableName)
-    cacheTable.find({}).toArray(function(err, docs) {
-      for (var i = 0; i < docs.length; i++) {
-        var url = docs[i].url;
-        var value = docs[i].value;
-        stats[url] = value;
-      }
-      callback(mongoDB);
-    });
+    cacheTable = mongoDB.collection(cacheTableName)
+    callback(mongoDB);
  
   });
 }
