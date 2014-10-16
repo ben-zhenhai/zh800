@@ -37,7 +37,6 @@ function readLine(input, func) {
         func(line);
         index = remaining.indexOf('\n', last);
     } else if (isLastChunk) {
-        console.log("Send save command");
         sendSaveCommand();
     }
 
