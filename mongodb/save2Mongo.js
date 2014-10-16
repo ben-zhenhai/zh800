@@ -1,4 +1,5 @@
 var mongoURL = 'mongodb://localhost/zhenhai'
+var mongoDaily = 'mongodb://localhost/daily'
 var mongoose = require('mongoose')
 var conn = mongoose.createConnection(mongoURL)
 var Data = require(__dirname + '/data_model').getModel(conn)
@@ -41,10 +42,13 @@ function parseData(data) {
        insertDate: dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate())
     }
   
-    return new Data(record)
+    return {
+      raw: record,
+      model: new Data(record)
+    }
 }
 
-function startServer() {
+function startServer(mongoDB) {
 
     server.on('connection', function(client) {
         client.setEncoding('utf8')
@@ -55,12 +59,14 @@ function startServer() {
 
             console.log('add data [' + recordCount + "] / " + data + '...OK.')
             recordCount++;
+            var dailyTable = mongoDB.collection(record.raw.insertDate);
+            dailyTable.insert(record.raw);
 
             if (recordCount > BATCH_LIMIT) {
                recordCount = 0;
             }
 
-            record.save(function(error) {
+            record.model.save(function(error) {
                 if (error) {
                     console.error(error)
                 }
@@ -71,4 +77,18 @@ function startServer() {
     server.listen(5566)
 }
 
-startServer();
+function initMongoServer(callback) {
+  var mongoClient = require('mongodb').MongoClient
+  
+  mongoClient.connect(mongoDaily, function(err, mongoDB) {
+  
+    if (err) {
+      console.log("Cannot cannto to mongoDB:" + err);
+      return;
+    }
+
+    callback(mongoDB);
+  });
+}
+
+initMongoServer(startServer);
