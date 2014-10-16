@@ -11,18 +11,18 @@ var array = []
 var recordCount = 0;
 var BATCH_LIMIT = 1000000;
 
+function paddingZero(number) {
+  if (+number < 10) {
+    return "0" + number;
+  } else {
+    return number;
+  }
+}
+
 function parseData(data) {
     var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
     array = tmp.toString().split(" ")
     var dateObject = new Date(array[4] * 1000);
-
-    function paddingZero(number) {
-      if (+number < 10) {
-        return "0" + number;
-      } else {
-        return number;
-      }
-    }
 
     var record = {
        order_type: array[0],
@@ -82,6 +82,27 @@ function insertToLotDetail(mongoDB, record) {
   );
 }
 
+function insertToInterval(mongoDB, record) {
+
+  var dateObject = new Date(record.raw.emb_date * 1000);
+  var timestamp = record.raw.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
+  timestamp = timestamp.substring(0, 15) + "0";
+  var intervalTable = mongoDB.collection(record.raw.insertDate);
+  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+
+  intervalTable.update(
+    query, modifyAction, {upsert: true},
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+
+}
 
 function insertToDaily(mongoDB, record) {
   var dailyTable = mongoDB.collection("daily");
@@ -113,6 +134,7 @@ function startServer(mongoDB) {
             insertToDaily(mongoDB, record);
             insertToLot(mongoDB, record);
             insertToLotDetail(mongoDB, record);
+            insertToInterval(mongoDB, record);
             recordCount++;
 
             if (recordCount > BATCH_LIMIT) {
