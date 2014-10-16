@@ -17,7 +17,8 @@ var DataSchema = new Schema(
         DX : String,
         LC : String,
         mach_status : String,
-	insertDate: String
+	insertDate: String,
+        processed: Boolean
     },
     {
         versionKey: false
