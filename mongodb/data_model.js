@@ -16,7 +16,8 @@ var DataSchema = new Schema(
         CX : String, 
         DX : String,
         LC : String,
-        mach_status : String
+        mach_status : String,
+	insertDate: String
     },
     {
         versionKey: false

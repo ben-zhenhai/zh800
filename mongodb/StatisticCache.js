@@ -176,6 +176,7 @@ function addToCache(mongoDB, record) {
   updateMaxTime(record);
   updateMinTime(record);
 
+  /*
   var totalURLComponets = getTotalURLs(record);
   var monthlyURLComponets = getMonthlyURLs(record);
   var dailyURLComponets = getDailyURLs(record);
@@ -188,6 +189,7 @@ function addToCache(mongoDB, record) {
   updateStats(dailyURLComponets, "", 0, record);
   updateStats(reasonURLComponets, "", 0, record);
   updateStats(machineURLComponets, "", 0, record);
+  */
 
   insertToDailyTable(mongoDB, record);
 }
