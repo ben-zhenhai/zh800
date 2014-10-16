@@ -48,6 +48,58 @@ function parseData(data) {
     }
 }
 
+function insertToLot(mongoDB, record) {
+  var dailyTable = mongoDB.collection("lot");
+  var query = {lot_no: record.raw.lot_no};
+
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+
+  dailyTable.update(
+    query, modifyAction, {upsert: true},
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+}
+
+function insertToLotDetail(mongoDB, record) {
+  var dailyTable = mongoDB.collection("lot-" + record.raw.lot_no);
+  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+
+  dailyTable.update(
+    query, modifyAction, {upsert: true},
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+}
+
+
+function insertToDaily(mongoDB, record) {
+  var dailyTable = mongoDB.collection("daily");
+  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+
+  dailyTable.update(
+    query, modifyAction, {upsert: true},
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+}
+
 function startServer(mongoDB) {
 
     server.on('connection', function(client) {
@@ -58,9 +110,10 @@ function startServer(mongoDB) {
             var record = parseData(data);
 
             console.log('add data [' + recordCount + "] / " + data + '...OK.')
+            insertToDaily(mongoDB, record);
+            insertToLot(mongoDB, record);
+            insertToLotDetail(mongoDB, record);
             recordCount++;
-            var dailyTable = mongoDB.collection(record.raw.insertDate);
-            dailyTable.insert(record.raw);
 
             if (recordCount > BATCH_LIMIT) {
                recordCount = 0;

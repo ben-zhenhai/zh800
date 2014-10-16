@@ -3,12 +3,12 @@ var maxTime;
 var minTime;
 var cacheTable;
 var mongoURL = 'mongodb://localhost/zhenhai'
-var mongoURL2 = 'mongodb://localhost/processed'
-var mongoURL3 = 'mongodb://localhost/cache'
+var mongoURLDaily = 'mongodb://localhost/daily'
+var mongoURLCache = 'mongodb://localhost/cache'
 
 var writeOptions = {
   upsert: true,
-  writeConcern: {w: 1, j: true}
+  writeConcern: {w: 1}
 }
 
 
@@ -157,8 +157,8 @@ function insertToDailyTable(mongoDB, record) {
   var lotNo = record.lot_no;
   var machineID = record.mach_id;
 
-  var query = {timestamp: timestamp, defact_id: errorKind, lot_no: lotNo, mach_id: machineID};
-  var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
+  var query = {timestamp: timestamp, defact_id: record.raw.defact_id, lot_no: record.raw.lot_no, mach_id: record.raw.mach_id};
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   dailyTable.update(
     query, modifyAction, writeOptions,
@@ -218,66 +218,57 @@ function saveCache(mongoDB) {
 
 var count = 0;
 
-function processData(mongoDB, mongoDB2, mongoDB3) {
+function processData(mongoDaily, mongoCache, dateString) {
 
-  dataTable = mongoDB.collection("data")
-  processedTable = mongoDB2.collection("processed")
-  cacheTable = mongoDB3.collection(cacheTableName)
+  dailyTable = mongoDaily.collection(dateString)
+  cacheTable = mongoCache.collection(cacheTableName)
 
   console.log("========= START ===========");
-  dataTable.find(function(err, records) {
+  dailyTable.find(function(err, records) {
 
     records.forEach(function(record) {
-      console.log('Process [' + count + ']');
+      console.log('Process [' + dateString + " / " + count + ']');
 
-      addToCache(mongoDB3, record);
-      dataTable.remove({_id: record._id});
-      processedTable.insert(record);
+      addToCache(mongoCache, record);
+      dailyTable.remove({_id: record._id});
       count++;
 
     },function(err) {
-      saveCache(mongoDB);
+      saveCache(mongoCache);
       console.log("========== END =============");
-      setTimeout(function() {
-        processData(mongoDB, mongoDB2, mongoDB3);
-      }, 200);
+      process.exit(0);
     });
 
   });
 
 }
 
-function startProcess() {
+function startProcess(dateString) {
 
   var mongoClient = require('mongodb').MongoClient
   
-  mongoClient.connect(mongoURL, function(err, mongoDB) {
-  
+  mongoClient.connect(mongoURLDaily, function(err, mongoDaily) {
+    
     if (err) {
       console.log("Cannot cannto to mongoDB:" + err);
       return;
     }
 
-    mongoClient.connect(mongoURL2, function(err, mongoDB2) {
+    mongoClient.connect(mongoURLCache, function(err, mongoCache) {
     
       if (err) {
         console.log("Cannot cannto to mongoDB:" + err);
         return;
       }
 
-      mongoClient.connect(mongoURL3, function(err, mongoDB3) {
-      
-        if (err) {
-          console.log("Cannot cannto to mongoDB:" + err);
-          return;
-        }
-
-        processData(mongoDB, mongoDB2, mongoDB3);
-      });
-
+      processData(mongoDaily, mongoCache, dateString);
     });
-
   });
 }
 
-startProcess()
+if ( process.argv[2] ) {
+  startProcess(process.argv[2])
+} else {
+  console.log("Must set dateString table name (ex. 2014-10-23) as first arguement.");
+}
+
