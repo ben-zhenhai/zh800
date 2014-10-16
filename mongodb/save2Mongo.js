@@ -38,16 +38,10 @@ function parseData(data) {
        DX: array[11],
        LC: array[12],
        mach_status: array[13],
-       insertDate: dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate()),
-       processed: false
+       insertDate: dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate())
     }
   
-    var data = new Data(record)
-  
-    return {
-      raw: record,
-      mongoose: data
-    }
+    return new Data(record)
 }
 
 function startServer() {
@@ -66,7 +60,7 @@ function startServer() {
                recordCount = 0;
             }
 
-            record.mongoose.save(function(error) {
+            record.save(function(error) {
                 if (error) {
                     console.error(error)
                 }
