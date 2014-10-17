@@ -2,78 +2,76 @@ exports.cachedJSON = function() {
 
   function overview(convert, callback) {
 
-    var converter = function (url, title, record) {
-      return {
-        name: title,
-        value: record.bad_qty,
-        link: "/machine/" + title
+    var mapReducer = MapReducer.defineOn({
+      mongoURL: "mongodb://localhost/monthly",
+      model: "monthly",
+      groupingFunction: function (data) { return data.mach_id },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/machine/" + data._id
+        }
       }
-    }
+    });
 
-    CacheQuery.query("/machine", converter, callback);
+    mapReducer(callback);
+
   }
 
   function detailPie (machineID, callback) {
 
-    var converter = function (url, title, record) {
-      return {
-        name: title,
-        value: record.bad_qty
-      }
-    }
-
-    CacheQuery.query("/machine/" + machineID, converter, function(err, dataSet) {
-
-      var tmpData = {};
-      var resultData = [];
-
-      for (var i = 0; i < dataSet.length; i++) {
-        var data = dataSet[i];
-        var defactID = dataSet[i].name.split(" ")[1];
-        var value = dataSet[i].value;
-        var currentValue = tmpData[defactID] ? tmpData[defactID] : 0;
-        tmpData[defactID] = currentValue + value;
-      }
-
-      for (var defactID in tmpData) {
-        if (tmpData.hasOwnProperty(defactID)) {
-          if (+defactID > 0) {
-            resultData.push({name: defactID, value: tmpData[defactID]});
-          }
+    var mapReducer = MapReducer.defineOn({
+      mongoURL: "mongodb://localhost/monthly",
+      model: "monthly",
+      mongoFilters: {
+        mach_id: machineID
+      },
+      groupingFunction: function (data) { return data.defact_id },
+      queryField: "bad_qty",
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value
         }
       }
+    });
 
-      callback(undefined, resultData);
-    })
+    mapReducer(callback);
 
   }
 
   function detailTable (machineID, callback) {
+    var mongoURL = "mongodb://localhost/monthly"
+    var mongoClient = require('mongodb').MongoClient
 
-    var converter = function (url, title, record) {
-      var defactID = title.split(" ")[1];
-      var date = title.split(" ")[0];
-      return {
-        name: defactID,
-        time: date,
-        value: record.bad_qty
-      }
-    }
-
-    CacheQuery.query("/machine/" + machineID, converter, function(err, dataSet) {
-
+    mongoClient.connect(mongoURL, function(err, mongoDB) {
+      
       if (err) {
+        console.log("Cannot cannto to mongoDB:" + err);
         callback(err, undefined);
         return;
       }
 
-      dataSet.sort(function(objA, objB) {
-        if (objA.time < objB.time) { return -1; }
-        if (objA.time > objB.time) { return 1; }
-        if (objA.time == objB.time) { return 1; }
+      var resultData = [];
+
+      var collection = mongoDB.collection("monthly");
+
+      collection.find({mach_id: machineID}, function(err, dataSet) {
+        dataSet.forEach(function(d) {
+          var q = {time: d.timestamp, defact_id: d.defact_id, bad_qty: d.bad_qty};
+          resultData.push(q);
+        },function(d) {
+          resultData.sort(function(a, b) {
+            if (a.time < b.time) { return -1; }
+            if (a.time > b.time) { return 1; }
+            if (a.time == b.time) { return 0; }
+          });
+
+          callback(undefined, resultData);
+        });
       });
 
-      callback(undefined, dataSet);
     });
 
   }
