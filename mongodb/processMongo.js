@@ -159,15 +159,41 @@ function processData(mongoDB, mongoDBMonthly, data) {
   insertToProductDetail(mongoDB, record);
   insertToInterval(mongoDB, record);
   insertToMonthly(mongoDBMonthly, record);
-  recordCount++;
-
-  if (recordCount > BATCH_LIMIT) {
-    recordCount = 0;
-  }
 
 }
 
-function initMongoServer(callback) {
+function processFile(filename, mongoDB, mongoDBMonthly) {
+  console.log("enter " + filename);
+  var fs = require("fs");
+  var lines = fs.readFileSync(filename, {encoding: "UTF-8"}).split("\n");
+
+  for (var i = 0; i < lines.length; i++) {
+    //console.log("processing [" + recordCount + "]" + lines[i]);
+    processData(mongoDB, mongoDBMonthly, lines[i]);
+    recordCount++;
+  }
+
+  fs.unlinkSync(filename);
+  
+  console.log("should wait..");
+}
+
+function processQueueDir(mongoDB, mongoDBMonthly) {
+  var fs = require("fs");
+  var queueDir = process.env.HOME + "/dataQueue";
+  var files = fs.readdirSync(queueDir);
+
+  for (var i = 0; i < files.length; i++) {
+    if (files.indexOf(".txt")) {
+      processFile(queueDir + "/" + files[i], mongoDB, mongoDBMonthly);
+    }
+  }
+
+  //setTimeout(function(){ processQueueDir(mongoDB, mongoDBMonthly) }, 1000);
+
+}
+
+function initMongoServer() {
   var mongoClient = require('mongodb').MongoClient
   
   mongoClient.connect(mongoURLDaily, function(err, mongoDB) {
@@ -176,6 +202,7 @@ function initMongoServer(callback) {
       console.log("Cannot cannto to mongoDB:" + err);
       return;
     }
+
     mongoClient.connect(mongoURLMonthly, function(err, mongoDBMonthly) {
     
       if (err) {
@@ -183,12 +210,11 @@ function initMongoServer(callback) {
         return;
       }
 
-      callback(mongoDB, mongoDBMonthly);
+      processQueueDir(mongoDB, mongoDBMonthly);
+
     });
   });
 }
 
-module.exports = {
-  initMongoServer: initMongoServer,
-  processData: processData
-}
+initMongoServer();
+

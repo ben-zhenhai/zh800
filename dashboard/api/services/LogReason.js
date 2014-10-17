@@ -59,32 +59,6 @@ exports.cachedJSON = function() {
 
   function detailTable (reasonID, callback) {
 
-    var converter = function (url, title, record) {
-      var machineID = title.split(" ")[1];
-      var date = title.split(" ")[0];
-      return {
-        name: machineID,
-        time: date,
-        value: record.bad_qty
-      }
-    }
-
-    CacheQuery.query("/reason/" + reasonID, converter, function(err, dataSet) {
-
-      if (err) {
-        callback(err, undefined);
-        return;
-      }
-
-      dataSet.sort(function(objA, objB) {
-        if (objA.time < objB.time) { return -1; }
-        if (objA.time > objB.time) { return 1; }
-        if (objA.time == objB.time) { return 1; }
-      });
-
-      callback(undefined, dataSet);
-
-    });
     
   }
 

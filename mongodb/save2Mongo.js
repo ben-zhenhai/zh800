@@ -29,10 +29,13 @@ function parseDate(data) {
     return dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate());
 }
 
+var recordCount = 0;
+var batchCount = 0;
+var BATCH_LIMIT = 10000;
+
 function startServer(mongoDB, mongoDBMonthly) {
 
     var fork = require('child_process').fork;
-    var example1 = fork(__dirname + '/processMongo.js');
     var fs = require("fs");
 
     server.on('connection', function(client) {
@@ -40,16 +43,24 @@ function startServer(mongoDB, mongoDBMonthly) {
 
         client.on('data', function(data) {
           var file = process.env.HOME + "/dataArchive/" + parseDate(data);
-          fs.appendFile(file, data, function (err) {});
+
           if (data != "saveData") {
-            processing.processData(mongoDB, mongoDBMonthly, data);
-            example1.send(data);
+
+            fs.appendFile(file, data + "\n", function (err) {});
+            var tmpFile = process.env.HOME + "/dataQueue/tmpData" + batchCount;
+
+            fs.appendFile(tmpFile, data + "\n", function (err) {
+              recordCount++;
+              console.log("Add record[" + recordCount + "] to file...");
+              if (recordCount % BATCH_LIMIT == 0) {
+                fs.renameSync(tmpFile, tmpFile + ".txt");
+                batchCount++;
+              }
+            });
           }
         })
     })
     
     server.listen(5566)
 }
-
-var processing = require(__dirname + '/processMongo')
-processing.initMongoServer(startServer);
+startServer();
