@@ -1,33 +1,55 @@
 exports.cachedJSON = function() {
   function overview (year, month, callback) {
+    var startDate = year + "-" + PaddingZero.padding(+month)
+    var endDate = year + "-" + PaddingZero.padding(+month+1)
 
-    var converter = function(url, title, record) {
-      return {
-        name: title + " 日",
-        value: +(record.count_qty),
-        link: url + "/" + title
+    var mapReducer = MapReducer.defineOn({
+      model: "daily",
+      mongoFilters: {
+        timestamp: {$gte: startDate, $lt: endDate}
+      },
+      groupingFunction: function (data) { 
+        return new Date(data.timestamp).getDate();
+      },
+      converter: function (data) {
+        return {
+          name: data._id + " 日", 
+          value: data.value,
+          link: "/daily/" + year + "/" + month + "/" + data._id
+        }
       }
-    }
+    });
 
-    CacheQuery.query("/daily/" + year + "/" + month, converter, callback);
+    mapReducer(callback);
   }
 
   function yearMonthDate (year, month, date, callback) {
 
-    var converter = function(url, title, record) {
-      return {
-        name: title,
-        value: +(record.count_qty),
-        link: url + "/" + title
+    var startDate = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date);
+    var endDate = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date+1);
+
+    var mapReducer = MapReducer.defineOn({
+      model: "daily",
+      mongoFilters: {
+        timestamp: {$gte: startDate, $lt: endDate}
+      },
+      groupingFunction: function (data) { 
+        return data.mach_id;
+      },
+      converter: function (data) {
+        return {
+          name: data._id,  
+          value: data.value,
+          link: "/daily/" + year + "/" + month + "/" + date + "/" + data._id
+        }
       }
-    }
+    });
 
-    CacheQuery.query("/daily/" + year + "/" + month + "/" + date, converter, callback);
-
+    mapReducer(callback);
   }
 
   function machineDetail (year, month, date, machine, callback) {
-    var cacheTableName = year + "-" + month + "-" + date;
+    var cacheTableName = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date);
     var query = {mach_id: machine}
     CacheQuery.daily(cacheTableName, query, callback);
   }

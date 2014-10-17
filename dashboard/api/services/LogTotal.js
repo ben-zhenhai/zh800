@@ -1,7 +1,7 @@
 exports.cachedJSON = function () {
 
   function overview (callback) {
-    Lot.native(function(err, collection) {
+    Product.native(function(err, collection) {
       if (err) {
         callback(err);
         return;
@@ -9,7 +9,7 @@ exports.cachedJSON = function () {
 
       var resultData = [];
 
-      collection.find({}).sort({lot_no: 1}).toArray(function(err, records) {
+      collection.find({}).sort({product: 1}).toArray(function(err, records) {
         if (err) {
           callback(err);
           return;
@@ -17,9 +17,9 @@ exports.cachedJSON = function () {
 
         for (var i = 0; i < records.length; i++) {
           resultData.push({
-            name: records[i].lot_no,
+            name: records[i].product,
             value: +(records[i].count_qty),
-            link: "/total/" + records[i].lot_no
+            link: "/total/" + records[i].product
           });
         }
         callback(undefined, resultData);
@@ -36,7 +36,7 @@ exports.cachedJSON = function () {
     }
 
     var mapReducer = MapReducer.defineOn({
-      model: "lot-" + product,
+      model: "product-" + product,
       groupingFunction: function (data) { 
         return data.timestamp.substring(0, 7);
       },
@@ -60,7 +60,7 @@ exports.cachedJSON = function () {
     var endDate = year + "-" + PaddingZero.padding(+month+1);
 
     var mapReducer = MapReducer.defineOn({
-      model: "lot-" + product,
+      model: "product-" + product,
       groupingFunction: function (data) { 
 
         function getWeek(isoDate) {
@@ -116,7 +116,7 @@ exports.cachedJSON = function () {
     }
 
     var mapReducer = MapReducer.defineOn({
-      model: "lot-" + product,
+      model: "product-" + product,
       groupingFunction: getWeekAndDate,
       mongoFilters: {
         timestamp: {$gte: startDate, $lt: endDate}
@@ -145,7 +145,7 @@ exports.cachedJSON = function () {
     var endDate = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date+1);
 
     var mapReducer = MapReducer.defineOn({
-      model: "lot-" + product,
+      model: "product-" + product,
       groupingFunction: function (data) { return data.mach_id; },
       mongoFilters: {
         timestamp: {$gte: startDate, $lt: endDate}
@@ -165,7 +165,7 @@ exports.cachedJSON = function () {
 
   function machineDetail (product, year, month, week, date, machine, callback) {
     var cacheTableName = year + "-" + PaddingZero.padding(month) + "-" + PaddingZero.padding(date);
-    var query = {lot_no: product, mach_id: machine}
+    var query = {product: product, mach_id: machine}
     CacheQuery.daily(cacheTableName, query, callback);
   }
 
