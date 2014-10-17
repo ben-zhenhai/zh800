@@ -88,7 +88,7 @@ function insertToInterval(mongoDB, record) {
   var timestamp = record.raw.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
   timestamp = timestamp.substring(0, 15) + "0";
   var intervalTable = mongoDB.collection(record.raw.insertDate);
-  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+  var query = {timestamp: timestamp, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
 
   var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
@@ -103,6 +103,28 @@ function insertToInterval(mongoDB, record) {
   );
 
 }
+
+function insertToMonthly(mongoDB, record) {
+
+  var dateObject = new Date(record.raw.emb_date * 1000);
+  var timestamp = record.raw.insertDate.substring(0, 7);
+  var intervalTable = mongoDB.collection("monthly");
+  var query = {timestamp: timestamp, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+
+  intervalTable.update(
+    query, modifyAction, {upsert: true},
+    function(err, data){
+      if (err) {
+        console.log("save error:" + err);
+        return;
+      }
+    }
+  );
+
+}
+
 
 function insertToDaily(mongoDB, record) {
   var dailyTable = mongoDB.collection("daily");
@@ -135,6 +157,7 @@ function startServer(mongoDB) {
             insertToLot(mongoDB, record);
             insertToLotDetail(mongoDB, record);
             insertToInterval(mongoDB, record);
+            insertToMonthly(mongoDB, record);
             recordCount++;
 
             if (recordCount > BATCH_LIMIT) {
