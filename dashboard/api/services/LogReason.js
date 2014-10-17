@@ -27,7 +27,7 @@ exports.cachedJSON = function() {
       mongoURL: "mongodb://localhost/monthly",
       model: "monthly",
       mongoFilters: {
-        defact_id: defactID,
+        defact_id: +defactID,
         mach_id: machineID
       },
       groupingFunction: function (data) { return data.defact_id },
@@ -62,7 +62,7 @@ exports.cachedJSON = function() {
       var machineID = reasonID.split("-")[0] + "";
       
       var resultData = [];
-      collection.find({defact_id: defactID, mach_id: machineID}, function(err, dataSet) {
+      collection.find({defact_id: +defactID, mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {
           resultData.push({time: d.timestamp, name: d.mach_id, value: d.bad_qty});
         },function(d) {
