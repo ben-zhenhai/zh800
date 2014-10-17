@@ -14,16 +14,36 @@ var array = []
 var recordCount = 0;
 var BATCH_LIMIT = 1000000;
 
+function paddingZero(number) {
+  if (+number < 10) {
+    return "0" + number;
+  } else {
+    return number;
+  }
+}
+
+function parseDate(data) {
+    var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
+    var array = tmp.toString().split(" ")
+    var dateObject = new Date(array[4] * 1000);
+    return dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate());
+}
+
 function startServer() {
 
     var fork = require('child_process').fork;
     var example1 = fork(__dirname + '/processMongo.js');
+    var fs = require("fs");
 
     server.on('connection', function(client) {
         client.setEncoding('utf8')
-    
+
         client.on('data', function(data) {
-          example1.send(data);
+          var file = process.env.HOME + "/dataArchive/" + parseDate(data);
+          fs.appendFile(file, data, function (err) {});
+          if (data != "saveData") {
+            example1.send(data);
+          }
         })
     })
     

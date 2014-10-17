@@ -26,6 +26,7 @@ function parseData(data) {
     var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
     array = tmp.toString().split(" ")
     var dateObject = new Date(array[4] * 1000);
+    var product = array[1];
 
     var record = {
        order_type: array[0],
@@ -42,6 +43,7 @@ function parseData(data) {
        DX: array[11],
        LC: array[12],
        mach_status: array[13],
+       product: product,
        insertDate: dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate())
     }
   
@@ -51,9 +53,9 @@ function parseData(data) {
     }
 }
 
-function insertToLot(mongoDB, record) {
-  var dailyTable = mongoDB.collection("lot");
-  var query = {lot_no: record.raw.lot_no};
+function insertToProduct(mongoDB, record) {
+  var dailyTable = mongoDB.collection("product");
+  var query = {product: record.raw.product};
 
   var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
@@ -68,8 +70,8 @@ function insertToLot(mongoDB, record) {
   );
 }
 
-function insertToLotDetail(mongoDB, record) {
-  var dailyTable = mongoDB.collection("lot-" + record.raw.lot_no);
+function insertToProductDetail(mongoDB, record) {
+  var dailyTable = mongoDB.collection("product-" + record.raw.product);
   var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
 
   var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
@@ -91,7 +93,7 @@ function insertToInterval(mongoDB, record) {
   var timestamp = record.raw.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
   timestamp = timestamp.substring(0, 15) + "0";
   var intervalTable = mongoDB.collection(record.raw.insertDate);
-  var query = {timestamp: timestamp, lot_no: record.raw.lot_no, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
+  var query = {timestamp: timestamp, product: record.raw.product, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
 
   var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
@@ -155,8 +157,8 @@ function processData(mongoDB, mongoDBMonthly) {
     console.log('add data [' + recordCount + "] / " + data + '...OK.')
 
     insertToDaily(mongoDB, record);
-    insertToLot(mongoDB, record);
-    insertToLotDetail(mongoDB, record);
+    insertToProduct(mongoDB, record);
+    insertToProductDetail(mongoDB, record);
     insertToInterval(mongoDB, record);
     insertToMonthly(mongoDBMonthly, record);
     recordCount++;
