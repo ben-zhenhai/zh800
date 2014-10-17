@@ -178,22 +178,11 @@ function processFile(filename, mongoDB, mongoDBMonthly) {
   console.log("should wait..");
 }
 
-function processQueueDir(mongoDB, mongoDBMonthly) {
+function processQueueDir() {
   var fs = require("fs");
   var queueDir = process.env.HOME + "/dataQueue";
   var files = fs.readdirSync(queueDir);
 
-  for (var i = 0; i < files.length; i++) {
-    if (files.indexOf(".txt")) {
-      processFile(queueDir + "/" + files[i], mongoDB, mongoDBMonthly);
-    }
-  }
-
-  //setTimeout(function(){ processQueueDir(mongoDB, mongoDBMonthly) }, 1000);
-
-}
-
-function initMongoServer() {
   var mongoClient = require('mongodb').MongoClient
   
   mongoClient.connect(mongoURLDaily, function(err, mongoDB) {
@@ -210,11 +199,18 @@ function initMongoServer() {
         return;
       }
 
-      processQueueDir(mongoDB, mongoDBMonthly);
+      for (var i = 0; i < files.length; i++) {
+        if (files.indexOf(".txt") > 0) {
+          console.log("Processing file " + files[i]);
+          processFile(queueDir + "/" + files[i], mongoDB, mongoDBMonthly);
+        }
+      }
 
+      mongoDB.close();
+      mongoDBMonthly.close();
+      setTimeout(function(){ processQueueDir(mongoDB, mongoDBMonthly) }, 1000);
     });
   });
 }
 
-initMongoServer();
-
+processQueueDir()
