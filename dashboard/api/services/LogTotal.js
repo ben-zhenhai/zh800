@@ -1,88 +1,170 @@
 exports.cachedJSON = function () {
 
   function overview (callback) {
-    var converter = function(url, title, record) {
-      return {
-        name: title,
-        value: +(record.count_qty),
-        link: url + "/" + title
+    Lot.native(function(err, collection) {
+      if (err) {
+        callback(err);
+        return;
       }
-    }
 
-    CacheQuery.query("/total", converter, callback);
+      var resultData = [];
+
+      collection.find({}).sort({lot_no: 1}).toArray(function(err, records) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        for (var i = 0; i < records.length; i++) {
+          resultData.push({
+            name: records[i].lot_no,
+            value: +(records[i].count_qty),
+            link: "/total/" + records[i].lot_no
+          });
+        }
+        callback(undefined, resultData);
+      })
+    });
   }
 
   function product (product, callback) {
 
-    var sortByDate = function (objA, objB) {
-      function strToDate(dateString) {
-        var columns = dateString.split("-");
-        var year = columns[0];
-        var month = +(columns[1]) - 1; // JSDate's month count from 0
-        return new Date(+year, +month, 1);
-      }
-
-      return strToDate(objA._id).getTime() - strToDate(objB._id).getTime();
+    var sortByMonth = function (objA, objB) {
+      if (objA._id < objB._id) { return -1; }
+      if (objA._id > objB._id) { return 1; }
+      if (objA._id == objB._id) { return 0; }
     }
 
-    var converter = function(url, title, record) {
-      return {
-        name: title,
-        value: +(record.count_qty),
-        link: url + "/" + title.replace("-", "/")
+    var mapReducer = MapReducer.defineOn({
+      model: "lot-" + product,
+      groupingFunction: function (data) { 
+        return data.timestamp.substring(0, 7);
+      },
+      sorting: sortByMonth,
+      converter: function (data) {
+        var date = new Date(data._id + "-01");
+        return {
+          name: data._id, 
+          value: data.value,
+          link: "/total/" + product + "/" + date.getFullYear() + "/" + (+date.getMonth() + 1)
+        }
       }
-    }
+    });
 
-    CacheQuery.query("/total/" + product, converter, callback);
+    mapReducer(callback);
   }
 
   function productMonth (product, year, month, callback) {
-    var yearMonth = year + "-" + month;
 
-    var converter = function(url, title, record) {
-      return {
-        name: '第 ' + title + ' 週',
-        value: +(record.count_qty),
-        link: url.replace("-", "/") + "/" + title
+    var startDate = year + "-" + PaddingZero.padding(month);
+    var endDate = year + "-" + PaddingZero.padding(+month+1);
+
+    var mapReducer = MapReducer.defineOn({
+      model: "lot-" + product,
+      groupingFunction: function (data) { 
+
+        function getWeek(isoDate) {
+          var date = isoDate.getDate();
+          var day = isoDate.getDay();
+          return Math.ceil((date - 1 - day) / 7) + 1;
+        }
+
+        return getWeek(new Date(data.timestamp)) 
+      },
+      mongoFilters: {
+        timestamp: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: "第 " + data._id + " 週", 
+          value: data.value,
+          link: "/total/" + product + "/" + year + "/" + month + "/" + data._id
+        }
       }
-    }
+    });
 
-    CacheQuery.query("/total/" + product + "/" + yearMonth, converter, callback);
+    mapReducer(callback);
   }
 
   function productMonthWeek (product, year, month, week, callback) {
 
-    var yearMonth = year + "-" + month;
+    var startDate = year + "-" + PaddingZero.padding(+month) + "-01";
+    var endDate = year + "-" + PaddingZero.padding(+month+1) + "-01";
 
-    var converter = function(url, title, record) {
+    var sortByDate = function (objA, objB) {
+      if (new Date(objA._id.date) < new Date(objB._id.date)) { return -1; }
+      if (new Date(objA._id.date) > new Date(objB._id.date)) { return 1; }
+      if (new Date(objA._id.date) == new Date(objB._id.date)) { return 0; }
+    }
+
+    var getWeekAndDate = function (data) {
+
+      function getWeek(isoDate) {
+        var date = isoDate.getDate();
+        var day = isoDate.getDay();
+        return Math.ceil((date - 1 - day) / 7) + 1;
+      }
+
+      function dateFormatter(isoDate) {
+        return isoDate.getFullYear() + "-" + (isoDate.getMonth() + 1) + "-" + isoDate.getDate() ;
+      }
+
       return {
-        name: title + ' 號',
-        value: +(record.count_qty),
-        link: url.replace("-", "/") + "/" + title
+        date: dateFormatter(new Date(data.timestamp)),
+        week: getWeek(new Date(data.timestamp)) 
       }
     }
 
-    CacheQuery.query("/total/" + product + "/" + yearMonth + "/" + week, converter, callback);
+    var mapReducer = MapReducer.defineOn({
+      model: "lot-" + product,
+      groupingFunction: getWeekAndDate,
+      mongoFilters: {
+        timestamp: {$gte: startDate, $lt: endDate}
+      },
+      customFilter: function (data) { return data._id["week"] == week; },
+      sorting: sortByDate,
+      converter: function (data) {
+        var dateString = data._id["date"].split("-")[2]
+        var currentWeek = data._id["week"]
+
+        return {
+          name: dateString + " 日",
+          value: data.value,
+          link: "/total/" + product + "/" + year + "/" + month + "/" + currentWeek + "/" + dateString
+        };
+      }
+    });
+
+    mapReducer(callback);
+
   }
 
   function productMonthWeekDate (product, year, month, week, date, callback) {
 
-    var yearMonth = year + "-" + month;
+    var startDate = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date);
+    var endDate = year + "-" + PaddingZero.padding(+month) + "-" + PaddingZero.padding(+date+1);
 
-    var converter = function(url, title, record) {
-      return {
-        name: title,
-        value: +(record.count_qty),
-        link: url.replace("-", "/") + "/" + title
+    var mapReducer = MapReducer.defineOn({
+      model: "lot-" + product,
+      groupingFunction: function (data) { return data.mach_id; },
+      mongoFilters: {
+        timestamp: {$gte: startDate, $lt: endDate}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date + "/" + data._id
+        };
       }
-    }
+    });
 
-    CacheQuery.query("/total/" + product + "/" + yearMonth + "/" + week + "/" + date, converter, callback);
+    mapReducer(callback);
   }
 
 
   function machineDetail (product, year, month, week, date, machine, callback) {
-    var cacheTableName = year + "-" + month + "-" + date;
+    var cacheTableName = year + "-" + PaddingZero.padding(month) + "-" + PaddingZero.padding(date);
     var query = {lot_no: product, mach_id: machine}
     CacheQuery.daily(cacheTableName, query, callback);
   }
@@ -92,25 +174,35 @@ exports.cachedJSON = function () {
     var maxTime = new Date();
     var minTime = new Date();
 
-    Cached.native(function(err, collection) {
+
+
+    Daily.native(function(err, collection) {
       if (err) {
         console.log("database error:" + err);
+        callback(err);
         return;
       }
 
-      collection.findOne({url: "maxTime"}, function(err, maxTimeInDB) {
+      var query = {$group: { _id: "", minTime: {$min: "$timestamp"}, maxTime: {$max: "$timestamp"}}}
+      collection.aggregate(query, function(err, data) {
+        if (err) {
+          console.log("database error:" + err);
+          callback(err);
+          return;
+        }
+        console.log(data[0]);
+        var maxTime = new Date();
+        var minTime = new Date();
 
-        collection.findOne({url: "minTime"}, function(err, minTimeInDB) {
-          
-            if (maxTimeInDB) {
-              maxTime = new Date((+maxTimeInDB.value) * 1000);
-            }
+        if (data.length == 1 && data[0].minTime) {
+          minTime = new Date(data[0].minTime);
+        }
 
-            if (minTimeInDB) {
-              minTime = new Date((+minTimeInDB.value) * 1000);
-            }
-            callback(undefined, minTime, maxTime);
-        });
+        if (data.length == 1 && data[0].maxTime) {
+          maxTime = new Date(data[0].maxTime)
+        }
+
+        callback(undefined, minTime, maxTime);
       });
     });
   }

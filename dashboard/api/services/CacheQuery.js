@@ -1,44 +1,6 @@
-function query(url, converter, callback) {
-  var resultData = [];
-
-  Cached.native(function(err, collection) {
-
-    if (err) {
-      console.error("database error:" + err);
-      callback(err, undefined);
-      return;
-    }
-
-    collection.find({url: url}).toArray(function(err, dataSet) {
-
-      if (err) {
-        callback(err, undefined);
-        return;
-      }
-
-      if (dataSet) {
-
-        for (var i = 0; i < dataSet.length; i++) {
-          var record = dataSet[i];
-          resultData.push(converter(url, record.title, record));
-        }
-
-        resultData.sort(function(objA, objB) {
-          if (objA.name < objB.name) { return -1; }
-          if (objA.name > objB.name) { return 1; }
-          if (objA.name == objB.name) { return 0; }
-        });
-      }
-
-      callback(undefined, resultData);
-    });
-  });
-
-}
-
 function daily(tableName, query, callback) {
   var mongoClient = require('mongodb').MongoClient
-  var mongoURL = 'mongodb://localhost/zhenhai'
+  var mongoURL = 'mongodb://localhost/daily'
   var data = [];
 
   mongoClient.connect(mongoURL, function(err, mongoDB) {
@@ -102,5 +64,4 @@ function daily(tableName, query, callback) {
 
 }
 
-exports.query = query
 exports.daily = daily

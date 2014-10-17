@@ -23,6 +23,7 @@
  *
  */
 
+var mongoURL = 'mongodb://localhost/daily'
 
 exports.defineOn = function(options) {
 
@@ -32,6 +33,7 @@ exports.defineOn = function(options) {
   var customFilter = options.customFilter
   var converter = options.converter
   var sorting = options.sorting
+  var queryField = options.queryField
 
   return function(callback) {
 
@@ -42,8 +44,23 @@ exports.defineOn = function(options) {
       callback({error:'MongoDB connection timeout'});
     }, sails.config.timeout.mongoDB);
 
-    model.native(function(err, collection) {
-      var mapFunction = function() { emit(groupingFunction(this), this.bad_qty) }
+    var mongoClient = require('mongodb').MongoClient
+
+    mongoClient.connect(mongoURL, function(err, mongoDB) {
+      
+      if (err) {
+        console.log("Cannot cannto to mongoDB:" + err);
+        callback(err, undefined);
+        return;
+      }
+
+      var collection = mongoDB.collection(model)
+      var mapFunction = function() { emit(groupingFunction(this), this.count_qty) }
+
+      if (queryField == "bad_qty") {
+        mapFunction = function() { emit(groupingFunction(this), this.bad_qty) }
+      }
+
       var reduceFunction = function(key, values) { return Array.sum(values); }
       var mapReduceOptions = {
         out: {inline: 1},
