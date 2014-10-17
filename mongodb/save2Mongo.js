@@ -29,7 +29,7 @@ function parseDate(data) {
     return dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate());
 }
 
-function startServer() {
+function startServer(mongoDB, mongoDBMonthly) {
 
     var fork = require('child_process').fork;
     var example1 = fork(__dirname + '/processMongo.js');
@@ -42,6 +42,7 @@ function startServer() {
           var file = process.env.HOME + "/dataArchive/" + parseDate(data);
           fs.appendFile(file, data, function (err) {});
           if (data != "saveData") {
+            processing.processData(mongoDB, mongoDBMonthly, data);
             example1.send(data);
           }
         })
@@ -50,4 +51,5 @@ function startServer() {
     server.listen(5566)
 }
 
-startServer();
+var processing = require(__dirname + '/processMongo')
+processing.initMongoServer(startServer);

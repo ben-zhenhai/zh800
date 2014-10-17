@@ -148,29 +148,26 @@ function insertToDaily(mongoDB, record) {
   );
 }
 
-function processData(mongoDB, mongoDBMonthly) {
+function processData(mongoDB, mongoDBMonthly, data) {
 
-  process.on("message", function(data) {
+  var record = parseData(data);
 
-    var record = parseData(data);
+  console.log('add data [' + recordCount + "] / " + data + '...OK.')
 
-    console.log('add data [' + recordCount + "] / " + data + '...OK.')
+  insertToDaily(mongoDB, record);
+  insertToProduct(mongoDB, record);
+  insertToProductDetail(mongoDB, record);
+  insertToInterval(mongoDB, record);
+  insertToMonthly(mongoDBMonthly, record);
+  recordCount++;
 
-    insertToDaily(mongoDB, record);
-    insertToProduct(mongoDB, record);
-    insertToProductDetail(mongoDB, record);
-    insertToInterval(mongoDB, record);
-    insertToMonthly(mongoDBMonthly, record);
-    recordCount++;
+  if (recordCount > BATCH_LIMIT) {
+    recordCount = 0;
+  }
 
-    if (recordCount > BATCH_LIMIT) {
-      recordCount = 0;
-    }
-
-  });
 }
 
-function initMongoServer() {
+function initMongoServer(callback) {
   var mongoClient = require('mongodb').MongoClient
   
   mongoClient.connect(mongoURLDaily, function(err, mongoDB) {
@@ -186,9 +183,12 @@ function initMongoServer() {
         return;
       }
 
-      processData(mongoDB, mongoDBMonthly);
+      callback(mongoDB, mongoDBMonthly);
     });
   });
 }
 
-initMongoServer();
+module.exports = {
+  initMongoServer: initMongoServer,
+  processData: processData
+}
