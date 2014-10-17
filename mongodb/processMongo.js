@@ -184,6 +184,8 @@ function processQueueDir() {
   var files = fs.readdirSync(queueDir);
 
   var mongoClient = require('mongodb').MongoClient
+
+  console.log("Prepare to process file queue...");
   
   mongoClient.connect(mongoURLDaily, function(err, mongoDB) {
   
@@ -200,7 +202,7 @@ function processQueueDir() {
       }
 
       for (var i = 0; i < files.length; i++) {
-        if (files.indexOf(".txt") > 0) {
+        if (files[i].indexOf(".txt") > 0) {
           console.log("Processing file " + files[i]);
           processFile(queueDir + "/" + files[i], mongoDB, mongoDBMonthly);
         }
@@ -208,7 +210,7 @@ function processQueueDir() {
 
       mongoDB.close();
       mongoDBMonthly.close();
-      setTimeout(function(){ processQueueDir(mongoDB, mongoDBMonthly) }, 1000);
+      setTimeout(function(){ processQueueDir() }, 5000);
     });
   });
 }
