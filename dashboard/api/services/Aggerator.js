@@ -14,11 +14,19 @@
  *  MongoDB returned the data or error has occured.
  *
  */
+
+var defaultMongoURL = 'mongodb://localhost/daily'
+
 exports.defineOn = function(options) {
 
   var model = options.model
   var aggeration = options.aggeration
   var converter = options.converter
+  var mongoURL = defaultMongoURL;
+
+  if (options.mongoURL) {
+    mongoURL = options.mongoURL;
+  }
 
   return function(callback) {
 
@@ -29,11 +37,17 @@ exports.defineOn = function(options) {
       callback({error:'MongoDB connection timeout'});
     }, sails.config.timeout.mongoDB);
 
-    model.native(function(err, collection) {
+    var mongoClient = require('mongodb').MongoClient
+
+    mongoClient.connect(mongoURL, function(err, mongoDB) {
+      
       if (err) {
-        callback(err)
+        console.log("Cannot cannto to mongoDB:" + err);
+        callback(err, undefined);
         return;
       }
+
+      var collection = mongoDB.collection(options.model);
 
       var onGetResultSet = function (err, result) {
 
@@ -65,5 +79,6 @@ exports.defineOn = function(options) {
 
       collection.aggregate(aggeration, onGetResultSet);
     });
+
   }
 }

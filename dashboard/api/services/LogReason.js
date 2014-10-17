@@ -1,25 +1,27 @@
 exports.cachedJSON = function() {
   function overview(callback) {
 
-    var converter = function (url, title, record) {
+    var aggeration = [ 
+      { $group: { _id: "$defact_id", bad_qty: { $sum: "$bad_qty" } } },
+      { $sort: {_id: 1}}
+    ]
+
+    var converter = function (data) {
       return {
-        name: title,
-        value: record.bad_qty,
-        link: "/reason/" + title
+        name: data._id, 
+        value: data.bad_qty,
+        link: "/reason/" + data._id
       }
     }
 
-    CacheQuery.query("/reason", converter, function(err, dataSet) {
-
-      if (err) {
-        callback(err, undefined);
-        return;
-      }
-
-      var resultData = [];
-
-      callback(err, dataSet);
+    var aggerator = Aggerator.defineOn({
+      model: "monthly",
+      mongoURL: "mongodb://localhost/monthly",
+      aggeration: aggeration,
+      converter: converter
     });
+
+    aggerator(callback);
   }
 
   function reasonDetail (reasonID, callback) {
