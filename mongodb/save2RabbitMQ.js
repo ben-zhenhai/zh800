@@ -14,7 +14,7 @@ function startServer(messageQueue) {
         client.setEncoding('utf8')
         client.on('data', function(data) {
           if (data != "saveData") {
-            console.log("Received data [%d] %s", count, data)
+            console.log("Received data [%d]: %s", count, data)
             rabbitSender.send(data)
             count++;
           }

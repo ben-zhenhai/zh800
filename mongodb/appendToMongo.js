@@ -15,7 +15,7 @@ function paddingZero(number) {
 }
 
 function parseData(data) {
-    var array = data.replace(/(\r\n|\n|\r)/gm,'').toString.split(" ");
+    var array = data.replace(/(\r\n|\n|\r)/gm,'').toString().split(" ");
     var dateObject = new Date(array[4] * 1000);
     var product = array[1];
 
@@ -190,16 +190,22 @@ function startProcessingServer(callback) {
 function prepareRabbitMQ(mongoDB, mongoDBMonthly) {
 
   var rabbitMQ = require('amqplib/callback_api')
-  var dataQueue = "test"
+  var dataQueue = "rawDataLine"
   var count = 0
   
   rabbitMQ.connect('amqp://localhost', function(err, conn) {
+
+    if (err != null) {
+      console.log("cannot connection to rabbitMQ server, error:" + err);
+      process.exit(-1);
+    }
+ 
     conn.createChannel(on_open);
 
     function on_open(err, ch) {
 
       if (err != null) {
-        console.log("error:" + err);
+        console.log("canno open rabbitMQ cahnnel, error:" + err);
         process.exit(-1);
       }
 

@@ -1,18 +1,26 @@
 var rabbitMQ = require('amqplib/callback_api')
-var q = "test"
+var dataQueue = "rawDataLine"
 
 rabbitMQ.connect('amqp://localhost', function(err, conn) {
+
+
+  if (err != null) {
+    console.log("cannot connect to rabbitMQ server, error:" + err);
+    return;
+  }
+
   conn.createChannel(on_open);
+
   function on_open(err, ch) {
     if (err != null) {
-      console.log("error:" + err);
+      console.log("cannot open rabbitMQ channel error:" + err);
+      return;
     }
 
-    ch.assertQueue(q);
+    ch.assertQueue(dataQueue);
 
     process.on('message', function(m) {
-      //console.log('CHILD got message:' + m);
-      ch.sendToQueue(q, new Buffer(m), {persistent: true});
+      ch.sendToQueue(dataQueue, new Buffer(m), {persistent: true});
     });
     process.send("RabbitOK");
   }
