@@ -259,27 +259,4 @@ class AddToPostgres(connection: Connection) {
 
 }
 
-object Processing {
 
-
-
-  def main(args: Array[String]) {
-
-    Class.forName("org.postgresql.Driver");
-
-    val connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/zhenhai?charSet=utf-8", "zhenhai", "zhenhai123456")
-    val file = Source.fromFile(new File("/home/brianhsu/dataSet2/x00"));
-    var recordCount: Long = 0
-    val addToPostgres = new AddToPostgres(connection)
-
-    file.getLines().take(9000).foreach{line =>
-      val record = Record(line)
-      println(s"Processing [$recordCount]... $record")
-      addToPostgres.addData(record)
-      recordCount += 1;
-    }
-    val exporter = new Exporter(connection)
-    exporter.export()
-  }
-
-}

@@ -23,12 +23,12 @@ function paddingZero(number) {
 }
 
 function parseData(data) {
-    var tmp = data.replace(/(\r\n|\n|\r)/gm,'')
+    tmp = data.replace(/(\r\n|\n|\r)/gm,'')
     array = tmp.toString().split(" ")
-    var dateObject = new Date(array[4] * 1000);
-    var product = array[1];
+    dateObject = new Date(array[4] * 1000);
+    product = array[1];
 
-    var record = {
+    record = {
        order_type: array[0],
        lot_no: array[1],
        work_qty: array[2],
@@ -54,10 +54,10 @@ function parseData(data) {
 }
 
 function insertToProduct(mongoDB, record) {
-  var dailyTable = mongoDB.collection("product");
-  var query = {product: record.raw.product};
+  dailyTable = mongoDB.collection("product");
+  query = {product: record.raw.product};
 
-  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+  modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   dailyTable.update(
     query, modifyAction, {upsert: true},
@@ -71,10 +71,10 @@ function insertToProduct(mongoDB, record) {
 }
 
 function insertToProductDetail(mongoDB, record) {
-  var dailyTable = mongoDB.collection("product-" + record.raw.product);
-  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+  dailyTable = mongoDB.collection("product-" + record.raw.product);
+  query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
 
-  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+  modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   dailyTable.update(
     query, modifyAction, {upsert: true},
@@ -89,13 +89,13 @@ function insertToProductDetail(mongoDB, record) {
 
 function insertToInterval(mongoDB, record) {
 
-  var dateObject = new Date(record.raw.emb_date * 1000);
-  var timestamp = record.raw.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
+  dateObject = new Date(record.raw.emb_date * 1000);
+  timestamp = record.raw.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
   timestamp = timestamp.substring(0, 15) + "0";
-  var intervalTable = mongoDB.collection(record.raw.insertDate);
-  var query = {timestamp: timestamp, product: record.raw.product, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
+  intervalTable = mongoDB.collection(record.raw.insertDate);
+  query = {timestamp: timestamp, product: record.raw.product, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
 
-  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+  modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   intervalTable.update(
     query, modifyAction, {upsert: true},
@@ -111,12 +111,12 @@ function insertToInterval(mongoDB, record) {
 
 function insertToMonthly(mongoDB, record) {
 
-  var dateObject = new Date(record.raw.emb_date * 1000);
-  var timestamp = record.raw.insertDate.substring(0, 7);
-  var intervalTable = mongoDB.collection("monthly");
-  var query = {timestamp: timestamp, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
+  dateObject = new Date(record.raw.emb_date * 1000);
+  timestamp = record.raw.insertDate.substring(0, 7);
+  intervalTable = mongoDB.collection("monthly");
+  query = {timestamp: timestamp, mach_id: record.raw.mach_id, defact_id: record.raw.defact_id};
 
-  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+  modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   intervalTable.update(
     query, modifyAction, {upsert: true},
@@ -132,10 +132,10 @@ function insertToMonthly(mongoDB, record) {
 
 
 function insertToDaily(mongoDB, record) {
-  var dailyTable = mongoDB.collection("daily");
-  var query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
+  dailyTable = mongoDB.collection("daily");
+  query = {timestamp: record.raw.insertDate, mach_id: record.raw.mach_id};
 
-  var modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
+  modifyAction = {$inc: {bad_qty: +record.raw.bad_qty, count_qty: +record.raw.count_qty}}
 
   dailyTable.update(
     query, modifyAction, {upsert: true},
@@ -150,7 +150,7 @@ function insertToDaily(mongoDB, record) {
 
 function processData(mongoDB, mongoDBMonthly, data) {
 
-  var record = parseData(data);
+  record = parseData(data);
 
   console.log('add data [' + recordCount + "] / " + data + '...OK.')
 
@@ -164,10 +164,10 @@ function processData(mongoDB, mongoDBMonthly, data) {
 
 function processFile(filename, mongoDB, mongoDBMonthly) {
   console.log("enter " + filename);
-  var fs = require("fs");
-  var lines = fs.readFileSync(filename, {encoding: "UTF-8"}).split("\n");
+  fs = require("fs");
+  lines = fs.readFileSync(filename, {encoding: "UTF-8"}).split("\n");
 
-  for (var i = 0; i < lines.length; i++) {
+  for (i = 0; i < lines.length; i++) {
     //console.log("processing [" + recordCount + "]" + lines[i]);
     processData(mongoDB, mongoDBMonthly, lines[i]);
     recordCount++;
@@ -179,11 +179,11 @@ function processFile(filename, mongoDB, mongoDBMonthly) {
 }
 
 function processQueueDir() {
-  var fs = require("fs");
-  var queueDir = process.env.HOME + "/dataQueue";
-  var files = fs.readdirSync(queueDir);
+  fs = require("fs");
+  queueDir = process.env.HOME + "/dataQueue";
+  files = fs.readdirSync(queueDir);
 
-  var mongoClient = require('mongodb').MongoClient
+  mongoClient = require('mongodb').MongoClient
 
   console.log("Prepare to process file queue...");
   

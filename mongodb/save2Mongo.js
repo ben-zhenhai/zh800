@@ -1,18 +1,6 @@
-var mongoURL = 'mongodb://localhost/zhenhai'
-var mongoURLDaily = 'mongodb://localhost/daily'
-var mongoURLMonthly = 'mongodb://localhost/monthly'
-var mongoURLArchive = 'mongodb://localhost/archive'
-
-var mongoose = require('mongoose')
-var conn = mongoose.createConnection(mongoURL)
-var Data = require(__dirname + '/data_model').getModel(conn)
-
 var net = require('net')
-var server = net.createServer()
- 
-var array = []
 var recordCount = 0;
-var BATCH_LIMIT = 1000000;
+var BATCH_LIMIT = 10000;
 
 function paddingZero(number) {
   if (+number < 10) {
@@ -29,38 +17,35 @@ function parseDate(data) {
     return dateObject.getFullYear() + "-" + paddingZero(+dateObject.getMonth()+1) + "-" + paddingZero(+dateObject.getDate());
 }
 
-var recordCount = 0;
-var batchCount = 0;
-var BATCH_LIMIT = 10000;
+var child_process = require("child_process")
+var rabbitSender = child_process.fork('./rabbitSender.js');
 
-function startServer(mongoDB, mongoDBMonthly) {
+function startServer(messageQueue) {
 
-    var fork = require('child_process').fork;
-    var fs = require("fs");
-
+    console.log("START SERVER...")
+    var server = net.createServer()
     server.on('connection', function(client) {
         client.setEncoding('utf8')
-
         client.on('data', function(data) {
+          var fs = require("fs")
           var file = process.env.HOME + "/dataArchive/" + parseDate(data);
 
           if (data != "saveData") {
-
             fs.appendFile(file, data + "\n", function (err) {});
-            var tmpFile = process.env.HOME + "/dataQueue/tmpData" + batchCount;
-
-            fs.appendFile(tmpFile, data + "\n", function (err) {
-              recordCount++;
-              console.log("Add record[" + recordCount + "] to file...");
-              if (recordCount % BATCH_LIMIT == 0) {
-                fs.renameSync(tmpFile, tmpFile + ".txt");
-                batchCount++;
-              }
-            });
+            console.log("Received data:" + data)
+            rabbitSender.send(data)
           }
         })
     })
     
     server.listen(5566)
 }
-startServer();
+
+rabbitSender.on('message', function(m) {
+  if (m == "RabbitOK") {
+    console.log('PARENT got message:', m);
+    startServer();
+  }
+});
+
+
