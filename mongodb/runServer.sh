@@ -1,3 +1,3 @@
 #! /bin/bash
 
-node save2Mongo.js
+node save2RabbitMQ.js

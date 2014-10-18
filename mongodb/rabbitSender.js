@@ -12,7 +12,7 @@ rabbitMQ.connect('amqp://localhost', function(err, conn) {
 
     process.on('message', function(m) {
       //console.log('CHILD got message:' + m);
-      ch.sendToQueue(q, new Buffer(m));
+      ch.sendToQueue(q, new Buffer(m), {persistent: true});
     });
     process.send("RabbitOK");
   }
