@@ -15,7 +15,7 @@
  *
  */
 
-var defaultMongoURL = 'mongodb://localhost/daily'
+var defaultMongoURL = 'mongodb://localhost/zhenhai'
 
 exports.defineOn = function(options) {
 
@@ -23,10 +23,6 @@ exports.defineOn = function(options) {
   var aggeration = options.aggeration
   var converter = options.converter
   var mongoURL = defaultMongoURL;
-
-  if (options.mongoURL) {
-    mongoURL = options.mongoURL;
-  }
 
   return function(callback) {
 

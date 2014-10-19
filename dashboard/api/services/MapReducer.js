@@ -23,7 +23,7 @@
  *
  */
 
-var defaultMongoURL = 'mongodb://localhost/daily'
+var defaultMongoURL = 'mongodb://localhost/zhenhai'
 
 exports.defineOn = function(options) {
 
@@ -35,10 +35,6 @@ exports.defineOn = function(options) {
   var sorting = options.sorting
   var queryField = options.queryField
   var mongoURL = defaultMongoURL;
-
-  if (options.mongoURL) {
-    mongoURL = options.mongoURL;
-  }
 
   return function(callback) {
 

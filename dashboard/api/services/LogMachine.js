@@ -3,7 +3,6 @@ exports.cachedJSON = function() {
   function overview(convert, callback) {
 
     var mapReducer = MapReducer.defineOn({
-      mongoURL: "mongodb://localhost/monthly",
       model: "monthly",
       groupingFunction: function (data) { return data.mach_id },
       converter: function (data) {
@@ -22,7 +21,6 @@ exports.cachedJSON = function() {
   function detailPie (machineID, callback) {
 
     var mapReducer = MapReducer.defineOn({
-      mongoURL: "mongodb://localhost/monthly",
       model: "monthly",
       mongoFilters: {
         mach_id: machineID
@@ -42,7 +40,7 @@ exports.cachedJSON = function() {
   }
 
   function detailTable (machineID, callback) {
-    var mongoURL = "mongodb://localhost/monthly"
+    var mongoURL = "mongodb://localhost/zhenhai"
     var mongoClient = require('mongodb').MongoClient
 
     mongoClient.connect(mongoURL, function(err, mongoDB) {
