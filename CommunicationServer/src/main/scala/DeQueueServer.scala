@@ -2,24 +2,21 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.QueueingConsumer;
-import java.sql.DriverManager
 
-object Receiever {
+object DeQueueServer {
 
-  val QUEUE_NAME = "rawDataLine"
-
-  Class.forName("org.postgresql.Driver");
+  val QueueName = "rawDataLine"
 
   def initRabbitMQ() = {
      val factory = new ConnectionFactory
      factory.setHost("localhost")
      val connection = factory.newConnection()
      val channel = connection.createChannel()
-     channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+     channel.queueDeclare(QueueName, true, false, false, null);
      channel.basicQos(1)
 
      val consumer = new QueueingConsumer(channel);
-     channel.basicConsume(QUEUE_NAME, false, consumer);
+     channel.basicConsume(QueueName, false, consumer);
      (channel, consumer)
   }
 
@@ -35,7 +32,7 @@ object Receiever {
      while (true) {
        val delivery = consumer.nextDelivery();
        val message = new String(delivery.getBody());
-       println(s" [$recordCount] Received '" + message + "'");
+       println(s" [$recordCount] DeQueue '" + message + "'");
        mongoProcessor.addRecord(Record(message))
        channel.basicAck(delivery.getEnvelope.getDeliveryTag, false);
        recordCount += 1;
