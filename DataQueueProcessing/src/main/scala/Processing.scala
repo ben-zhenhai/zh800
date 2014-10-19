@@ -10,6 +10,7 @@ class MongoProcessor {
 
   def update(mongoDB: MongoDB, tableName: String, query: MongoDBObject, record: Record) {
     val operation = $inc("bad_qty" -> record.badQty, "count_qty" -> record.countQty)
+    mongoDB(tableName).ensureIndex(query.mapValues(x => 1))
     mongoDB(tableName).update(query, operation, upsert = true)
   }
 
