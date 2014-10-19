@@ -32,8 +32,13 @@ object DeQueueServer {
      while (true) {
        val delivery = consumer.nextDelivery();
        val message = new String(delivery.getBody());
+
        println(s" [$recordCount] DeQueue '" + message + "'");
-       mongoProcessor.addRecord(Record(message))
+
+       Record(message).foreach{ record =>
+         mongoProcessor.addRecord(record)
+       }
+
        channel.basicAck(delivery.getEnvelope.getDeliveryTag, false);
        recordCount += 1;
      }

@@ -1,6 +1,7 @@
 import java.util.Date
 import java.text.SimpleDateFormat
 import com.mongodb.casbah.Imports._
+import scala.util.Try
 
 case class Record(
   orderType: String, 
@@ -43,7 +44,7 @@ case class Record(
 object Record {
 
   val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
-  def apply(line: String) = {
+  def apply(line: String) = Try {
     val columns = line.split(" ");
     val product = columns(1)
     val timestamp = columns(4).toLong

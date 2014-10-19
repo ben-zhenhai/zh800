@@ -35,10 +35,12 @@ object EnQueueServer {
 
       println(s"[$counter] EnQueue: $line")
 
-      channel.basicPublish(
-        "", QueueName, MessageProperties.PERSISTENT_TEXT_PLAIN, 
-        line.getBytes
-      )
+      if (line != "saveData") {
+        channel.basicPublish(
+          "", QueueName, MessageProperties.PERSISTENT_TEXT_PLAIN, 
+          line.getBytes
+        )
+      }
     }
   }
 
@@ -55,9 +57,9 @@ object EnQueueServer {
       while (true) {
         val socket = server.accept()
         Future {
+          counter += 1
           processInput(socket, channel, counter)
         }
-        counter += 1
       }
     }
   }
