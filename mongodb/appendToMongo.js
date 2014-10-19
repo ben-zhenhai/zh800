@@ -48,7 +48,12 @@ function insertToProduct(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  dailyTable.ensureIndex({product: 1}, {unique:true, background:false, w:1}, function(err) {
+  dailyTable.ensureIndex({product: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
     dailyTable.update(
       query, modifyAction, {upsert: true},
       function(err, data){
@@ -59,7 +64,7 @@ function insertToProduct(mongoDB, mongoDBMonthly, record, ch, msg) {
         insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg);      
       }
     );
-  });
+  })
 }
 
 function insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg) {
@@ -69,7 +74,13 @@ function insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, {unique:true, background:false, w:1},function() {
+  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
     dailyTable.update(
       query, modifyAction, {upsert: true},
       function(err, data){
@@ -80,7 +91,7 @@ function insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg) {
         insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg)
       }
     );
-  });
+  })
 }
 
 function insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg) {
@@ -93,7 +104,13 @@ function insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  intervalTable.ensureIndex({timestamp: 1, product: 1, mach_id: 1, defact_id: 1}, {unique:true, background:false, w:1},function() {
+  intervalTable.ensureIndex({timestamp: 1, product: 1, mach_id: 1, defact_id: 1}, function (err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
     intervalTable.update(
       query, modifyAction, {upsert: true},
       function(err, data){
@@ -104,7 +121,9 @@ function insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg) {
         insertToMonthly(mongoDB, mongoDBMonthly, record, ch, msg)
       }
     );
+
   });
+
 
 }
 
@@ -112,13 +131,19 @@ function insertToMonthly(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   dateObject = new Date(record.emb_date * 1000);
   timestamp = record.insertDate.substring(0, 7);
-  monthlyTable = mongoDBMonthly.collection("monthly");
+  intervalTable = mongoDBMonthly.collection("monthly");
   query = {timestamp: timestamp, mach_id: record.mach_id, defact_id: record.defact_id};
 
   modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  monthlyTable.ensureIndex({timestamp: 1, mach_id: 1, defact_id: 1}, {unique:true, background:false, w:1},function() {
-    monthlyTable.update(
+  intervalTable.ensureIndex({timestamp: 1, mach_id: 1, defact_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
+    intervalTable.update(
       query, modifyAction, {upsert: true},
       function(err, data){
         if (err) {
@@ -139,7 +164,13 @@ function insertToDaily(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, {unique:true, background:false, w:1},function(err) {
+  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
     dailyTable.update(
       query, modifyAction, {upsert: true},
       function(err, data){
@@ -150,13 +181,14 @@ function insertToDaily(mongoDB, mongoDBMonthly, record, ch, msg) {
         insertToRaw(mongoDB, mongoDBMonthly, record, ch, msg);
       }
     );
+
   });
+
 }
 
 function insertToRaw(mongoDB, mongoDBMonthly, record, ch, msg) {
 
   var rawTable = mongoDB.collection("raw");
-
   rawTable.insert(record, function(err, data) {
     if (err) {
       console.log("save error:" + err);

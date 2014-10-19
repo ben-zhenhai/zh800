@@ -16,6 +16,8 @@ object Receiever {
      val connection = factory.newConnection()
      val channel = connection.createChannel()
      channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+     channel.basicQos(1)
+
      val consumer = new QueueingConsumer(channel);
      channel.basicConsume(QUEUE_NAME, false, consumer);
      (channel, consumer)
