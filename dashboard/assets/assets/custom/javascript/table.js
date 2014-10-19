@@ -14,7 +14,7 @@ function setTable(selection, tableSchema) {
 
 function setupMachineList(id, productMachine, urlPrefix) {
   $(id).select2({width: "100%"}).on('change', function(e) {
-    window.location = urlPrefix + "/" + productMachine;
+    window.location = urlPrefix + "/" + e.val;
   });
   $(id).select2('val', productMachine);
 }
