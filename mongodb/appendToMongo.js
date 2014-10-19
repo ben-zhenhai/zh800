@@ -41,83 +41,171 @@ function parseData(data) {
     return record;
 }
 
-function toIndexOption(query) {
-  var indexOptions = {}
-  Object.keys(query).map(function(value, index) {
-    indexOptions[value] = 1;
-  })
-  return indexOptions;
-}
+function insertToProduct(mongoDB, mongoDBMonthly, record, ch, msg) {
 
-function updateTable(mongoDB, tableName, query, record, callback) {
-  var collection = mongoDB.collection(tableName)
+  var dailyTable = mongoDB.collection("product");
+  var query = {product: record.product};
+
   var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  collection.ensureIndex(collection, toIndexOption(query), function(err) {
-    if (!err) {
-      console.log("Build index failed..." + err);
+  dailyTable.ensureIndex({product: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
       return;
     }
 
-    collection.update(query, modifyAction, {upsert: true}, function() {
-      if (!err) {
-        console.log("add record failed..." + err);
-        return;
+    dailyTable.update(
+      query, modifyAction, {upsert: true},
+      function(err, data){
+        if (err) {
+          console.log("save error:" + err);
+          return;
+        }
+        insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg);      
       }
-
-      callback();
-    });
-  });
+    );
+  })
 }
 
-function addToMongoDB(mongoDB, mongoDBMonthly, data, ch, msg) {
+function insertToProductDetail(mongoDB, mongoDBMonthly, record, ch, msg) {
 
-  var record = parseData(data);
+  var dailyTable = mongoDB.collection("product-" + record.product);
+  var query = {timestamp: record.insertDate, mach_id: record.mach_id};
 
-  console.log('add data [' + recordCount + "] / " + data + '...OK.')
+  var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
 
-  updateTable(mongoDB, "product", {product: record.product}, record, function() {
+  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
 
-    var prodcutDetailTable = "product-" + record.product
 
-    updateTable(mongoDB, prodcutDetailTable, {product: record.product}, record, function() {
-
-      var query = {timestamp: timestamp, product: record.product, 
-                   mach_id: record.mach_id, defact_id: record.defact_id};
-
-      var dateObject = new Date(record.emb_date * 1000);
-      var timestamp = record.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + 
-                                                paddingZero(dateObject.getMinutes());
-      timestamp = timestamp.substring(0, 15) + "0";
-
-      updateTable(mongoDB, record.insertDate, query, record, function () {
-        var query = {timestamp: record.insertDate, mach_id: record.mach_id};
-
-        updateTable(mongoDB, "daily", query, record, function() {
-
-          var timestamp = record.insertDate.substring(0, 7);
-          var query = {timestamp: timestamp, mach_id: record.mach_id, 
-                       defact_id: record.defact_id};
-
-          updateTable(mongoDBMonthly, "monthly", query, record, function() {
-            insertToRaw(mongoDBMonthly, record);
-            ch.ack(msg);
-            recordCount++;
-          });
-        });
-      });
-    })
-  });
+    dailyTable.update(
+      query, modifyAction, {upsert: true},
+      function(err, data){
+        if (err) {
+          console.log("save error:" + err);
+          return;
+        }
+        insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg)
+      }
+    );
+  })
 }
 
-function insertToRaw(mongoDB, record) {
+function insertToInterval(mongoDB, mongoDBMonthly, record, ch, msg) {
+
+  var dateObject = new Date(record.emb_date * 1000);
+  var timestamp = record.insertDate + " " + paddingZero(dateObject.getHours()) + ":" + paddingZero(dateObject.getMinutes());
+  var timestamp = timestamp.substring(0, 15) + "0";
+  var intervalTable = mongoDB.collection(record.insertDate);
+  var query = {timestamp: timestamp, product: record.product, mach_id: record.mach_id, defact_id: record.defact_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
+
+  intervalTable.ensureIndex({timestamp: 1, product: 1, mach_id: 1, defact_id: 1}, function (err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
+    intervalTable.update(
+      query, modifyAction, {upsert: true},
+      function(err, data){
+        if (err) {
+          console.log("save error:" + err);
+          return;
+        }
+        insertToMonthly(mongoDB, mongoDBMonthly, record, ch, msg)
+      }
+    );
+
+  });
+
+
+}
+
+function insertToMonthly(mongoDB, mongoDBMonthly, record, ch, msg) {
+
+  dateObject = new Date(record.emb_date * 1000);
+  timestamp = record.insertDate.substring(0, 7);
+  intervalTable = mongoDBMonthly.collection("monthly");
+  query = {timestamp: timestamp, mach_id: record.mach_id, defact_id: record.defact_id};
+
+  modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
+
+  intervalTable.ensureIndex({timestamp: 1, mach_id: 1, defact_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
+    intervalTable.update(
+      query, modifyAction, {upsert: true},
+      function(err, data){
+        if (err) {
+          console.log("save error:" + err);
+          return;
+        }
+        insertToDaily(mongoDB, mongoDBMonthly, record, ch, msg)
+      }
+    );
+  });
+
+}
+
+
+function insertToDaily(mongoDB, mongoDBMonthly, record, ch, msg) {
+  var dailyTable = mongoDB.collection("daily");
+  var query = {timestamp: record.insertDate, mach_id: record.mach_id};
+
+  var modifyAction = {$inc: {bad_qty: +record.bad_qty, count_qty: +record.count_qty}}
+
+  dailyTable.ensureIndex({timestamp: 1, mach_id: 1}, function(err) {
+    if (err) {
+      console.log("index error:" + err);
+      return;
+    }
+
+
+    dailyTable.update(
+      query, modifyAction, {upsert: true},
+      function(err, data){
+        if (err) {
+          console.log("save error:" + err);
+          return;
+        }
+        insertToRaw(mongoDB, mongoDBMonthly, record, ch, msg);
+      }
+    );
+
+  });
+
+}
+
+function insertToRaw(mongoDB, mongoDBMonthly, record, ch, msg) {
+
   var rawTable = mongoDB.collection("raw");
   rawTable.insert(record, function(err, data) {
     if (err) {
       console.log("save error:" + err);
       return;
     }
+    recordCount++;
   });
+  ch.ack(msg);
+
+}
+
+function processData(mongoDB, mongoDBMonthly, data, ch, msg) {
+
+  var record = parseData(data);
+
+  console.log('add data [' + recordCount + "] / " + data + '...OK.')
+  insertToProduct(mongoDB, mongoDBMonthly,record, ch, msg);
 }
 
 function startProcessingServer(callback) {
@@ -169,7 +257,7 @@ function prepareRabbitMQ(mongoDB, mongoDBMonthly) {
       ch.consume(dataQueue, function(msg) {
         if (msg !== null) {
           var data = msg.content.toString();
-          addToMongoDB(mongoDB, mongoDBMonthly, data, ch, msg);
+          processData(mongoDB, mongoDBMonthly, data, ch, msg);
         }
       });
     }
