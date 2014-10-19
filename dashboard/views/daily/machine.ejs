@@ -150,7 +150,7 @@
 
         function strToDate(dateString) {
           var columns = dateString.split("/");
-          return new Date(columns[0], columns[1], columns[2]);
+          return new Date(columns[0], +(columns[1]-1), columns[2]);
         }
 
         function getWeek(isoDate) {
@@ -161,7 +161,7 @@
 
         var isoDate = strToDate(dateText);
 
-        var url = "/daily/" + isoDate.getFullYear() + "/" + isoDate.getMonth() + 
+        var url = "/daily/" + isoDate.getFullYear() + "/" + (+isoDate.getMonth()+1) + 
                   "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
 
         window.location = url;

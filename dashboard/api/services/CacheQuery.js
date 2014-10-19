@@ -1,6 +1,6 @@
 function daily(tableName, query, callback) {
   var mongoClient = require('mongodb').MongoClient
-  var mongoURL = 'mongodb://localhost/daily'
+  var mongoURL = 'mongodb://localhost/zhenhai'
   var data = [];
 
   mongoClient.connect(mongoURL, function(err, mongoDB) {
