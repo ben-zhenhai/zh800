@@ -6,27 +6,25 @@ import java.sql.DriverManager
 
 object Receiever {
 
-  val QUEUE_NAME = "test"
+  val QUEUE_NAME = "rawDataLine"
 
   Class.forName("org.postgresql.Driver");
 
-  def getConsumer = {
+  def initRabbitMQ() = {
      val factory = new ConnectionFactory
      factory.setHost("localhost")
      val connection = factory.newConnection()
      val channel = connection.createChannel()
      channel.queueDeclare(QUEUE_NAME, true, false, false, null);
      val consumer = new QueueingConsumer(channel);
-
-     channel.basicConsume(QUEUE_NAME, true, consumer);
-     consumer
+     channel.basicConsume(QUEUE_NAME, false, consumer);
+     (channel, consumer)
   }
 
   def main(args: Array[String]) {
 
-     val connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/zhenhai?charSet=utf-8", "zhenhai", "zhenhai123456")
-     val addToPostgres = new AddToPostgres(connection)
-     val consumer = getConsumer
+     val (channel, consumer) = initRabbitMQ()
+     val mongoProcessor = new MongoProcessor
 
      var recordCount: Long = 0
 
@@ -36,7 +34,8 @@ object Receiever {
        val delivery = consumer.nextDelivery();
        val message = new String(delivery.getBody());
        println(s" [$recordCount] Received '" + message + "'");
-       addToPostgres.addData(Record(message))
+       mongoProcessor.addRecord(Record(message))
+       channel.basicAck(delivery.getEnvelope.getDeliveryTag, false);
        recordCount += 1;
      }
 
