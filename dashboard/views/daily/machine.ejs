@@ -132,7 +132,7 @@
           <thead>
             <tr>
               <th>時間</th>
-              <th>生產數量</th>
+              <th>量品數量</th>
               <th>錯誤數量</th>
               <th>錯誤類別</th>
             </tr>
@@ -192,7 +192,7 @@
         } 
 
         for (var i = 0; i < dataJSON.length; i++) {
-          if (+(dataJSON[i].defact_id > 0)) {
+          if (+(dataJSON[i].bad_qty > 0)) {
             addToData(dataJSON[i].defact_id, dataJSON[i].bad_qty);
           }
         }
@@ -245,7 +245,7 @@
             function (data) { return data.timestamp },
             function (data) { return data.count_qty; },
             function (data) { return data.bad_qty; },
-            function (data) { return data.defact_id; }
+            function (data) { return data.bad_qty == 0 ? "" : data.defact_id; }
           ]
         }
       }
