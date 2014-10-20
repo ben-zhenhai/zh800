@@ -64,7 +64,7 @@
             <i class="inbox icon"></i>
             <div class="content">
               <div class="header">查無資料</div>
-              <p>無法查詢到相關資料，請確定網址是否正確。</p>
+              <p>尚無相關資料，或目前無法取得錯誤統計，請稍候再試。</p>
             </div>
           </div>
         </div>
@@ -81,6 +81,13 @@
     <script>
 
       $.ajax("/api/json/machine", {timeout: 30 * 1000}).done(function(data) {
+
+        if (!data.dataSet || data.dataSet.length == 0) {
+          $('#notFoundBlock').show();
+          $('#loadingIndicator').hide();
+          return;
+        }
+
         var drawPieChart = pieChart({
           width: 400,
           height: 400,

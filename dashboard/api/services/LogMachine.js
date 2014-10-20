@@ -5,6 +5,9 @@ exports.cachedJSON = function() {
     var mapReducer = MapReducer.defineOn({
       model: "monthly",
       groupingFunction: function (data) { return data.mach_id },
+      mongoFilters: {
+        bad_qty: {$gt: 0}
+      },
       converter: function (data) {
         return {
           name: data._id,
@@ -23,7 +26,8 @@ exports.cachedJSON = function() {
     var mapReducer = MapReducer.defineOn({
       model: "monthly",
       mongoFilters: {
-        mach_id: machineID
+        mach_id: machineID,
+        bad_qty: {$gt: 0}
       },
       groupingFunction: function (data) { return data.defact_id },
       queryField: "bad_qty",
@@ -58,7 +62,9 @@ exports.cachedJSON = function() {
       collection.find({mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {
           var q = {time: d.timestamp, defact_id: d.defact_id, bad_qty: d.bad_qty};
-          resultData.push(q);
+          if (q.bad_qty > 0) {
+            resultData.push(q);
+          }
         },function(d) {
           resultData.sort(function(a, b) {
             if (a.time < b.time) { return -1; }

@@ -5,6 +5,9 @@ exports.cachedJSON = function() {
       model: "monthly",
       queryField: "bad_qty",
       groupingFunction: function (data) { return data.mach_id + "__" + data.defact_id; },
+      mongoFilters: {
+        bad_qty: {$gt: 0}
+      },
       converter: function (data) {
         return {
           name: data._id,
@@ -26,7 +29,8 @@ exports.cachedJSON = function() {
       model: "monthly",
       mongoFilters: {
         defact_id: +defactID,
-        mach_id: machineID
+        mach_id: machineID,
+        bad_qty: {$gt: 0}
       },
       groupingFunction: function (data) { return data.defact_id },
       queryField: "bad_qty",
@@ -62,7 +66,9 @@ exports.cachedJSON = function() {
       var resultData = [];
       collection.find({defact_id: +defactID, mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {
-          resultData.push({time: d.timestamp, name: d.mach_id, value: d.bad_qty});
+          if (d.bad_qty > 0) {
+            resultData.push({time: d.timestamp, name: d.mach_id, value: d.bad_qty});
+          }
         },function(d) {
           resultData.sort(function(a, b) {
             if (a.time < b.time) { return -1; }
