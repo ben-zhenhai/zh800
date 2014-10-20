@@ -1,7 +1,7 @@
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.Connection
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.QueueingConsumer
 
 object DeQueueServer {
 
@@ -12,11 +12,11 @@ object DeQueueServer {
      factory.setHost("localhost")
      val connection = factory.newConnection()
      val channel = connection.createChannel()
-     channel.queueDeclare(QueueName, true, false, false, null);
+     channel.queueDeclare(QueueName, true, false, false, null)
      channel.basicQos(1)
 
-     val consumer = new QueueingConsumer(channel);
-     channel.basicConsume(QueueName, false, consumer);
+     val consumer = new QueueingConsumer(channel)
+     channel.basicConsume(QueueName, false, consumer)
      (channel, consumer)
   }
 
@@ -27,20 +27,20 @@ object DeQueueServer {
 
      var recordCount: Long = 0
 
-     println(" [*] Waiting for messages. To exit press CTRL+C");
+     println(" [*] Start DeQueue Server to append to MongoDB.")
 
      while (true) {
-       val delivery = consumer.nextDelivery();
-       val message = new String(delivery.getBody());
+       val delivery = consumer.nextDelivery()
+       val message = new String(delivery.getBody())
 
-       println(s" [$recordCount] DeQueue '" + message + "'");
+       println(s" [*] [$recordCount] DeQueue: $message")
 
        Record(message).foreach{ record =>
          mongoProcessor.addRecord(record)
        }
 
-       channel.basicAck(delivery.getEnvelope.getDeliveryTag, false);
-       recordCount += 1;
+       channel.basicAck(delivery.getEnvelope.getDeliveryTag, false)
+       recordCount += 1
      }
 
   }

@@ -8,7 +8,7 @@ import ExecutionContext.Implicits.global
 
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.{Connection => RabbitMQConnection, Channel => RabbitMQChannel}
-import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.MessageProperties
 
 object EnQueueServer {
 
@@ -28,12 +28,13 @@ object EnQueueServer {
 
   def processInput(socket: Socket, channel: RabbitMQChannel, counter: Long) {
     for {
+      managedSocket <- managed(socket)
       inputStream <- managed(socket.getInputStream)
       bufferedSource <- managed(new BufferedSource(inputStream))
     } {
       val line = bufferedSource.getLines().next()
 
-      println(s"[$counter] EnQueue: $line")
+      println(s" [*] [$counter] EnQueue: $line")
 
       if (line != "saveData") {
         channel.basicPublish(
@@ -46,6 +47,7 @@ object EnQueueServer {
 
   def main(args: Array[String]) {
 
+    println(" [*] Start Communication Server to receive data from machines.")
     var counter = 0L
 
     for {
