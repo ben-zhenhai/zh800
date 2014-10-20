@@ -4,7 +4,7 @@ exports.cachedJSON = function() {
     var mapReducer = MapReducer.defineOn({
       model: "monthly",
       queryField: "bad_qty",
-      groupingFunction: function (data) { return data.mach_id + "-" + data.defact_id; },
+      groupingFunction: function (data) { return data.mach_id + "__" + data.defact_id; },
       converter: function (data) {
         return {
           name: data._id,
@@ -19,8 +19,8 @@ exports.cachedJSON = function() {
   }
 
   function reasonDetail (reasonID, callback) {
-    var defactID = reasonID.split("-")[1] + "";
-    var machineID = reasonID.split("-")[0] + "";
+    var defactID = reasonID.split("__")[1] + "";
+    var machineID = reasonID.split("__")[0] + "";
 
     var mapReducer = MapReducer.defineOn({
       model: "monthly",
@@ -56,8 +56,8 @@ exports.cachedJSON = function() {
       }
 
       var collection = mongoDB.collection("monthly");
-      var defactID = reasonID.split("-")[1] + "";
-      var machineID = reasonID.split("-")[0] + "";
+      var defactID = reasonID.split("__")[1] + "";
+      var machineID = reasonID.split("__")[0] + "";
       
       var resultData = [];
       collection.find({defact_id: +defactID, mach_id: machineID}, function(err, dataSet) {
