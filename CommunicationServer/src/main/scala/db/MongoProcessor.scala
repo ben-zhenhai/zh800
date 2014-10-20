@@ -1,5 +1,11 @@
+package tw.com.zhenhai.db
+
+import tw.com.zhenhai.model._
+
 import com.mongodb.casbah.Imports._
+
 import java.text.SimpleDateFormat
+import java.util.Date
 
 class MongoProcessor {
 
@@ -12,6 +18,16 @@ class MongoProcessor {
     val operation = $inc("bad_qty" -> record.badQty, "count_qty" -> record.countQty)
     zhenhaiDB(tableName).ensureIndex(query.mapValues(x => 1))
     zhenhaiDB(tableName).update(query, operation, upsert = true)
+  }
+
+  def addMachineAlert(record: Record) {
+    zhenhaiDB("alert").insert(
+      MongoDBObject(
+        "timestamp" -> dateFormatter.format(new Date(record.embDate * 1000)),
+        "mach_id"   -> record.machID,
+        "defact_id" -> record.defactID
+      )
+    )
   }
 
   def addRecord(record: Record) {
@@ -31,15 +47,22 @@ class MongoProcessor {
 
     update(
       tableName = record.insertDate, 
-      query = MongoDBObject("timestamp" -> tenMinute, "product" -> record.product, "mach_id" -> record.machID, 
-                            "defact_id" -> record.defactID), 
+      query = MongoDBObject(
+        "timestamp" -> tenMinute, 
+        "product" -> record.product, 
+        "mach_id" -> record.machID, 
+        "defact_id" -> record.defactID
+      ), 
       record = record
     )
 
     update(
-      tableName = "monthly", 
-      query = MongoDBObject("timestamp" -> record.insertDate.substring(0, 7), "mach_id" -> record.machID, 
-                            "defact_id" -> record.defactID), 
+      tableName = "dailyDefact", 
+      query = MongoDBObject(
+        "timestamp" -> record.insertDate, 
+        "mach_id" -> record.machID, 
+        "defact_id" -> record.defactID
+      ), 
       record = record
     )
 

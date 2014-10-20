@@ -3,7 +3,7 @@ exports.cachedJSON = function() {
   function overview(convert, callback) {
 
     var mapReducer = MapReducer.defineOn({
-      model: "monthly",
+      model: "dailyDefact",
       groupingFunction: function (data) { return data.mach_id },
       mongoFilters: {
         bad_qty: {$gt: 0}
@@ -24,7 +24,7 @@ exports.cachedJSON = function() {
   function detailPie (machineID, callback) {
 
     var mapReducer = MapReducer.defineOn({
-      model: "monthly",
+      model: "dailyDefact",
       mongoFilters: {
         mach_id: machineID,
         bad_qty: {$gt: 0}
@@ -57,7 +57,7 @@ exports.cachedJSON = function() {
 
       var resultData = [];
 
-      var collection = mongoDB.collection("monthly");
+      var collection = mongoDB.collection("dailyDefact");
 
       collection.find({mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {

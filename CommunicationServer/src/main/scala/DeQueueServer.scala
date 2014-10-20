@@ -1,3 +1,9 @@
+package tw.com.zhenhai
+
+import tw.com.zhenhai.db.MongoProcessor
+import tw.com.zhenhai.model.Record
+import tw.com.zhenhai.util.KeepRetry
+
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.Channel
@@ -20,7 +26,7 @@ object DeQueueServer {
      (channel, consumer)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = KeepRetry {
 
      val (channel, consumer) = initRabbitMQ()
      val mongoProcessor = new MongoProcessor
@@ -36,7 +42,10 @@ object DeQueueServer {
        println(s" [*] [$recordCount] DeQueue: $message")
 
        Record(message).foreach{ record =>
-         mongoProcessor.addRecord(record)
+         record.countQty match {
+           case -1 => mongoProcessor.addMachineAlert(record)
+           case  n => mongoProcessor.addRecord(record)
+         }
        }
 
        channel.basicAck(delivery.getEnvelope.getDeliveryTag, false)

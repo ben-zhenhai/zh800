@@ -1,3 +1,9 @@
+package tw.com.zhenhai
+
+import tw.com.zhenhai.db.MongoProcessor
+import tw.com.zhenhai.model.Record
+import tw.com.zhenhai.util.KeepRetry
+
 import java.net.{ServerSocket, Socket}
 
 import scala.io._
@@ -45,7 +51,7 @@ object EnQueueServer {
     }
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = KeepRetry {
 
     println(" [*] Start Communication Server to receive data from machines.")
     var counter = 0L

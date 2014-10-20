@@ -2,7 +2,7 @@ exports.cachedJSON = function() {
   function overview(callback) {
 
     var mapReducer = MapReducer.defineOn({
-      model: "monthly",
+      model: "dailyDefact",
       queryField: "bad_qty",
       groupingFunction: function (data) { return data.mach_id + "__" + data.defact_id; },
       mongoFilters: {
@@ -26,7 +26,7 @@ exports.cachedJSON = function() {
     var machineID = reasonID.split("__")[0] + "";
 
     var mapReducer = MapReducer.defineOn({
-      model: "monthly",
+      model: "dailyDefact",
       mongoFilters: {
         defact_id: +defactID,
         mach_id: machineID,
@@ -59,7 +59,7 @@ exports.cachedJSON = function() {
         return;
       }
 
-      var collection = mongoDB.collection("monthly");
+      var collection = mongoDB.collection("dailyDefact");
       var defactID = reasonID.split("__")[1] + "";
       var machineID = reasonID.split("__")[0] + "";
       
