@@ -5,6 +5,7 @@ class MongoProcessor {
 
   val mongoClient = MongoClient("localhost")
   val zhenhaiDB = mongoClient("zhenhai")
+  val dailyDB = mongoClient("zhenhaiDaily")
   val dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm")
 
   def update(tableName: String, query: MongoDBObject, record: Record) {
@@ -48,6 +49,7 @@ class MongoProcessor {
       record = record
     )
 
+    dailyDB(record.insertDate).insert(record.toMongoObject)
     zhenhaiDB("data").insert(record.toMongoObject)
   }
 }
