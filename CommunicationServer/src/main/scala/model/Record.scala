@@ -47,6 +47,11 @@ object Record {
 
   val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
 
+  //! Should delete when production.
+  import scala.util.Random
+  def machineIDs = (MachineInfo.productMapping.keySet ++ MachineInfo.machineModel.keySet).toArray
+  def randomMachineID = machineIDs(Random.nextInt(machineIDs.size))
+
   def apply(line: String) = Try {
     val columns = line.split(" ");
     val machineID = columns(8)
