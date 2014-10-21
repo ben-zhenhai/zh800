@@ -14,6 +14,7 @@ module.exports = {
   main: function(req, res) {
 
     var logTotal = LogTotal.jsonAPI();
+    var logAlert = LogAlert.jsonAPI();
 
     logTotal.getDateRange(function(err, minDate, maxDate) {
 
@@ -22,16 +23,23 @@ module.exports = {
         return;
       }
 
-      var variables = {
-        currentYear: (new Date()).getFullYear(),
-        currentMonth: (+(new Date()).getMonth()) + 1,
-        minYear: minDate.getFullYear(),
-        minMonth: (+minDate.getMonth() + 1),
-        maxYear: maxDate.getFullYear(),
-        maxMonth: (+maxDate.getMonth() + 1)
-      }
 
-      res.view("dashboard", variables);
+      logAlert.hasData(function(hasAlert) {
+        console.log("alert:" + hasAlert)
+        var variables = {
+          currentYear: (new Date()).getFullYear(),
+          currentMonth: (+(new Date()).getMonth()) + 1,
+          minYear: minDate.getFullYear(),
+          minMonth: (+minDate.getMonth() + 1),
+          maxYear: maxDate.getFullYear(),
+          maxMonth: (+maxDate.getMonth() + 1),
+          alertDisabled: hasAlert ? "" : "disabled",
+          alertLink: hasAlert ? "/alert" : "#"
+        }
+
+        res.view("dashboard", variables);
+      });
+
     });
 
   }

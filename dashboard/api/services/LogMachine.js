@@ -1,10 +1,10 @@
 exports.cachedJSON = function() {
-
-  function overview(convert, callback) {
+  function overview(callback) {
 
     var mapReducer = MapReducer.defineOn({
-      model: "dailyDefact",
-      groupingFunction: function (data) { return data.mach_id },
+      model: "reasonByMachine",
+      queryField: "bad_qty",
+      groupingFunction: function (data) { return data.mach_type },
       mongoFilters: {
         bad_qty: {$gt: 0}
       },
@@ -18,8 +18,53 @@ exports.cachedJSON = function() {
     });
 
     mapReducer(callback);
-
   }
+
+  function step(step, callback) {
+
+    var mapReducer = MapReducer.defineOn({
+      model: "reasonByMachine",
+      queryField: "bad_qty",
+      groupingFunction: function (data) { return data.mach_model },
+      mongoFilters: {
+        mach_type: step,
+        bad_qty: {$gt: 0}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/machine/" + step + "/" + data._id
+        }
+      }
+    });
+
+    mapReducer(callback);
+  }
+
+  function stepModel(step, model, callback) {
+
+    var mapReducer = MapReducer.defineOn({
+      model: "reasonByMachine",
+      queryField: "bad_qty",
+      groupingFunction: function (data) { return data.mach_id },
+      mongoFilters: {
+        mach_type: step,
+        mach_model: model,
+        bad_qty: {$gt: 0}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/machine/" + step + "/" + model + "/" + data._id
+        }
+      }
+    });
+
+    mapReducer(callback);
+  }
+
 
   function detailPie (machineID, callback) {
 
@@ -41,6 +86,7 @@ exports.cachedJSON = function() {
 
     mapReducer(callback);
 
+      
   }
 
   function detailTable (machineID, callback) {
@@ -55,15 +101,13 @@ exports.cachedJSON = function() {
         return;
       }
 
-      var resultData = [];
-
       var collection = mongoDB.collection("dailyDefact");
-
+      
+      var resultData = [];
       collection.find({mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {
-          var q = {time: d.timestamp, defact_id: d.defact_id, bad_qty: d.bad_qty};
-          if (q.bad_qty > 0) {
-            resultData.push(q);
+          if (d.bad_qty > 0) {
+            resultData.push({time: d.timestamp, defact_id: d.defact_id, bad_qty: d.bad_qty});
           }
         },function(d) {
           resultData.sort(function(a, b) {
@@ -75,19 +119,18 @@ exports.cachedJSON = function() {
           callback(undefined, resultData);
         });
       });
-
     });
-
   }
 
   return {
     overview: overview,
+    step: step,
+    stepModel: stepModel,
     detailPie: detailPie,
     detailTable: detailTable
   }
 
 }
-
 
 exports.jsonAPI = function() {
   return LogMachine.cachedJSON();

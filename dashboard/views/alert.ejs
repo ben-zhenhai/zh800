@@ -11,19 +11,35 @@
   <link rel="stylesheet" type="text/css" href="/assets/sementicUI/css/semantic.css">
   <link rel="stylesheet" type="text/css" href="/assets/custom/css/custom.css">
 
+
   <script src="/assets/lib/javascript/jquery-2.1.1.js"></script>
   <script src="/assets/lib/javascript/d3.v3.min.js"></script>
+  <script src="/assets/lib/javascript/stupidtable.min.js"></script>
 
   <script src="/assets/sementicUI/javascript/semantic.js"></script>
 
   <script src="/assets/custom/javascript/chart.js"></script>
   <script src="/assets/custom/javascript/steps.js"></script>
-
+  <script src="/assets/custom/javascript/table.js"></script>
 
   <style>
+.chart rect {
+  fill: steelblue;
+}
+
+.chart text {
+  fill: black;
+  font: 16px sans-serif;
+  text-anchor: middle;
+}
+
+.chart rect:hover {
+  fill: brown;
+     cursor: pointer;
+}
+
 .slice path:hover {
   fill: brown;
-  cursor: pointer;
 }
 
   </style>
@@ -34,7 +50,7 @@
     <div class="container">
       <a href="/" class="item"><div class="ui header">Zhenhai Dashboard</div></a>
       <div class="right menu">
-        <div class="item">依錯誤原因</div>
+        <div class="item">依機器</div>
         <div class="ui simple dropdown item">
           <div><i class="ui large list icon"></i></div>
           <div class="menu">
@@ -42,70 +58,69 @@
             <a class="item" href="/user/logout"><i class="ui sign out icon"></i> 登出</a>
           </div>
         </div>
-
       </div>
     </div>
   </div>
   <div class="center aligned one column ui grid" style="padding-top:60px; padding-bottom:20px">
     <div class="column">
-      <div class="ui four steps">
-        <% for (var i = 0; i < steps.length; i++) { %>
-          <div data-defaultName="<%= steps[i].title %>" id="<%= 'step' + i %>" class="ui <%= steps[i].active %> step"><%= steps[i].title %></div>
-        <% } %>
+      <div class="ui one steps">
+         <div class="ui active step">機台異常</div>
       </div>
     </div>
     <div class="column">
-      <a href="<%= csvLink %>" class="ui right floated button">Export CSV File</a>
-    </div>
-    <div class="column">
-
-      <div class="ui one column page grid" style="display: none" id="notFoundBlock">
+      <div class="ui one column page grid" style="display: none;" id="notFoundBlock">
         <div class="column">
           <div class="ui icon error message">
             <i class="inbox icon"></i>
             <div class="content">
               <div class="header">查無資料</div>
-              <p>尚無相關資料，或目前無法取得錯誤統計，請稍候再試。</p>
+              <p>尚無相關資料。</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div id="loadingIndicator">
-        <div><i class="huge circular loading icon"></i></div>
-        <div style="margin-top: 1em">讀取中……</div>
+      <div class="one column ui page grid">
+        <div class="column">
+          <table class="ui celled table segment" id="detailTable">
+            <thead>
+              <tr>
+                <th data-sort="string">時間 <i id="arrow0" class="ui sort icon" style="float: right"></i></th>
+                <th data-sort="int">機台 <i id="arrow1" class="ui sort icon" style="float: right"></i></th>
+                <th data-sort="int">錯誤種類（事件 ID） <i id="arrow2" class="ui sort icon" style="float: right"></i></th>
+              </tr>
+            </thead>
+            <tbody id="table">
+              <tr><td>00:00</td><td>A001</td><td>10</td></tr>
+              <tr><td>00:00</td><td>B001</td><td>15</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      <svg class="pieChart"></svg>
     </div>
 
     <script>
+      function toTableSchema(dataJSON) {
+        return {
+          data: dataJSON,
+          extractors: [
+            function (data) { return data.timestamp },
+            function (data) { return data.mach_id },
+            function (data) { return data.defact_id }
+          ]
+        }
+      }
 
-      $.ajax("<%= ajaxDataURL %>", {timeout: 30 * 1000}).done(function(data) {
+      $.ajax("/api/json/alert", {timeout: 30 * 1000}).done(function(data) {
 
-        if (!data.dataSet || data.dataSet.length == 0) {
+        console.log(data);
+        if (!data || data.length == 0) {
           $('#notFoundBlock').show();
-          $('#loadingIndicator').hide();
           return;
         }
 
-        var drawPieChart = pieChart({
-          width: 400,
-          height: 400,
-          radius: 180,
-          threshold: <%= threshold %>,
-          extractValue: function(data) { return data.value; },
-          extractName: function(data) { return data.name; }
-        })
-
-        drawPieChart(".pieChart", data.dataSet);
-
-      }).always(function() {
-        $('#loadingIndicator').hide();
-      }).error(function() {
-        $('#notFoundBlock').show();
+        setTable("#table", toTableSchema(data));
       });
-
 
     </script>
 

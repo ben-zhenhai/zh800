@@ -8,19 +8,19 @@
 
   <title>Zhenhai Dashboard</title>
 
-  <link rel="stylesheet" type="text/css" href="../assets/sementicUI/css/semantic.css">
-  <link rel="stylesheet" type="text/css" href="../assets/custom/css/custom.css">
+  <link rel="stylesheet" type="text/css" href="/assets/sementicUI/css/semantic.css">
+  <link rel="stylesheet" type="text/css" href="/assets/custom/css/custom.css">
 
-  <script src="../assets/lib/javascript/jquery-2.1.1.js"></script>
-  <script src="../assets/lib/javascript/d3.v3.min.js"></script>
+
+  <script src="/assets/lib/javascript/jquery-2.1.1.js"></script>
+  <script src="/assets/lib/javascript/d3.v3.min.js"></script>
   <script src="/assets/lib/javascript/stupidtable.min.js"></script>
 
-  <script src="../assets/sementicUI/javascript/semantic.js"></script>
+  <script src="/assets/sementicUI/javascript/semantic.js"></script>
 
-  <script src="../assets/custom/javascript/chart.js"></script>
-  <script src="../assets/custom/javascript/steps.js"></script>
-  <script src="../assets/custom/javascript/table.js"></script>
-
+  <script src="/assets/custom/javascript/chart.js"></script>
+  <script src="/assets/custom/javascript/steps.js"></script>
+  <script src="/assets/custom/javascript/table.js"></script>
 
   <style>
 .chart rect {
@@ -50,7 +50,7 @@
     <div class="container">
       <a href="/" class="item"><div class="ui header">Zhenhai Dashboard</div></a>
       <div class="right menu">
-        <div class="item">依錯誤原因</div>
+        <div class="item">依機器</div>
         <div class="ui simple dropdown item">
           <div><i class="ui large list icon"></i></div>
           <div class="menu">
@@ -58,7 +58,6 @@
             <a class="item" href="/user/logout"><i class="ui sign out icon"></i> 登出</a>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -104,7 +103,7 @@
             <thead>
               <tr>
                 <th data-sort="string">時間 <i id="arrow0" class="ui sort icon" style="float: right"></i></th>
-                <th data-sort="string">機器 <i id="arrow1" class="ui sort icon" style="float: right"></i></th>
+                <th data-sort="int">錯誤種類 <i id="arrow1" class="ui sort icon" style="float: right"></i></th>
                 <th data-sort="int">錯誤數量 <i id="arrow2" class="ui sort icon" style="float: right"></i></th>
               </tr>
             </thead>
@@ -122,8 +121,8 @@
 
     </script>
     <script>
-      $.ajax("<%= pieChartDataURL %>", {timeout: 30 * 1000}).done(function(data) {
 
+      $.ajax("<%= pieChartDataURL %>", {timeout: 30 * 1000}).done(function(data) {
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();
@@ -151,13 +150,12 @@
             'data': data,
             'extractors': [
               function (data) { return data.time; },
-              function (data) { return data.name; },
-              function (data) { return data.value; }
+              function (data) { return data.defact_id; },
+              function (data) { return data.bad_qty; }
             ]
           };
 
           setTable("#table", tableSchema);
-
           $('#detailTable').show();
           sortTable('#detailTable', 3);
 
