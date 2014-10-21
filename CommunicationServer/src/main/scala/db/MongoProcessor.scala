@@ -72,6 +72,16 @@ class MongoProcessor {
       record = record
     )
 
+    update(
+      tableName = "reasonByMachine", 
+      query = MongoDBObject(
+        "mach_id" -> record.machID,
+        "mach_model" -> MachineInfo.getModel(record.machID),
+        "mach_type" -> MachineInfo.getMachineType(record.machID)
+      ), 
+      record = record
+    )
+
     dailyDB(record.insertDate).insert(record.toMongoObject)
     zhenhaiDB("data").insert(record.toMongoObject)
   }

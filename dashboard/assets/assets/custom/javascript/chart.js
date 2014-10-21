@@ -131,6 +131,7 @@ function pieChart(options) {
   assertInt(options.width, "No width attribute");
   assertInt(options.height, "No height attribute");
   assertInt(options.radius, "No radius");
+  var threshold = options.threshold >= 0 ? options.threshold : 0.5;
 
   var draw = function (selection, data) {
 
@@ -190,7 +191,13 @@ function pieChart(options) {
         .attr("transform", calculateArcCenter)
         .attr("text-anchor", "middle")
         .attr("id", function(d, i) { return "pieText" + i; })
-        .text(function(d) { return options.extractName(d.data); });
+        .text(function(d) { 
+          if (d.endAngle - d.startAngle >= threshold) {
+            return options.extractName(d.data); 
+          } {
+            return "";
+          }
+        });
 
 
     for (var i = 0; i < data.length; i++) {

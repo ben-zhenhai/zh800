@@ -2,9 +2,9 @@ exports.cachedJSON = function() {
   function overview(callback) {
 
     var mapReducer = MapReducer.defineOn({
-      model: "dailyDefact",
+      model: "reasonByMachine",
       queryField: "bad_qty",
-      groupingFunction: function (data) { return data.mach_id + "__" + data.defact_id; },
+      groupingFunction: function (data) { return data.mach_type },
       mongoFilters: {
         bad_qty: {$gt: 0}
       },
@@ -18,17 +18,59 @@ exports.cachedJSON = function() {
     });
 
     mapReducer(callback);
-
   }
 
-  function reasonDetail (reasonID, callback) {
-    var defactID = reasonID.split("__")[1] + "";
-    var machineID = reasonID.split("__")[0] + "";
+  function step(step, callback) {
+
+    var mapReducer = MapReducer.defineOn({
+      model: "reasonByMachine",
+      queryField: "bad_qty",
+      groupingFunction: function (data) { return data.mach_model },
+      mongoFilters: {
+        mach_type: step,
+        bad_qty: {$gt: 0}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/reason/" + step + "/" + data._id
+        }
+      }
+    });
+
+    mapReducer(callback);
+  }
+
+  function stepModel(step, model, callback) {
+
+    var mapReducer = MapReducer.defineOn({
+      model: "reasonByMachine",
+      queryField: "bad_qty",
+      groupingFunction: function (data) { return data.mach_id },
+      mongoFilters: {
+        mach_type: step,
+        mach_model: model,
+        bad_qty: {$gt: 0}
+      },
+      converter: function (data) {
+        return {
+          name: data._id,
+          value: data.value,
+          link: "/reason/" + step + "/" + model + "/" + data._id
+        }
+      }
+    });
+
+    mapReducer(callback);
+  }
+
+
+  function detailPie (machineID, callback) {
 
     var mapReducer = MapReducer.defineOn({
       model: "dailyDefact",
       mongoFilters: {
-        defact_id: +defactID,
         mach_id: machineID,
         bad_qty: {$gt: 0}
       },
@@ -47,7 +89,7 @@ exports.cachedJSON = function() {
       
   }
 
-  function detailTable (reasonID, callback) {
+  function detailTable (machineID, callback) {
     var mongoURL = "mongodb://localhost/zhenhai"
     var mongoClient = require('mongodb').MongoClient
 
@@ -60,14 +102,12 @@ exports.cachedJSON = function() {
       }
 
       var collection = mongoDB.collection("dailyDefact");
-      var defactID = reasonID.split("__")[1] + "";
-      var machineID = reasonID.split("__")[0] + "";
       
       var resultData = [];
-      collection.find({defact_id: +defactID, mach_id: machineID}, function(err, dataSet) {
+      collection.find({mach_id: machineID}, function(err, dataSet) {
         dataSet.forEach(function(d) {
           if (d.bad_qty > 0) {
-            resultData.push({time: d.timestamp, name: d.mach_id, value: d.bad_qty});
+            resultData.push({time: d.timestamp, defact_id: d.defact_id, bad_qty: d.bad_qty});
           }
         },function(d) {
           resultData.sort(function(a, b) {
@@ -79,14 +119,14 @@ exports.cachedJSON = function() {
           callback(undefined, resultData);
         });
       });
-
     });
-    
   }
 
   return {
     overview: overview,
-    reasonDetail: reasonDetail,
+    step: step,
+    stepModel: stepModel,
+    detailPie: detailPie,
     detailTable: detailTable
   }
 

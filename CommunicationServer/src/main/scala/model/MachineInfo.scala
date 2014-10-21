@@ -241,7 +241,14 @@ object MachineInfo {
     "E49-S8" -> ("SPH-3000", 2)
   )
 
-  def getProduct(machineID: String) = productMapping.get(machineID)
+  def getProduct(machineID: String) = productMapping.get(machineID).getOrElse("Unknow")
+  def getModel(machineID: String) = machineModel.get(machineID).map(_._1).getOrElse("Unknown")
+  def getMachineType(machineID: String) = {
+    for {
+      machModel <- machineModel.get(machineID).map(_._2)
+      machType  <- machineType.get(machModel)
+    } yield machType
+  }.getOrElse("Unknown")
 
 }
 

@@ -68,17 +68,13 @@ module.exports.routes = {
   "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
   // By Reason Dashboard
-  /*
   "GET /reason": "ReasonReport.overview",
-  "GET /reason/:reasonID": "ReasonReport.detail",
-  */
+  "GET /reason/:step": "ReasonReport.step",
+  "GET /reason/:step/:model": "ReasonReport.stepModel",
+  "GET /reason/:step/:model/:machineID": "ReasonReport.detail",
 
   // Alert Dashboard
   "GET /alert": "AlertReport.overview",
-
-  // By Machine Dashboard
-  "GET /machine": "MachineReport.overview",
-  "GET /machine/:machineID": "MachineReport.detail",
 
   // Total Reivew JSON API
   "GET /api/json/total": "TotalJSON.overview",
@@ -101,16 +97,16 @@ module.exports.routes = {
   "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
   // By reason JSON API
-  /*
   "GET /api/json/reason": "ReasonJSON.overview",
+  "GET /api/json/reason/:step": "ReasonJSON.step",
+  "GET /api/json/reason/:step/:model": "ReasonJSON.stepModel",
+  "GET /api/json/reason/:step/:model/:machineID/pie": "ReasonJSON.detailPie",
+  "GET /api/json/reason/:step/:model/:machineID/table": "ReasonJSON.detailTable",
+
+  /*
   "GET /api/json/reason/:reasonID/pie": "ReasonJSON.detailPie",
   "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
   */
-
-  // By machine JSON API
-  "GET /api/json/machine": "MachineJSON.overview",
-  "GET /api/json/machine/:machineID/pie": "MachineJSON.detailPie",
-  "GET /api/json/machine/:machineID/table": "MachineJSON.detailTable",
 
   // Total Reivew CSV API
   "GET /api/csv/total": "TotalCSV.overview",
@@ -137,10 +133,6 @@ module.exports.routes = {
   "GET /api/csv/reason": "ReasonCSV.overview",
   "GET /api/csv/reason/:reasonID": "ReasonCSV.detailTable",
   */
-
-  // By machine CSV API
-  "GET /api/csv/machine": "MachineCSV.overview",
-  "GET /api/csv/machine/:machineID": "MachineCSV.detailTable",
 
   // Alert Dashboard
   "GET /api/json/alert": "AlertJSON.overview",

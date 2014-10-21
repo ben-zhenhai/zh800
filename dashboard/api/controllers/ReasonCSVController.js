@@ -20,7 +20,7 @@ module.exports = {
 
 
       res.type('text/csv');
-      res.write(new Buffer('"錯誤種類","數量"\n'));
+      res.write(new Buffer('"製程","數量"\n'));
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
         res.write(new Buffer('"' + record.name + '",' + record.value + "\n"));

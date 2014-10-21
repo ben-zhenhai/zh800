@@ -24,12 +24,49 @@ module.exports = {
     });
   },
 
+  step: function(req, res) {
+
+    var logReason = LogReason.jsonAPI();
+    var step = req.param("step")
+
+    logReason.step(step, function(err, result) {
+
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
+      var resultJSON = {dataSet: result}
+
+      res.json(resultJSON);
+    });
+  },
+
+  stepModel: function(req, res) {
+
+    var logReason = LogReason.jsonAPI();
+    var step = req.param("step")
+    var model = req.param("model")
+
+    logReason.stepModel(step, model, function(err, result) {
+
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
+      var resultJSON = {dataSet: result}
+
+      res.json(resultJSON);
+    });
+  },
+
   detailPie: function(req, res) {
 
     var logReason = LogReason.jsonAPI();
-    var reasonID = req.param("reasonID");
+    var machineID = req.param("machineID");
 
-    logReason.reasonDetail(reasonID, function(err, result) {
+    logReason.detailPie(machineID, function(err, result) {
 
       if (err) {
         res.serverError(err);
@@ -37,7 +74,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: ["錯誤原因：" + reasonID],
+        steps: ["錯誤原因：" + machineID],
         dataSet: result
       }
 
@@ -48,9 +85,9 @@ module.exports = {
   detailTable: function(req, res) {
 
     var logReason = LogReason.jsonAPI();
-    var reasonID = req.param("reasonID");
+    var machineID = req.param("machineID");
 
-    logReason.detailTable(reasonID, function(err, result) {
+    logReason.detailTable(machineID, function(err, result) {
 
       if (err) {
         res.serverError(err);

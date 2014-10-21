@@ -54,7 +54,7 @@ object Record {
 
   def apply(line: String) = Try {
     val columns = line.split(" ");
-    val machineID = columns(8)
+    val machineID = randomMachineID
     val timestamp = columns(4).toLong
     new Record(
       columns(0), 
@@ -65,13 +65,13 @@ object Record {
       columns(5).toLong, 
       columns(6),
       columns(7).toLong,
-      columns(8),
+      machineID,
       columns(9),
       columns(10),
       columns(11),
       columns(12),
       columns(13),
-      MachineInfo.getProduct(machineID).getOrElse("Unknown"),
+      MachineInfo.getProduct(machineID),
       dateFormatter.format(new Date(timestamp * 1000))
     )
   }
