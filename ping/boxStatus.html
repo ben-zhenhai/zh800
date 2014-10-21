@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Box Connection Status</title>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="https://cdn.socket.io/socket.io-1.1.0.js"></script>
+        <script>
+            var socket = io();
+
+            socket.on('freeman', function(msg) {
+              $('#data table').empty();
+              var obj = jQuery.parseJSON(msg);
+              $.each(obj, function(index, json) {
+                $('#data table').append('<tr><td width="40%">' + json.IP + '</td><td width="60%">' + json.DATE + '</td></tr>');
+              });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="data">
+            <table border="1" width="50%">
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
