@@ -68,8 +68,13 @@ module.exports.routes = {
   "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
   // By Reason Dashboard
+  /*
   "GET /reason": "ReasonReport.overview",
   "GET /reason/:reasonID": "ReasonReport.detail",
+  */
+
+  // Alert Dashboard
+  "GET /alert": "AlertReport.overview",
 
   // By Machine Dashboard
   "GET /machine": "MachineReport.overview",
@@ -96,9 +101,11 @@ module.exports.routes = {
   "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
   // By reason JSON API
+  /*
   "GET /api/json/reason": "ReasonJSON.overview",
   "GET /api/json/reason/:reasonID/pie": "ReasonJSON.detailPie",
   "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
+  */
 
   // By machine JSON API
   "GET /api/json/machine": "MachineJSON.overview",
@@ -126,12 +133,17 @@ module.exports.routes = {
   "GET /api/csv/daily/:year/:month/:date/:machine": "DailyCSV.machineDetail",
 
   // By reason CSV API
+  /*
   "GET /api/csv/reason": "ReasonCSV.overview",
   "GET /api/csv/reason/:reasonID": "ReasonCSV.detailTable",
+  */
 
   // By machine CSV API
   "GET /api/csv/machine": "MachineCSV.overview",
   "GET /api/csv/machine/:machineID": "MachineCSV.detailTable",
+
+  // Alert Dashboard
+  "GET /api/json/alert": "AlertJSON.overview",
 
 
   /***************************************************************************
