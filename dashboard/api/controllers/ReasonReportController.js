@@ -18,6 +18,7 @@ module.exports = {
     var variables = {
       steps: steps,
       ajaxDataURL: "/api/json/reason",
+      csvLink: "/api/csv/reason",
       threshold: 0.5
     }
 
@@ -37,6 +38,7 @@ module.exports = {
     var variables = {
       steps: steps,
       ajaxDataURL: "/api/json/reason/" + step,
+      csvLink: "/api/csv/reason/" + step,
       threshold: 0.5
     }
 
@@ -57,6 +59,7 @@ module.exports = {
     var variables = {
       steps: steps,
       ajaxDataURL: "/api/json/reason/" + step + "/" + model,
+      csvLink: "/api/csv/reason/" + step + "/" + model,
       threshold: 0.2
     }
 

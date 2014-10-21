@@ -103,11 +103,6 @@ module.exports.routes = {
   "GET /api/json/reason/:step/:model/:machineID/pie": "ReasonJSON.detailPie",
   "GET /api/json/reason/:step/:model/:machineID/table": "ReasonJSON.detailTable",
 
-  /*
-  "GET /api/json/reason/:reasonID/pie": "ReasonJSON.detailPie",
-  "GET /api/json/reason/:reasonID/table": "ReasonJSON.detailTable",
-  */
-
   // Total Reivew CSV API
   "GET /api/csv/total": "TotalCSV.overview",
   "GET /api/csv/total/:product": "TotalCSV.product",
@@ -129,10 +124,11 @@ module.exports.routes = {
   "GET /api/csv/daily/:year/:month/:date/:machine": "DailyCSV.machineDetail",
 
   // By reason CSV API
-  /*
   "GET /api/csv/reason": "ReasonCSV.overview",
-  "GET /api/csv/reason/:reasonID": "ReasonCSV.detailTable",
-  */
+  "GET /api/csv/reason/:step": "ReasonCSV.step",
+  "GET /api/csv/reason/:step/:model": "ReasonCSV.stepModel",
+  "GET /api/csv/reason/:step/:model/:machineID": "ReasonCSV.detailTable",
+
 
   // Alert Dashboard
   "GET /api/json/alert": "AlertJSON.overview",
