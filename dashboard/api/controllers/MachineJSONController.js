@@ -11,15 +11,44 @@ module.exports = {
 
     var logMachine = LogMachine.jsonAPI();
 
-    function convert(data) {
-      return {
-        name: data._id, 
-        value: data.bad_qty,
-        link: "/machine/" + data._id
-      }
-    }
+    logMachine.overview(function(err, result) {
 
-    logMachine.overview(convert, function(err, result) {
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
+      var resultJSON = {dataSet: result}
+
+      res.json(resultJSON);
+    });
+  },
+
+  step: function(req, res) {
+
+    var logMachine = LogMachine.jsonAPI();
+    var step = req.param("step")
+
+    logMachine.step(step, function(err, result) {
+
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+
+      var resultJSON = {dataSet: result}
+
+      res.json(resultJSON);
+    });
+  },
+
+  stepModel: function(req, res) {
+
+    var logMachine = LogMachine.jsonAPI();
+    var step = req.param("step")
+    var model = req.param("model")
+
+    logMachine.stepModel(step, model, function(err, result) {
 
       if (err) {
         res.serverError(err);
@@ -45,7 +74,7 @@ module.exports = {
       }
 
       var resultJSON = {
-        steps: [machineID],
+        steps: ["錯誤原因：" + machineID],
         dataSet: result
       }
 
@@ -68,6 +97,7 @@ module.exports = {
       res.json(result);
     });
   }
+
 
 };
 

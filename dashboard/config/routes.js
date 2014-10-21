@@ -68,10 +68,10 @@ module.exports.routes = {
   "GET /daily/:year/:month/:date/:machine": "DailyReport.machineDetail",
 
   // By Reason Dashboard
-  "GET /reason": "ReasonReport.overview",
-  "GET /reason/:step": "ReasonReport.step",
-  "GET /reason/:step/:model": "ReasonReport.stepModel",
-  "GET /reason/:step/:model/:machineID": "ReasonReport.detail",
+  "GET /machine": "MachineReport.overview",
+  "GET /machine/:step": "MachineReport.step",
+  "GET /machine/:step/:model": "MachineReport.stepModel",
+  "GET /machine/:step/:model/:machineID": "MachineReport.detail",
 
   // Alert Dashboard
   "GET /alert": "AlertReport.overview",
@@ -97,11 +97,11 @@ module.exports.routes = {
   "GET /api/json/daily/:year/:month/:date/:machine": "DailyJSON.machineDetail",
 
   // By reason JSON API
-  "GET /api/json/reason": "ReasonJSON.overview",
-  "GET /api/json/reason/:step": "ReasonJSON.step",
-  "GET /api/json/reason/:step/:model": "ReasonJSON.stepModel",
-  "GET /api/json/reason/:step/:model/:machineID/pie": "ReasonJSON.detailPie",
-  "GET /api/json/reason/:step/:model/:machineID/table": "ReasonJSON.detailTable",
+  "GET /api/json/machine": "MachineJSON.overview",
+  "GET /api/json/machine/:step": "MachineJSON.step",
+  "GET /api/json/machine/:step/:model": "MachineJSON.stepModel",
+  "GET /api/json/machine/:step/:model/:machineID/pie": "MachineJSON.detailPie",
+  "GET /api/json/machine/:step/:model/:machineID/table": "MachineJSON.detailTable",
 
   // Total Reivew CSV API
   "GET /api/csv/total": "TotalCSV.overview",
@@ -124,10 +124,10 @@ module.exports.routes = {
   "GET /api/csv/daily/:year/:month/:date/:machine": "DailyCSV.machineDetail",
 
   // By reason CSV API
-  "GET /api/csv/reason": "ReasonCSV.overview",
-  "GET /api/csv/reason/:step": "ReasonCSV.step",
-  "GET /api/csv/reason/:step/:model": "ReasonCSV.stepModel",
-  "GET /api/csv/reason/:step/:model/:machineID": "ReasonCSV.detailTable",
+  "GET /api/csv/machine": "MachineCSV.overview",
+  "GET /api/csv/machine/:step": "MachineCSV.step",
+  "GET /api/csv/machine/:step/:model": "MachineCSV.stepModel",
+  "GET /api/csv/machine/:step/:model/:machineID": "MachineCSV.detailTable",
 
 
   // Alert Dashboard
