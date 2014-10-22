@@ -16,8 +16,9 @@ import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.{Connection => RabbitMQConnection, Channel => RabbitMQChannel}
 import com.rabbitmq.client.MessageProperties
 
-object EnQueueServer {
+class EnQueueServerThread extends Thread {
 
+  var shouldStopped = false
   val QueueName = "rawDataLine"
 
   def initRabbitConnection() = {
@@ -51,24 +52,38 @@ object EnQueueServer {
     }
   }
 
-  def main(args: Array[String]) = KeepRetry {
+  override def start() {
+    this.shouldStopped = false
+    super.start()
+  }
 
-    println(" [*] Start Communication Server to receive data from machines.")
-    var counter = 0L
+  override def run() {
 
-    for {
-      server <- managed(new ServerSocket(5566))
-      rabbitConnection <- managed(initRabbitConnection())
-      channel <- managed(initRabbitChannel(rabbitConnection))
-    } {
 
-      while (true) {
-        val socket = server.accept()
-        Future {
-          counter += 1
-          processInput(socket, channel, counter)
+    KeepRetry {
+
+      println(" [*] Start Communication Server to receive data from machines.")
+
+      var counter = 0L
+
+      for {
+        server <- managed(new ServerSocket(5566))
+        rabbitConnection <- managed(initRabbitConnection())
+        channel <- managed(initRabbitChannel(rabbitConnection))
+      } {
+
+        while (!shouldStopped) {
+          val socket = server.accept()
+          Future {
+            counter += 1
+            processInput(socket, channel, counter)
+          }
         }
       }
     }
+
   }
+
 }
+
+

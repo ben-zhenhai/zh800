@@ -12,8 +12,9 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.QueueingConsumer
 
-object DeQueueServer {
+class DeQueueServerThread extends Thread {
 
+  var shouldStopped = false
   val QueueName = "rawDataLine"
 
   def initRabbitMQ() = {
@@ -29,35 +30,39 @@ object DeQueueServer {
      (channel, consumer)
   }
 
-  def main(args: Array[String]) = KeepRetry {
+  override def run() {
 
-     val (channel, consumer) = initRabbitMQ()
-     val mongoProcessor = new MongoProcessor
+    KeepRetry {
 
-     var recordCount: Long = 0
+      val (channel, consumer) = initRabbitMQ()
+      val mongoProcessor = new MongoProcessor
+      var recordCount: Long = 0
 
-     println(" [*] Start DeQueue Server to append to MongoDB.")
+      println(" [*] Start DeQueue Server to append to MongoDB.")
 
-     while (true) {
-       val delivery = consumer.nextDelivery()
-       val message = new String(delivery.getBody())
+      while (!shouldStopped) {
+        val delivery = consumer.nextDelivery()
+        val message = new String(delivery.getBody())
 
-       Future {
-         println(s" [*] [$recordCount] DeQueue: $message")
+        Future {
+          println(s" [*] [$recordCount] DeQueue: $message")
 
-         Record(message).foreach{ record =>
-           record.countQty match {
-             case -1 => mongoProcessor.addMachineAlert(record)
-             case  n => mongoProcessor.addRecord(record)
-           }
-         }
+          Record(message).foreach{ record =>
+            record.countQty match {
+              case -1 => mongoProcessor.addMachineAlert(record)
+              case  n => mongoProcessor.addRecord(record)
+            }
+          }
 
-         channel.basicAck(delivery.getEnvelope.getDeliveryTag, false)
-         recordCount += 1
-       }
-     }
+          channel.basicAck(delivery.getEnvelope.getDeliveryTag, false)
+          recordCount += 1
+        }
+      }
 
+    }
   }
+
 }
+
 
 
