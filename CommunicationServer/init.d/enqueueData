@@ -6,9 +6,11 @@ DESC="Enqueue Zhenhai Data"
 
 # The path to Jsvc
 EXEC="/usr/bin/jsvc"
+JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64/jre/"
+PROJECT_HOME="/opt/Communication"
 
-COMMONS_DAEMON_JAR="/usr/share/commons-daemon/lib/commons-daemon.jar"
-PROJECT_JAR="/home/brianhsu/zh800/CommunicationServer/target/scala-2.11/CommunicationServer-assembly-0.0.1.jar"
+COMMONS_DAEMON_JAR="$PROJECT_HOME/commons-daemon.jar"
+PROJECT_JAR="$PROJECT_HOME/CommunicationServer-assembly-0.0.1.jar"
 
 # Our classpath including our jar file and the Apache Commons Daemon library
 CLASS_PATH="$COMMONS_DAEMON_JAR:$PROJECT_JAR"
@@ -22,7 +24,7 @@ PID="/var/run/$NAME.pid"
 
 jsvc_exec()
 {  
-    $EXEC -debug -cp $CLASS_PATH -user $USER -pidfile $PID $1 $CLASS
+    $EXEC -debug -home $JAVA_HOME -cp $CLASS_PATH -user $USER -pidfile $PID $1 $CLASS
     echo "$EXEC -debug -cp $CLASS_PATH -user $USER -pidfile $PID $1 $CLASS"
 }
 
