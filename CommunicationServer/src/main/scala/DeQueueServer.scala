@@ -24,6 +24,8 @@ class DeQueueServerThread extends Thread {
   def initRabbitMQ() = {
      val factory = new ConnectionFactory
      factory.setHost("localhost")
+     factory.setUsername("zhenhai")
+     factory.setPassword("zhenhai123456")
      val connection = factory.newConnection()
      val channel = connection.createChannel()
      channel.queueDeclare(QueueName, true, false, false, null)
@@ -42,7 +44,7 @@ class DeQueueServerThread extends Thread {
       val mongoProcessor = new MongoProcessor
       var recordCount: Long = 0
 
-      logger.info(" [*] Start DeQueue Server to append to MongoDB.")
+      logger.info(" [*] DeQueue Server Started.")
 
       while (!shouldStopped) {
         val delivery = consumer.nextDelivery()
@@ -63,6 +65,7 @@ class DeQueueServerThread extends Thread {
         }
       }
 
+      logger.info(" [*] DeQueue Server Stopped.")
     }
   }
 

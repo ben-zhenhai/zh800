@@ -27,7 +27,9 @@ class EnQueueServerThread extends Thread {
 
   def initRabbitConnection() = {
     val factory = new ConnectionFactory
-    factory.setHost("localhost")
+    factory.setUsername("zhenhai")
+    factory.setPassword("zhenhai123456")
+
     factory.newConnection()
   }
 
@@ -66,8 +68,6 @@ class EnQueueServerThread extends Thread {
 
     KeepRetry {
 
-      logger.info(" [*] Start Communication Server to receive data from machines.")
-
       var counter = 0L
 
       for {
@@ -76,6 +76,8 @@ class EnQueueServerThread extends Thread {
         channel <- managed(initRabbitChannel(rabbitConnection))
       } {
 
+        logger.info(" [*] EeQueue Server Started.")
+
         while (!shouldStopped) {
           val socket = server.accept()
           Future {
@@ -83,6 +85,8 @@ class EnQueueServerThread extends Thread {
             processInput(socket, channel, counter)
           }
         }
+
+        logger.info(" [*] EeQueue Server Stopped.")
       }
     }
 
