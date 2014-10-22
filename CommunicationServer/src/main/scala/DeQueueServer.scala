@@ -12,7 +12,11 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.QueueingConsumer
 
+import org.slf4j.LoggerFactory
+
 class DeQueueServerThread extends Thread {
+
+  implicit val logger = LoggerFactory.getLogger("DeQueueServer")
 
   var shouldStopped = false
   val QueueName = "rawDataLine"
@@ -38,14 +42,14 @@ class DeQueueServerThread extends Thread {
       val mongoProcessor = new MongoProcessor
       var recordCount: Long = 0
 
-      println(" [*] Start DeQueue Server to append to MongoDB.")
+      logger.info(" [*] Start DeQueue Server to append to MongoDB.")
 
       while (!shouldStopped) {
         val delivery = consumer.nextDelivery()
         val message = new String(delivery.getBody())
 
         Future {
-          println(s" [*] [$recordCount] DeQueue: $message")
+          logger.info(s" [*] [$recordCount] DeQueue: $message")
 
           Record(message).foreach{ record =>
             record.countQty match {

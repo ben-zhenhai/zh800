@@ -15,8 +15,12 @@ import ExecutionContext.Implicits.global
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.{Connection => RabbitMQConnection, Channel => RabbitMQChannel}
 import com.rabbitmq.client.MessageProperties
+import org.slf4j.LoggerFactory
+
 
 class EnQueueServerThread extends Thread {
+
+  implicit val logger = LoggerFactory.getLogger("EnQueueServer")
 
   var shouldStopped = false
   val QueueName = "rawDataLine"
@@ -41,7 +45,7 @@ class EnQueueServerThread extends Thread {
     } {
       val line = bufferedSource.getLines().next()
 
-      println(s" [*] [$counter] EnQueue: $line")
+      logger.info(s" [*] [$counter] EnQueue: $line")
 
       if (line != "saveData") {
         channel.basicPublish(
@@ -62,7 +66,7 @@ class EnQueueServerThread extends Thread {
 
     KeepRetry {
 
-      println(" [*] Start Communication Server to receive data from machines.")
+      logger.info(" [*] Start Communication Server to receive data from machines.")
 
       var counter = 0L
 

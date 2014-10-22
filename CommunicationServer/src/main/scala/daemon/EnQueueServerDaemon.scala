@@ -15,7 +15,6 @@ class EnQueueServerDaemon extends Daemon {
   }
 
   override def stop() {
-    println("Stop...");
     serverThread.shouldStopped = true
     serverThread.join(2000)
   }

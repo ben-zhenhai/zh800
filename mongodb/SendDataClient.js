@@ -1,7 +1,7 @@
 var net = require('net')
 
 var PORT = 5566
-var HOST = '192.168.0.181'
+var HOST = 'localhost'
 
 var args = process.argv.slice(2)
 var fs = require('fs')
