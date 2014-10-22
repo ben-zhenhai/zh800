@@ -30,7 +30,7 @@ class MongoProcessor {
     )
   }
 
-  def addRecord(record: Record) {
+  def addRecord(record: Record, isImportFromDaily: Boolean = false) {
     val tenMinute = dateFormatter.format(record.embDate * 1000).substring(0, 15) + "0"
 
     update(
@@ -82,8 +82,11 @@ class MongoProcessor {
       record = record
     )
 
-    dailyDB(record.insertDate).insert(record.toMongoObject)
     zhenhaiDB("data").insert(record.toMongoObject)
+
+    if (isImportFromDaily) {
+      dailyDB(record.insertDate).insert(record.toMongoObject)
+    }
   }
 }
 

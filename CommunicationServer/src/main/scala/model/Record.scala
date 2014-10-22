@@ -51,6 +51,25 @@ object Record {
   import scala.util.Random
   def machineIDs = (MachineInfo.productMapping.keySet ++ MachineInfo.machineModel.keySet).toArray
   def randomMachineID = machineIDs(Random.nextInt(machineIDs.size))
+  
+  def apply(dbObject: DBObject) = new Record(
+    dbObject("order_type").toString,
+    dbObject("lot_no").toString,
+    dbObject("work_qty").toString.toLong,
+    dbObject("count_qty").toString.toLong,
+    dbObject("emb_date").toString.toLong,
+    dbObject("bad_qty").toString.toLong,
+    dbObject("mach_ip").toString,
+    dbObject("defact_id").toString.toLong,
+    dbObject("mach_id").toString,
+    dbObject("work_id").toString,
+    dbObject("CX").toString,
+    dbObject("DX").toString,
+    dbObject("LC").toString,
+    dbObject("mach_status").toString,
+    dbObject("product").toString,
+    dbObject("insertDate").toString
+  )
 
   def apply(line: String) = Try {
     val columns = line.split(" ");
