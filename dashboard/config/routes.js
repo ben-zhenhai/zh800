@@ -133,6 +133,12 @@ module.exports.routes = {
   // Alert Dashboard
   "GET /api/json/alert": "AlertJSON.overview",
 
+  /**********************************************************
+   * Hidden URL
+   ********************************************************/
+
+  "GET /barcode": "Barcode.index",
+  "POST /barcode/view": "Barcode.view",
 
   /***************************************************************************
   *                                                                          *
