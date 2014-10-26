@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( CameraTest )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( CameraTest camera.c )
+target_link_libraries( CameraTest ${OpenCV_LIBS} )
