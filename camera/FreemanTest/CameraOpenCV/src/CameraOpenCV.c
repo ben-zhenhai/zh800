@@ -9,6 +9,236 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#define column 320
+#define row 240
+#define Threshold 150
+#define Error1XThreshold 10
+#define Error1YThreshold 10
+#define Error2YThreshold column/8
+
+IplImage *dst;
+IplImage *showSumX;
+IplImage *showSumY;
+
+char pointXY[column][row];
+short SumX1[column];
+short SumX[column];
+short SumY[row];
+
+int localmaxY = 0;
+int valueY = 0;
+
+int YUpperBoundvalue = 0;
+int YUpperBoundPos = 0;
+int YLowerBoundvalue = 0;
+int YLowerBoundPos = 0;
+
+void detectAndDisplay(IplImage *frame);
+void Error2();
+void Error1();
+
+int main(void)
+{
+    IplImage* pFrameImg = NULL;
+    IplImage* pGrayImg = NULL;
+    IplImage* pForegroundImg = NULL;
+    IplImage* pBackgroundImg_8U = NULL;
+    IplImage* pBackgroundImg_32F = NULL;
+    CvMemStorage *pcvMStorage = cvCreateMemStorage(0);
+    CvSeq *pcvSeq = NULL;
+    CvCapture* capture = cvCaptureFromCAM(1);
+    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, column);
+    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, row);
+    int nFrmNum = 0;
+    int imgNameCount = 0;
+
+    int c;
+
+    if(!capture)
+    {
+    	fprintf(stderr, "Cannot get image! \n");
+    	return 1;
+    }
+
+    while(pFrameImg = cvQueryFrame(capture))
+    {
+        nFrmNum++;
+        if(nFrmNum == 1)
+        {
+            pBackgroundImg_8U = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U, 1);
+            pBackgroundImg_32F = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_32F, 1);
+            pForegroundImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
+            pGrayImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
+            cvCvtColor(pFrameImg, pBackgroundImg_8U, CV_BGR2GRAY);
+            cvCvtColor(pFrameImg, pForegroundImg, CV_BGR2GRAY);
+            cvConvertScale(pBackgroundImg_8U, pBackgroundImg_32F, 1.0, 0.0);
+        }
+        else
+        {
+            cvCvtColor(pFrameImg, pGrayImg, CV_BGR2GRAY); // convert source image(pFrameImg) to gray(pGramImg)
+            cvAbsDiff(pGrayImg, pBackgroundImg_8U, pForegroundImg);
+            cvThreshold(pForegroundImg, pForegroundImg, 120, 255.0, CV_THRESH_BINARY);
+
+            int contours_num = cvFindContours(pForegroundImg, pcvMStorage, &pcvSeq, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));
+            //printf("%d\n", contours_num);
+            cvRunningAvg(pGrayImg, pBackgroundImg_32F, 1, 0);
+            cvConvertScale(pBackgroundImg_32F, pBackgroundImg_8U , 1.0, 0.0);
+            if (contours_num > 10 && nFrmNum > 3)
+            {
+                pFrameImg = cvQueryFrame(capture);
+                cvShowImage("Camera", pFrameImg);
+                // START - will save image to file
+                // char fileName[100];
+                // sprintf(fileName, "/home/freeman//Picture %d.jpg", imgNameCount++);
+                // cvSaveImage(fileName, pFrameImg, 0);
+                // END   - will save image to file
+            }
+            else
+            {
+            	// START - will save image to file
+            	char fileName[100];
+            	sprintf(fileName, "Picture %d.jpg", imgNameCount++);
+            	cvSaveImage(fileName, pFrameImg, 0);
+            	// END   - will save image to file
+            }
+            //zhReverse(pFrameImg);
+            cvShowImage("webcam", pFrameImg);
+            cvShowImage("background", pBackgroundImg_8U);
+            cvShowImage("foreground", pForegroundImg);
+            //cvWaitKey(30);
+        }
+        c = cvWaitKey(10);
+        if (c == 27)
+        {
+            break;
+        }
+    }
+    cvReleaseImage(&pFrameImg);
+    cvReleaseImage(&pForegroundImg);
+    cvReleaseImage(&pBackgroundImg_8U);
+    cvReleaseImage(&pBackgroundImg_32F);
+    cvReleaseImage(&pGrayImg);
+    cvReleaseCapture(&capture);
+    return 0;
+}
+
+void Error1()
+{
+    int ForCount1 = 0;
+    int ForCount2 = 0;
+
+    memset(SumX1, 0, sizeof(short)*column);
+    for(ForCount1 = YUpperBoundPos - 1; ForCount1 >= (YUpperBoundPos/2); ForCount1--)
+    {
+        if(SumY[ForCount1] > Error1YThreshold && SumY[ForCount1-1] > Error1YThreshold && SumY[ForCount1-2] > Error1YThreshold )
+        {
+            for(ForCount2 = 0; ForCount2 < column; ForCount2++)
+            {
+                if(pointXY[ForCount2][ForCount1] == 1)
+                {
+                    CvScalar s = cvGet2D(dst,ForCount1,ForCount2);
+                    s.val[0] = 150;
+                    cvSet2D(dst, ForCount1, ForCount2, s);
+                    cvSet2D(dst, ForCount1-1, ForCount2, s);
+                    cvSet2D(dst, ForCount1-2, ForCount2, s);
+                }
+            }
+            printf("Error1\n\n");
+            break;
+        }
+    }
+}
+
+void Error2()
+{
+    int ForCount1;
+    int ForCount2;
+    ForCount1 = ForCount2 = 0;
+    int ValueCount = 0;
+    int pass = 0;
+
+    memset(SumX1, 0, sizeof(short)*column);
+
+    for(ForCount1 = 0; ForCount1 < column; ForCount1++)
+    {
+        for(ForCount2 = YLowerBoundPos+1; ForCount2 < row; ForCount2++)
+        {
+            SumX1[ForCount1] = SumX1[ForCount1] + (short)pointXY[ForCount1][ForCount2];
+        }
+        if(SumX1[ForCount1] > Error2YThreshold)
+        {
+            pass++;
+        }
+    }
+    if(pass == 0)
+    {
+        for(ForCount2 = YLowerBoundPos+1; ForCount2 < row; ForCount2++)
+        {
+            for(ForCount1 = 0; ForCount1 < column; ForCount1++)
+            {
+                if(pointXY[ForCount1][ForCount2] == 1)
+                {
+                    CvScalar s = cvGet2D(dst,ForCount2,ForCount1);
+                    s.val[0] = 70;
+                    cvSet2D(dst, ForCount2, ForCount1, s);
+                }
+            }
+        }
+    }
+}
+
+void Integral(int limit)
+{
+    struct timeval time1, time2;
+    int ForCount =0;
+    int ForCount2 = 0;
+    char Flag = 0;
+
+    gettimeofday(&time1, NULL);
+    if(limit == column)
+    {
+        for(ForCount = 0; ForCount < column; ForCount++)
+        {
+            for(ForCount2 = 0; ForCount2 < row; ForCount2++)
+            {
+                SumX[ForCount] = SumX[ForCount] + (short)pointXY[ForCount][ForCount2];
+            }
+        }
+    }
+    else
+    {
+        localmaxY = valueY = 0;
+
+        for(ForCount = 0; ForCount < row; ForCount++)
+        {
+            for(ForCount2 = 0; ForCount2 < column; ForCount2++)
+            {
+                SumY[ForCount] = SumY[ForCount]+(short)pointXY[ForCount2][ForCount];
+            }
+            if(valueY == 0 && SumY[ForCount] > (column/3))
+            {
+                YUpperBoundPos = ForCount;
+                valueY = SumY[ForCount];
+                YUpperBoundvalue = valueY;
+            }
+            else if(valueY != 0 && SumY[ForCount] > (column/3))
+            {
+                YLowerBoundPos = ForCount;
+                YLowerBoundvalue = SumY[ForCount];
+                valueY = SumY[ForCount];
+            }else;
+        }
+        gettimeofday(&time2, NULL);
+        for(ForCount = 0; ForCount < column; ForCount++)
+        {
+            CvScalar s = cvGet2D(dst,YLowerBoundPos,ForCount);
+            s.val[0] = 200;
+            cvSet2D(dst, YLowerBoundPos, ForCount, s);
+        }
+    }
+}
+
+
 //
 //int main(void)
 //{
@@ -88,65 +318,9 @@
 //
 //}
 
-int main(void)
-{
-    IplImage* pFrameImg = NULL;
-    IplImage* pGrayImg = NULL;
-    IplImage* pForegroundImg = NULL;
-    IplImage* pBackgroundImg_8U = NULL;
-    IplImage* pBackgroundImg_32F = NULL;
-    CvMemStorage *pcvMStorage = cvCreateMemStorage(0);
-    CvSeq *pcvSeq = NULL;
-    CvCapture* pCapture = cvCaptureFromCAM(0);
-    int nFrmNum = 0;
-    int imgNameCount = 0;
-    while( pFrameImg = cvQueryFrame( pCapture ) )
-    {
-        nFrmNum++;
-        if(nFrmNum == 1)
-        {
-            pBackgroundImg_8U = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U, 1);
-            pBackgroundImg_32F = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_32F, 1);
-            pForegroundImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
-            pGrayImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
-            cvCvtColor(pFrameImg, pBackgroundImg_8U, CV_BGR2GRAY);
-            cvCvtColor(pFrameImg, pForegroundImg, CV_BGR2GRAY);
-            cvConvertScale(pBackgroundImg_8U, pBackgroundImg_32F, 1.0, 0.0);
-        }
-        else
-        {
-            cvCvtColor(pFrameImg, pGrayImg, CV_BGR2GRAY);
-            cvAbsDiff(pGrayImg, pBackgroundImg_8U, pForegroundImg);
-            cvThreshold(pForegroundImg, pForegroundImg, 120, 255.0, CV_THRESH_BINARY);
+// ----------------------------------------------------------------------------------------
 
-            int contours_num=cvFindContours(pForegroundImg, pcvMStorage, &pcvSeq, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));
-            printf("%d\n", contours_num);
-            cvRunningAvg(pGrayImg, pBackgroundImg_32F, 1, 0);
-            cvConvertScale(pBackgroundImg_32F, pBackgroundImg_8U , 1.0, 0.0);
-            if (contours_num > 10 && nFrmNum > 3) {
-                pFrameImg = cvQueryFrame(pCapture);
-                cvShowImage("Camera", pFrameImg);
 
-                // START - will save image to file
-                char fileName[100];
-                sprintf(fileName, "/home/freeman//Picture %d.jpg", imgNameCount++);
-                cvSaveImage(fileName, pFrameImg, 0);
-                // END   - will save image to file
-            }
-            cvShowImage("webcam", pFrameImg);
-            cvShowImage("background", pBackgroundImg_8U);
-            cvShowImage("foreground", pForegroundImg);
-            cvWaitKey(30);
-        }
-    }
-    cvReleaseImage(&pFrameImg);
-    cvReleaseImage(&pForegroundImg);
-    cvReleaseImage(&pBackgroundImg_8U);
-    cvReleaseImage(&pBackgroundImg_32F);
-    cvReleaseImage(&pGrayImg);
-    cvReleaseCapture(&pCapture);
-    return 0;
-}
 //
 //int main(int argc, char** argv)
 //{
