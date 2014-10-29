@@ -21,7 +21,8 @@ case class Record(
   lc: String,
   machineStatus: String,
   product: String,
-  insertDate: String
+  insertDate: String,
+  macAddress: String
 ) {
   def toMongoObject = MongoDBObject(
     "order_type" -> orderType,
@@ -39,7 +40,8 @@ case class Record(
     "LC" -> lc,
     "mach_status" -> machineStatus,
     "product" -> product,
-    "insertDate" ->  insertDate
+    "insertDate" ->  insertDate,
+    "mac_address" -> macAddress
   )
 }
 
@@ -47,11 +49,6 @@ object Record {
 
   val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
 
-  //! Should delete when production.
-  import scala.util.Random
-  def machineIDs = (MachineInfo.productMapping.keySet ++ MachineInfo.machineModel.keySet).toArray
-  def randomMachineID = machineIDs(Random.nextInt(machineIDs.size))
-  
   def apply(dbObject: DBObject) = new Record(
     dbObject("order_type").toString,
     dbObject("lot_no").toString,
@@ -68,12 +65,13 @@ object Record {
     dbObject("LC").toString,
     dbObject("mach_status").toString,
     dbObject("product").toString,
-    dbObject("insertDate").toString
+    dbObject("insertDate").toString,
+    dbObject("mac_address").toString
   )
 
   def apply(line: String) = Try {
     val columns = line.split(" ");
-    val machineID = randomMachineID
+    val machineID = columns(8)
     val timestamp = columns(4).toLong
     new Record(
       columns(0), 
@@ -91,7 +89,8 @@ object Record {
       columns(12),
       columns(13),
       MachineInfo.getProduct(machineID),
-      dateFormatter.format(new Date(timestamp * 1000))
+      dateFormatter.format(new Date(timestamp * 1000)),
+      Try{columns(14)}.getOrElse("")
     )
   }
 }
