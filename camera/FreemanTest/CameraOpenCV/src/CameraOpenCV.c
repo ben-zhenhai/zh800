@@ -46,69 +46,51 @@ int main(void)
     IplImage* pBackgroundImg_32F = NULL;
     CvMemStorage *pcvMStorage = cvCreateMemStorage(0);
     CvSeq *pcvSeq = NULL;
-    CvCapture* capture = cvCaptureFromCAM(1);
-    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, column);
-    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, row);
+//    CvCapture* capture = cvCaptureFromCAM(1);
+    CvCapture *capture = cvCaptureFromFile("frames/noLight/%00008d.jpg"); // freeman 2014.10.29
     int nFrmNum = 0;
     int imgNameCount = 0;
 
-    int c;
+    int key;
 
     if(!capture)
     {
-    	fprintf(stderr, "Cannot get image! \n");
+    	fprintf(stderr, "Cannot get Camera! \n");
     	return 1;
     }
 
-    while(pFrameImg = cvQueryFrame(capture))
-    {
-        nFrmNum++;
-        if(nFrmNum == 1)
-        {
-            pBackgroundImg_8U = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U, 1);
-            pBackgroundImg_32F = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_32F, 1);
-            pForegroundImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
-            pGrayImg = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
-            cvCvtColor(pFrameImg, pBackgroundImg_8U, CV_BGR2GRAY);
-            cvCvtColor(pFrameImg, pForegroundImg, CV_BGR2GRAY);
-            cvConvertScale(pBackgroundImg_8U, pBackgroundImg_32F, 1.0, 0.0);
-        }
-        else
-        {
-            cvCvtColor(pFrameImg, pGrayImg, CV_BGR2GRAY); // convert source image(pFrameImg) to gray(pGramImg)
-            cvAbsDiff(pGrayImg, pBackgroundImg_8U, pForegroundImg);
-            cvThreshold(pForegroundImg, pForegroundImg, 120, 255.0, CV_THRESH_BINARY);
+    pFrameImg = cvQueryFrame(capture);
+    pBackgroundImg_8U =  cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U, 1);
+    pBackgroundImg_32F = cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_32F, 1);
+    pForegroundImg =     cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
+    pGrayImg =           cvCreateImage(cvSize(pFrameImg->width, pFrameImg->height), IPL_DEPTH_8U,1);
+    cvCvtColor(pFrameImg, pBackgroundImg_8U, CV_BGR2GRAY);
+    cvCvtColor(pFrameImg, pForegroundImg, CV_BGR2GRAY);
+    cvConvertScale(pBackgroundImg_8U, pBackgroundImg_32F, 1.0, 0.0);
 
-            int contours_num = cvFindContours(pForegroundImg, pcvMStorage, &pcvSeq, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));
-            //printf("%d\n", contours_num);
-            cvRunningAvg(pGrayImg, pBackgroundImg_32F, 1, 0);
-            cvConvertScale(pBackgroundImg_32F, pBackgroundImg_8U , 1.0, 0.0);
-            if (contours_num > 10 && nFrmNum > 3)
-            {
-                pFrameImg = cvQueryFrame(capture);
-                cvShowImage("Camera", pFrameImg);
-                // START - will save image to file
-                // char fileName[100];
-                // sprintf(fileName, "/home/freeman//Picture %d.jpg", imgNameCount++);
-                // cvSaveImage(fileName, pFrameImg, 0);
-                // END   - will save image to file
-            }
-            else
-            {
-            	// START - will save image to file
-            	char fileName[100];
-            	sprintf(fileName, "Picture %d.jpg", imgNameCount++);
-            	cvSaveImage(fileName, pFrameImg, 0);
-            	// END   - will save image to file
-            }
-            //zhReverse(pFrameImg);
-            cvShowImage("webcam", pFrameImg);
-            cvShowImage("background", pBackgroundImg_8U);
-            cvShowImage("foreground", pForegroundImg);
-            //cvWaitKey(30);
-        }
-        c = cvWaitKey(10);
-        if (c == 27)
+    int file_counter = 1;
+
+    while(pFrameImg)
+    {
+    	//IplImage* test = zhResize(pFrameImg, 0.5f, CV_INTER_LINEAR);
+        cvCvtColor(pFrameImg, pGrayImg, CV_BGR2GRAY); // convert source image(pFrameImg) to gray(pGramImg)
+        cvAbsDiff(pGrayImg, pBackgroundImg_8U, pForegroundImg);
+        cvThreshold(pForegroundImg, pForegroundImg, 110, 255.0, CV_THRESH_BINARY);
+
+        int contours_num = cvFindContours(pForegroundImg, pcvMStorage, &pcvSeq, sizeof(CvContour), CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));
+        // 當 contours_num == 0, 表示畫面是靜止的，這時候才開始判斷導線棒是否正確。
+
+        printf("counter: %d,  contours_num: %d\n", file_counter++, contours_num);
+        cvRunningAvg(pGrayImg, pBackgroundImg_32F, 1, 0);
+        cvConvertScale(pBackgroundImg_32F, pBackgroundImg_8U , 1.0, 0.0);
+//        zhReverse(pFrameImg);
+        cvShowImage("webcam", pFrameImg);
+        cvShowImage("background", pBackgroundImg_8U);
+        cvShowImage("foreground", pForegroundImg);
+        //cvWaitKey(30);
+        pFrameImg = cvQueryFrame(capture);
+        key = cvWaitKey(10);
+        if (key == 27)
         {
             break;
         }
