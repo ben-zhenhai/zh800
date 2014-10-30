@@ -41,7 +41,11 @@ class MongoProcessor {
 
     update(
       tableName = s"product-${record.product}", 
-      query = MongoDBObject("timestamp" -> record.insertDate, "mach_id" -> record.machID), 
+      query = MongoDBObject(
+        "timestamp" -> record.insertDate, 
+        "shiftDate" -> record.shiftDate, 
+        "mach_id" -> record.machID
+      ), 
       record = record
     )
 
@@ -57,9 +61,21 @@ class MongoProcessor {
     )
 
     update(
+      tableName = s"shift-${record.shiftDate}", 
+      query = MongoDBObject(
+        "timestamp" -> tenMinute, 
+        "product" -> record.product, 
+        "mach_id" -> record.machID, 
+        "defact_id" -> record.defactID
+      ), 
+      record = record
+    )
+
+    update(
       tableName = "dailyDefact", 
       query = MongoDBObject(
         "timestamp" -> record.insertDate, 
+        "shiftDate" -> record.shiftDate, 
         "mach_id" -> record.machID, 
         "defact_id" -> record.defactID
       ), 
@@ -68,7 +84,11 @@ class MongoProcessor {
 
     update(
       tableName = "daily", 
-      query = MongoDBObject("timestamp" -> record.insertDate, "mach_id" -> record.machID), 
+      query = MongoDBObject(
+        "timestamp" -> record.insertDate, 
+        "shiftDate" -> record.shiftDate, 
+        "mach_id" -> record.machID
+      ), 
       record = record
     )
 

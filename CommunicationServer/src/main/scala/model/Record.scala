@@ -22,7 +22,8 @@ case class Record(
   machineStatus: String,
   product: String,
   insertDate: String,
-  macAddress: String
+  macAddress: String,
+  shiftDate: String
 ) {
   def toMongoObject = MongoDBObject(
     "order_type" -> orderType,
@@ -41,7 +42,8 @@ case class Record(
     "mach_status" -> machineStatus,
     "product" -> product,
     "insertDate" ->  insertDate,
-    "mac_address" -> macAddress
+    "mac_address" -> macAddress,
+    "shiftDate" -> shiftDate
   )
 }
 
@@ -66,8 +68,14 @@ object Record {
     dbObject("mach_status").toString,
     dbObject("product").toString,
     dbObject("insertDate").toString,
-    dbObject("mac_address").toString
+    dbObject("mac_address").toString,
+    dbObject("shiftDate").toString
   )
+
+  def getShiftTime(timestamp: Long) = {
+    val offsetOf7Hours = 7 * 60 * 60 * 1000
+    new Date((timestamp * 1000) - offsetOf7Hours)    
+  }
 
   def apply(line: String) = Try {
     val columns = line.split(" ");
@@ -90,7 +98,8 @@ object Record {
       columns(13),
       MachineInfo.getProduct(machineID),
       dateFormatter.format(new Date(timestamp * 1000)),
-      Try{columns(14)}.getOrElse("")
+      Try{columns(14)}.getOrElse(""),
+      dateFormatter.format(getShiftTime(timestamp))
     )
   }
 }
