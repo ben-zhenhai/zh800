@@ -104,7 +104,7 @@ class MongoProcessor {
 
     zhenhaiDB("data").insert(record.toMongoObject)
 
-    if (isImportFromDaily) {
+    if (!isImportFromDaily) {
       dailyDB(record.insertDate).insert(record.toMongoObject)
     }
   }
