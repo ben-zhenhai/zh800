@@ -58,6 +58,10 @@ class DeQueueServerThread extends Thread {
               case -1 => mongoProcessor.addMachineAlert(record)
               case  n => mongoProcessor.addRecord(record)
             }
+
+            if (record.countQty == 0 && record.badQty == 0) {
+              logger.info(s" [!] [strange] DeQueue: $message")
+            }
           }
 
           channel.basicAck(delivery.getEnvelope.getDeliveryTag, false)
