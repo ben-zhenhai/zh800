@@ -144,7 +144,7 @@ exports.cachedJSON = function() {
   }
 
   function machineDetail (year, month, date, machine, callback) {
-    var cacheTableName = year + "-" + PaddingZero.padding(month) + "-" + PaddingZero.padding(date);
+    var cacheTableName = "shift-" + year + "-" + PaddingZero.padding(month) + "-" + PaddingZero.padding(date);
     var query = {mach_id: machine}
     CacheQuery.daily(cacheTableName, query, callback);
   }
