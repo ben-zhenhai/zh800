@@ -20,13 +20,14 @@ class MongoProcessor(mongoClient: MongoClient) {
   }
 
   def addMachineAlert(record: Record) {
-    zhenhaiDB("alert").insert(
-      MongoDBObject(
-        "timestamp" -> dateFormatter.format(new Date(record.embDate * 1000)),
-        "mach_id"   -> record.machID,
-        "defact_id" -> record.defactID
-      )
+
+    val query = MongoDBObject(
+      "timestamp" -> dateFormatter.format(new Date(record.embDate * 1000)),
+      "mach_id"   -> record.machID,
+      "defact_id" -> record.defactID
     )
+
+    zhenhaiDB("alert").update(query, query, upsert = true);
   }
 
   def addRecord(record: Record, isImportFromDaily: Boolean = false) {
