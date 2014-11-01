@@ -18,6 +18,9 @@ module.exports = {
         return;
       }
 
+      // console.log("inside overview");
+      // console.log(result);
+
       res.json(result);
     });
   }

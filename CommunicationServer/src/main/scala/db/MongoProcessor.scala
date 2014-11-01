@@ -23,8 +23,7 @@ class MongoProcessor(mongoClient: MongoClient) {
 
     val query = MongoDBObject(
       "timestamp" -> dateFormatter.format(new Date(record.embDate * 1000)),
-      "mach_id"   -> record.machID,
-      "defact_id" -> record.defactID
+      "mach_id"   -> record.machID
     )
 
     zhenhaiDB("alert").update(query, query, upsert = true);

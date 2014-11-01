@@ -13,8 +13,6 @@ exports.cachedJSON = function () {
         }
 
         cursor.sort({timestamp: 1, mach_id: 1}).toArray(function(err, resultData) {
-          console.log("..............")
-          console.log(resultData)
           callback(undefined, resultData);
         });
 

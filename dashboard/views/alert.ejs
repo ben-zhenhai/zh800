@@ -87,7 +87,6 @@
               <tr>
                 <th data-sort="string">時間 <i id="arrow0" class="ui sort icon" style="float: right"></i></th>
                 <th data-sort="int">機台 <i id="arrow1" class="ui sort icon" style="float: right"></i></th>
-                <th data-sort="int">錯誤種類（事件 ID） <i id="arrow2" class="ui sort icon" style="float: right"></i></th>
               </tr>
             </thead>
             <tbody id="table">
@@ -105,8 +104,7 @@
           data: dataJSON,
           extractors: [
             function (data) { return data.timestamp },
-            function (data) { return data.mach_id },
-            function (data) { return data.defact_id }
+            function (data) { return data.mach_id }
           ]
         }
       }
