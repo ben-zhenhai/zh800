@@ -7,9 +7,8 @@ import com.mongodb.casbah.Imports._
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class MongoProcessor {
+class MongoProcessor(mongoClient: MongoClient) {
 
-  val mongoClient = MongoClient("localhost")
   val zhenhaiDB = mongoClient("zhenhai")
   val dailyDB = mongoClient("zhenhaiDaily")
   val dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm")

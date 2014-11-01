@@ -49,8 +49,6 @@ case class Record(
 
 object Record {
 
-  val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
-
   def apply(dbObject: DBObject) = new Record(
     dbObject("order_type").toString,
     dbObject("lot_no").toString,
@@ -81,6 +79,8 @@ object Record {
     val columns = line.split(" ");
     val machineID = columns(8)
     val timestamp = columns(4).toLong
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+
     new Record(
       columns(0), 
       columns(1), 

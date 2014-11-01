@@ -6,12 +6,11 @@ import tw.com.zhenhai.db._
 import com.mongodb.casbah.Imports._
 import org.slf4j.LoggerFactory
 
-
 object DailyImport {
 
   val mongoClient = MongoClient("localhost")
   val mongoDB = mongoClient("zhenhaiDaily")
-  val mongoProcessor = new MongoProcessor
+  val mongoProcessor = new MongoProcessor(mongoClient)
 
   def main(args: Array[String]) = {
     println(args(0))

@@ -13,6 +13,8 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.QueueingConsumer
 
 import org.slf4j.LoggerFactory
+import com.mongodb.casbah.Imports._
+
 
 class DeQueueServerThread extends Thread {
 
@@ -41,9 +43,9 @@ class DeQueueServerThread extends Thread {
     KeepRetry {
 
       val (channel, consumer) = initRabbitMQ()
-      val mongoProcessor = new MongoProcessor
       var recordCount: Long = 0
-
+      val mongoClient = MongoClient("localhost")
+ 
       logger.info(" [*] DeQueue Server Started.")
 
       while (!shouldStopped) {
@@ -53,6 +55,8 @@ class DeQueueServerThread extends Thread {
         Future {
           logger.info(s" [*] [$recordCount] DeQueue: $message")
 
+          val mongoProcessor = new MongoProcessor(mongoClient)
+ 
           Record(message).foreach{ record =>
             record.countQty match {
               case -1 => mongoProcessor.addMachineAlert(record)
