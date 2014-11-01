@@ -78,11 +78,15 @@
             </div>
           </div>
         </div>
+        <div id="loadingIndicator">
+          <div><i class="huge circular loading icon"></i></div>
+          <div style="margin-top: 1em">讀取中……</div>
+        </div>
       </div>
 
       <div class="one column ui page grid">
         <div class="column">
-          <table class="ui celled table segment" id="detailTable">
+          <table class="ui celled table segment" id="detailTable" style="display: none">
             <thead>
               <tr>
                 <th data-sort="string">時間 <i id="arrow0" class="ui sort icon" style="float: right"></i></th>
@@ -90,8 +94,6 @@
               </tr>
             </thead>
             <tbody id="table">
-              <tr><td>00:00</td><td>A001</td><td>10</td></tr>
-              <tr><td>00:00</td><td>B001</td><td>15</td></tr>
             </tbody>
           </table>
         </div>
@@ -114,10 +116,12 @@
         console.log(data);
         if (!data || data.length == 0) {
           $('#notFoundBlock').show();
+          $('#loadingIndicator').hide();
           return;
         }
 
         setTable("#table", toTableSchema(data));
+        $('#detailTable').show();
       });
 
     </script>
