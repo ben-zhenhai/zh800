@@ -21,7 +21,7 @@ wsServer.broadcast = function(data) {
 
 n.on('message',function(m){
   io.emit('freeman', JSON.stringify(m));
-  console.log('hihi');
+  //console.log('hihi');
 });
 
 app.get('/', function(req, res) {
