@@ -78,14 +78,19 @@
             </div>
           </div>
         </div>
-        <div id="loadingIndicator">
-          <div><i class="huge circular loading icon"></i></div>
-          <div style="margin-top: 1em">讀取中……</div>
+      </div>
+      <div class="ui one column page grid" style="display: none;" id="loadingIndicator">
+        <div class="column">
+          <div>
+            <div><i class="huge circular loading icon"></i></div>
+            <div style="margin-top: 1em">讀取中……</div>
+          </div>
         </div>
       </div>
 
       <div class="one column ui page grid">
         <div class="column">
+ 
           <table class="ui celled table segment" id="detailTable" style="display: none">
             <thead>
               <tr>
@@ -116,12 +121,12 @@
         console.log(data);
         if (!data || data.length == 0) {
           $('#notFoundBlock').show();
-          $('#loadingIndicator').hide();
           return;
         }
 
         setTable("#table", toTableSchema(data));
         $('#detailTable').show();
+        $('#loadingIndicator').hide();
       });
 
     </script>
