@@ -2,7 +2,6 @@ var ping = require ("net-ping");
 var session = ping.createSession ();
 var pingSet={};
 var fs = require('fs');
-//var cp = require("child_process");
 
 process.on('message',function(m){
   console.log('child got message: ',m);
@@ -13,8 +12,6 @@ if(fs.existsSync('ip.log')) {
 }
 
 var iniRead = require('./iniRead.js')(function(iniData) {
-  //console.log('ready:'+iniData);
-  //console.log('ready::'+iniData.pingTime);
   initPingSet(pingSet, iniData.ipRange);
   initPingSet(pingSet, iniData.ipRange2);
   setInterval(checkIP, iniData.pingTime,pingSet);
@@ -23,10 +20,11 @@ var iniRead = require('./iniRead.js')(function(iniData) {
 
 function asyncPing(ip,cb) {
   session.pingHost(ip, function (error, target) {
+    //console.log('~~~>' + ip);
     if (error) {
-      //errorAction(ip); //detect ping Fail
+      errorAction(ip); //detect ping Fail
     } else {
-      errorAction(ip); //detect ping success
+      //errorAction(ip); //detect ping success
     }
   });
 }
