@@ -11,6 +11,13 @@ var session = ping.createSession(options);
 var pingSet = {};
 var fs = require('fs');
 
+process.on('message', function(msg) {
+  console.log('child get ' + msg);
+  if(msg == 'firstInit') {
+    checkAliveResult(10);
+  }
+});
+
 function initIpArray(ipRange) {
   for (var x = 0; x < 256; x++) {
     pingSet[ipRange+x] = 0;
@@ -33,7 +40,7 @@ function checkAlive() {
   }
 }
 
-function checkAliveResule(errorTimes) {
+function checkAliveResult(errorTimes) {
   var failedIp = [];
   for(var ip in pingSet) {
     console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
@@ -42,7 +49,7 @@ function checkAliveResule(errorTimes) {
       data["IP"] = ip;
       data["DATE"] = Date();
       failedIp.push(data);
-      pingSet[ip] = errorTimes;
+      pingSet[ip] = parseInt(errorTimes);
     }
   }
   process.send(failedIp);
@@ -52,5 +59,5 @@ var iniRead = require('./iniRead.js')(function(iniData) {
   initIpArray(iniData.ipRange);
   initIpArray(iniData.ipRange2);
   setInterval(checkAlive, iniData.pingTime);
-  setInterval(checkAliveResule, iniData.checkTime, iniData.errorTimes);
+  setInterval(checkAliveResult, iniData.checkTime, iniData.errorTimes);
 });

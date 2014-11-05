@@ -7,9 +7,11 @@ var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
 
+n.send('firstInit');
+
 n.on('message',function(m){
   io.emit('freeman', JSON.stringify(m));
-  console.log(JSON.stringify(m));
+  //console.log(JSON.stringify(m));
 });
 
 app.use(express.static(__dirname + '/javascript'));
@@ -20,6 +22,7 @@ app.get('/', function(req, res) {
 
 io.on('connection', function(socket) {
   console.log('a user connected');
+  n.send('firstInit');
   socket.on('disconnect', function() {
     console.log('user disconnected');
   });
