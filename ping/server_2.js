@@ -2,7 +2,7 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var child_process = require('child_process');
-var n = child_process.fork('./ping.js');
+var n = child_process.fork('./ping_2.js');
 
 /*
 wsServer.on('connection', function(ws) {
@@ -21,7 +21,7 @@ wsServer.broadcast = function(data) {
 
 n.on('message',function(m){
   io.emit('freeman', JSON.stringify(m));
-  //console.log('hihi');
+  console.log(JSON.stringify(m));
 });
 
 app.get('/', function(req, res) {
