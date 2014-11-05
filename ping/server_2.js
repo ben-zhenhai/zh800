@@ -1,28 +1,18 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
+//var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
-
-/*
-wsServer.on('connection', function(ws) {
-  wsServer.on('message', function(message) {
-    console.log('received: %s', message);
-  });
-});
-
-
-wsServer.broadcast = function(data) {
-  for(var i in this.clients) {
-    this.clients[i].send(data);
-  }
-};
-*/
+var fs = require('fs');
 
 n.on('message',function(m){
   io.emit('freeman', JSON.stringify(m));
   console.log(JSON.stringify(m));
 });
+
+app.use(express.static(__dirname + '/javascript'));
 
 app.get('/', function(req, res) {
   res.sendfile('boxStatus.html');
