@@ -11,7 +11,7 @@
               $('#data table').empty();
               var obj = jQuery.parseJSON(msg);
               $.each(obj, function(index, json) {
-                $('#data table').append('<tr><td width="40%">' + json.IP + '</td><td width="60%">' + json.DATE + '</td></tr>');
+                $('#data table').append('<tr><td width="10%">' + json.ID  + '</td><td width="30%">' + json.IP + '</td><td width="60%">' + json.DATE + '</td></tr>');
               });
             });
         </script>
