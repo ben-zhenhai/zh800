@@ -117,7 +117,6 @@
           for (var i = 1; i < <%= minMonth %>; i++) {
             disableMonths.push(i);
           }
-          console.log(disableMonths);
           $('#monthPicker').monthpicker('disableMonths', disableMonths);
         }
 
@@ -146,6 +145,10 @@
         for (var i = 1; i < <%= minMonth %>; i++) {
           disableMonths.push(i);
         }
+        for (var i = <%= +(maxMonth) + 1 %>; i <= 12; i++) {
+          disableMonths.push(i);
+        }
+
 
         $('#monthPicker').monthpicker('disableMonths', disableMonths);
       }
