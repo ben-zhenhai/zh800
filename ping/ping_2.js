@@ -18,8 +18,8 @@ process.on('message', function(msg) {
   }
 });
 
-function initIpArray(ipRange) {
-  for (var x = 0; x < 256; x++) {
+function initIpArray(ipRange, upper, lower) {
+  for (var x = parseInt(lower); x <= parseInt(upper); x++) {
     pingSet[ipRange+x] = 0;
   }
 }
@@ -56,8 +56,8 @@ function checkAliveResult(errorTimes) {
 }
 
 var iniRead = require('./iniRead.js')(function(iniData) {
-  initIpArray(iniData.ipRange);
-  initIpArray(iniData.ipRange2);
+  initIpArray(iniData.ipRange, iniData.ipRange_upper, iniData.ipRange_lower);
+  initIpArray(iniData.ipRange2, iniData.ipRange2_upper, iniData.ipRange2_lower);
   setInterval(checkAlive, iniData.pingTime);
   setInterval(checkAliveResult, iniData.checkTime, iniData.errorTimes);
 });
