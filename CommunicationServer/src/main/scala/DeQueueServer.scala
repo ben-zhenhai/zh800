@@ -53,7 +53,7 @@ class DeQueueServerThread extends Thread {
         val message = new String(delivery.getBody())
 
         Future {
-          logger.info(s" [*] [$recordCount] DeQueue: $message")
+          // logger.info(s" [*] [$recordCount] DeQueue: $message")
 
           val mongoProcessor = new MongoProcessor(mongoClient)
  
