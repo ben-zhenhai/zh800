@@ -12,7 +12,7 @@ exports.cachedJSON = function () {
           return;
         }
 
-        cursor.sort({timestamp: 1, mach_id: 1}).toArray(function(err, resultData) {
+        cursor.sort({timestamp: 1, mach_id: 1, defact_id: 1}).toArray(function(err, resultData) {
           callback(undefined, resultData);
         });
 
