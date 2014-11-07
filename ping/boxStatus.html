@@ -11,14 +11,18 @@
               $('#data table').empty();
               var obj = jQuery.parseJSON(msg);
               $.each(obj, function(index, json) {
-                $('#data table').append('<tr><td width="10%">' + json.ID  + '</td><td width="30%">' + json.IP + '</td><td width="60%">' + json.DATE + '</td></tr>');
+                $('#data table').append('<tr><td width="10%">' + json.ID   + '</td>' +
+                                            '<td width="10%">' + json.TYPE + '</td>' +
+                                            '<td width="10%">' + json.IP   + '</td>' +
+                                            '<td width="20%">' + json.NOTE + '</td>' +
+                                            '<td width="50%">' + json.DATE + '</td></tr>');
               });
             });
         </script>
     </head>
     <body>
         <div id="data">
-            <table border="1" width="50%">
+            <table border="1" width="80%">
                 <tbody>
                 </tbody>
             </table>

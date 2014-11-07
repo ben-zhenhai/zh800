@@ -7,10 +7,14 @@ var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
 
-n.send('firstInit');
+console.log("Alive server start.");
+//n.send('firstInit');
 
 n.on('message',function(m){
   io.emit('freeman', JSON.stringify(m));
+  for (var i = 0; i < m.length; i++) {
+    console.log(m[i]);
+  }
   //console.log(JSON.stringify(m));
 });
 

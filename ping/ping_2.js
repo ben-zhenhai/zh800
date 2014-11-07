@@ -1,4 +1,3 @@
-var jsonQuery = require('json-query');
 var ping = require('net-ping');
 var options = {
   networkProtocol: ping.NetworkProtocol.IPv4,
@@ -11,7 +10,7 @@ var options = {
 var session = ping.createSession(options);
 var pingSet = {};
 var fs = require('fs');
-var ipMappingFile = 'ipMapping.json';
+var ipMappingFile = 'ipMapping_2.json';
 var ipMappingData = {};
 
 fs.readFile(ipMappingFile, 'utf8', function(err, data) {
@@ -65,14 +64,16 @@ function checkAliveResult(errorTimes) {
   for(var ip in pingSet) {
     //console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
     if(pingSet[ip] >= errorTimes) { 
-      var tmpID = ipMappingData.filter(function(obj) {
+      var tmp = ipMappingData.filter(function(obj) {
         return obj.IP === ip;
       });
       var data = {};
       //console.log('>>>>>>>>>>>>>> ' + ip);
-      data["ID"] = tmpID[0].ID;
+      data["ID"] = tmp[0].ID;
       //console.log('~~~~~~~~>>>' + data["ID"]);
+      data["TYPE"] = tmp[0].TYPE;
       data["IP"] = ip;
+      data["NOTE"] = tmp[0].NOTE;
       data["DATE"] = Date();
       failedIp.push(data);
       pingSet[ip] = parseInt(errorTimes);
