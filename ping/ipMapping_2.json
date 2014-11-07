@@ -93,13 +93,13 @@
     "ID":"G09",
     "TYPE":"FTO-2200A",
     "IP":"192.168.10.16",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E10",
     "TYPE":"TSW-880B",
     "IP":"192.168.10.17",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G10",
@@ -111,7 +111,7 @@
     "ID":"E11",
     "TYPE":"TSW-168T",
     "IP":"192.168.10.19",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E12",
@@ -123,7 +123,7 @@
     "ID":"G12",
     "TYPE":"FTO-2400",
     "IP":"192.168.10.21",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E13",
@@ -171,13 +171,13 @@
     "ID":"G17",
     "TYPE":"FTO-2500",
     "IP":"192.168.10.29",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E18",
     "TYPE":"HSW-160A",
     "IP":"192.168.10.30",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G18",
@@ -303,7 +303,7 @@
     "ID":"E47",
     "TYPE":"HSW-250",
     "IP":"192.168.10.51",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G47",
@@ -315,31 +315,31 @@
     "ID":"K1",
     "TYPE":"KAIDO",
     "IP":"192.168.10.53",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"K2",
     "TYPE":"KAIDO",
     "IP":"192.168.10.54",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S1",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.55",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G49",
-    "TYPE":"SBB-1800(組立)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.56",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G49",
-    "TYPE":"SBB-1800(仕上)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.57",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E50",
@@ -369,19 +369,19 @@
     "ID":"E52",
     "TYPE":"TSW-168",
     "IP":"192.168.10.62",
-    "NOTE":"封裝機台"
+    "NOTE":"Sealed"
   },
   {
     "ID":"G52",
-    "TYPE":"SBB-1800(組立)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.63",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G52",
-    "TYPE":"SBB-1800(仕上)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.64",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E53",
@@ -399,7 +399,7 @@
     "ID":"E72",
     "TYPE":"TSW-168T",
     "IP":"192.168.10.67",
-    "NOTE":"封裝機台"
+    "NOTE":"Sealed"
   },
   {
     "ID":"G72",
@@ -537,7 +537,7 @@
     "ID":"G82",
     "TYPE":"FTO-3000",
     "IP":"192.168.10.90",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E83",
@@ -555,13 +555,13 @@
     "ID":"E84",
     "TYPE":"HSW-880B",
     "IP":"192.168.10.93",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G84",
     "TYPE":"FTO-3010",
     "IP":"192.168.10.94",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E85",
@@ -591,19 +591,19 @@
     "ID":"E87",
     "TYPE":"HSW-160B",
     "IP":"192.168.10.99",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E88",
     "TYPE":"HSW-160B",
     "IP":"192.168.10.100",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E90",
     "TYPE":"HSW-250",
     "IP":"192.168.10.101",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E91",
@@ -627,7 +627,7 @@
     "ID":"G93",
     "TYPE":"FTO-2200A",
     "IP":"192.168.10.105",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G94",
@@ -663,7 +663,7 @@
     "ID":"E20",
     "TYPE":"HSW-160A",
     "IP":"192.168.10.111",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G20",
@@ -1023,7 +1023,7 @@
     "ID":"E67",
     "TYPE":"HSW-168",
     "IP":"192.168.10.171",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G67",
@@ -1125,25 +1125,25 @@
     "ID":"E101",
     "TYPE":"ARCO",
     "IP":"192.168.10.188",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E102",
     "TYPE":"ARCO",
     "IP":"192.168.10.189",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G103",
-    "TYPE":"SBB-1800(組立)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.190",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G103",
-    "TYPE":"SBB-1800(仕上)",
+    "TYPE":"SBB-1800",
     "IP":"192.168.10.191",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G104",
@@ -1159,15 +1159,15 @@
   },
   {
     "ID":"G106",
-    "TYPE":"SAA-1800(組立)",
+    "TYPE":"SAA-1800",
     "IP":"192.168.10.194",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G106",
-    "TYPE":"SSB-1800(仕上)",
+    "TYPE":"SSB-1800",
     "IP":"192.168.10.195",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E106",
@@ -1179,13 +1179,13 @@
     "ID":"E107",
     "TYPE":"HSW-160B",
     "IP":"192.168.10.197",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E108",
     "TYPE":"HSW-250",
     "IP":"192.168.10.198",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E100",
@@ -1197,79 +1197,79 @@
     "ID":"E111",
     "TYPE":"HSW-160A",
     "IP":"192.168.10.200",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E112",
     "TYPE":"HSW-160B",
     "IP":"192.168.10.201",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E104",
     "TYPE":"HSW-168",
     "IP":"192.168.10.202",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S2",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.203",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S3",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.204",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S4",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.205",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S5",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.206",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G107",
     "TYPE":"FT03050",
     "IP":"192.168.10.207",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G108",
     "TYPE":"FT03050",
     "IP":"192.168.10.208",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G109",
     "TYPE":"FT03050",
     "IP":"192.168.10.209",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S6",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.210",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S7",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.211",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"S8",
     "TYPE":"SPH-3000",
     "IP":"192.168.10.212",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"E114",
@@ -1339,15 +1339,15 @@
   },
   {
     "ID":"G111",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.10.224",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"G111",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.10.225",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"A01",
@@ -1377,7 +1377,7 @@
     "ID":"A05",
     "TYPE":"CS-205",
     "IP":"192.168.10.231",
-    "NOTE":"修機中"
+    "NOTE":"Fixing"
   },
   {
     "ID":"A06",
@@ -1389,7 +1389,7 @@
     "ID":"A07",
     "TYPE":"ATS-630J",
     "IP":"192.168.10.233",
-    "NOTE":"無法開機"
+    "NOTE":"Unbootable"
   },
   {
     "ID":"A08",
@@ -1521,7 +1521,7 @@
     "ID":"A29",
     "TYPE":"CS-231",
     "IP":"192.168.20.2",
-    "NOTE":"備料機台"
+    "NOTE":"Backup"
   },
   {
     "ID":"A30",
@@ -1611,7 +1611,7 @@
     "ID":"A44",
     "TYPE":"ATS-161H",
     "IP":"192.168.20.17",
-    "NOTE":"機台封裝"
+    "NOTE":"Sealed"
   },
   {
     "ID":"A45",
@@ -1635,25 +1635,25 @@
     "ID":"A48",
     "TYPE":"CAS-4500S",
     "IP":"192.168.20.21",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"A49",
     "TYPE":"YC-608",
     "IP":"192.168.20.22",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"A50",
     "TYPE":"YC-308",
     "IP":"192.168.20.23",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"A57",
     "TYPE":"YC-208",
     "IP":"192.168.20.24",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"A51",
@@ -1749,7 +1749,7 @@
     "ID":"A67",
     "TYPE":"YC-600B",
     "IP":"192.168.20.40",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"T01",
@@ -1761,7 +1761,7 @@
     "ID":"T02",
     "TYPE":"NCR236A",
     "IP":"192.168.20.42",
-    "NOTE":"網路異常"
+    "NOTE":"Network unavailable"
   },
   {
     "ID":"T03",
@@ -1869,55 +1869,55 @@
     "ID":"T22",
     "TYPE":"CFT450E",
     "IP":"192.168.20.60",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"T23",
     "TYPE":"HTP-300",
     "IP":"192.168.20.61",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"C01",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.20.62",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"C03",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.20.63",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"C04",
-    "TYPE":"TAICON自制",
+    "TYPE":"TAICON",
     "IP":"192.168.20.64",
     "NOTE":""
   },
   {
     "ID":"C05",
-    "TYPE":"TAICON自制",
+    "TYPE":"TAICON",
     "IP":"192.168.20.65",
     "NOTE":""
   },
   {
     "ID":"C06",
-    "TYPE":"TAICON自制",
+    "TYPE":"TAICON",
     "IP":"192.168.20.66",
     "NOTE":""
   },
   {
     "ID":"C07",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.20.67",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"C08",
-    "TYPE":"富信成",
+    "TYPE":"fù xìn chéng",
     "IP":"192.168.20.68",
-    "NOTE":"未裝機完成"
+    "NOTE":"Not Install"
   },
   {
     "ID":"B01",
