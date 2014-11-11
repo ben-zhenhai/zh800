@@ -21,7 +21,12 @@ object DailyImport {
     collection.find.foreach { doc =>
       val record = Record(doc)
       println(s"Processing record [$counter / $totalCount] ....")
-      mongoProcessor.addRecord(record, true)
+
+      record.countQty match {
+        case -1 => mongoProcessor.addMachineAlert(record)
+        case  n => mongoProcessor.addRecord(record)
+      }
+
       counter += 1
     }
   }
