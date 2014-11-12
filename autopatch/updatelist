@@ -1,0 +1,4 @@
+readertsw100.a /home/pi/works/tsw100/ tsw100/
+readertsw100-1.a /home/pi/works/tsw100/ tsw100/
+autopatch.a /home/pi/new_patch/
+updatelist /home/pi/new_patch/ tsw100/
