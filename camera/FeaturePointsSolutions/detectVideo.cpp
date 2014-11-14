@@ -41,7 +41,7 @@ int main(int argc, char ** argv) {
         int featureCount = getFeatureCount(grayImage, 500);
 
         drawFeatureCount(resized, featureCount);
-        detectError(resized, grayImage, edgeImage, featureCount, 800, counter);
+        detectErrorInBounds(resized, grayImage, edgeImage, featureCount, 800, counter, 55, 125, 175, 220);
         cvShowImage("Image", resized);
 
         char * filename = (char *) malloc(sizeof(char) * 200);
