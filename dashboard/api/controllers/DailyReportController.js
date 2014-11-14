@@ -15,7 +15,7 @@ module.exports = {
     var csvURL = "/api/csv/daily/" + year + "/" + month
 
     var steps = [
-      {active: "active", title: year + " 年 " + month + " 月"},
+      {active: "active", title: year + " 年 " + month + " 月", link: "/daily/" + year + "/" + month},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
     ];
@@ -35,8 +35,8 @@ module.exports = {
     var csvURL = "/api/csv/daily/" + year + "/" + month + "/" + date
 
     var steps = [
-      {active: "active", title: year + " 年 " + month + " 月"},
-      {active: "active", title: date + " 日"},
+      {active: "active", title: year + " 年 " + month + " 月", link: "/daily/" + year + "/" + month},
+      {active: "active", title: date + " 日", link: "/daily/" + year + "/" + month + "/" + date},
       {active: "", title: "機器"}
     ];
 
@@ -56,8 +56,8 @@ module.exports = {
     var csvURL = "/api/csv/daily/" + year + "/" + month + "/" + date + "/" + machine;
 
     var steps = [
-      {active: "active", title: year + " 年 " + month + " 月" },
-      {active: "active", title: date + " 日"},
+      {active: "active", title: year + " 年 " + month + " 月", link: "/daily/" + year + "/" + month },
+      {active: "active", title: date + " 日", link: "/daily/" + year + "/" + month + "/" + date},
       {active: "active", title: machine }
     ];
 

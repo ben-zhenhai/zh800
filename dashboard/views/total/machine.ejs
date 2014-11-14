@@ -68,8 +68,13 @@
     <div class="column">
       <div class="ui six steps">
         <% for (var i = 0; i < steps.length; i++) { %>
-          <div data-defaultName="<%= steps[i].title %>" id="<%= 'step' + i %>" class="ui <%= steps[i].active %> step"><%= steps[i].title %></div>
+          <% if (steps[i].link) { %>
+            <a href="<%= steps[i].link %>" data-defaultName="<%= steps[i].title %>" id="<%= 'step' + i %>" class="ui <%= steps[i].active %> step" style="cursor: pointer"><%= steps[i].title %></a>
+          <% } else { %>
+            <div data-defaultName="<%= steps[i].title %>" id="<%= 'step' + i %>" class="ui <%= steps[i].active %> step"><%= steps[i].title %></div>
+          <% } %>
         <% } %>
+
       </div>
     </div>
     <div class="column">

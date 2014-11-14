@@ -1,0 +1,3 @@
+/home/brianhsu/openCV/C/CMakeFiles/CaptureImage.dir
+/home/brianhsu/openCV/C/CMakeFiles/DetectImage.dir
+/home/brianhsu/openCV/C/CMakeFiles/DetectVideo.dir

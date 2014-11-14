@@ -301,7 +301,7 @@ void detectErrorInBounds(
         imageKeypoints, 30, 2, 0.1, &slope
     );
 
-    if (keyFrameFeature >= 45 && topLineY != bottomLineY) {
+    if (topLineY != bottomLineY) {
 
         drawSlopeInfo(image, slope);
         drawBoundary(image, topLineY, bottomLineY, leftLineX, rightLineX);
