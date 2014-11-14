@@ -10,7 +10,7 @@ module.exports = {
   index: function(req, res) {
 
     var steps = [
-      {active: "active", title: "總覽"},
+      {active: "active", title: "總覽", link: "/total"},
       {active: "", title: "Φ 別"},
       {active: "", title: "月份"},
       {active: "", title: "週"},
@@ -31,8 +31,8 @@ module.exports = {
     var productDataURL = "/api/json/total/" + product;
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: product},
+      {active: "active", title: "總覽", link: "/total"},
+      {active: "active", title: product, link: "/total/" + product},
       {active: "", title: "月份"},
       {active: "", title: "週"},
       {active: "", title: "日期"},
@@ -53,9 +53,9 @@ module.exports = {
     var month = req.param("month");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: product},
-      {active: "active", title: year + "-" + month},
+      {active: "active", title: "總覽", link: "/total"},
+      {active: "active", title: product, link: "/total/" + product},
+      {active: "active", title: year + "-" + month, link: "/total/" + product + "/" + year + "/" + month},
       {active: "", title: "週"},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
@@ -81,10 +81,10 @@ module.exports = {
     var week = req.param("week");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: product},
-      {active: "active", title: year + "-" + month},
-      {active: "active", title: "第 " + week + " 週"},
+      {active: "active", title: "總覽", link: "/total"},
+      {active: "active", title: product, link: "/total/" + product + "/"},
+      {active: "active", title: year + "-" + month, link: "/total/" + product + "/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/total/" + product + "/" + year + "/" + month + "/" + week},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
     ];
@@ -110,11 +110,11 @@ module.exports = {
     var date = req.param("date");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: product},
-      {active: "active", title: year + "-" + month},
-      {active: "active", title: "第 " + week + " 週"},
-      {active: "active", title: date + " 日"},
+      {active: "active", title: "總覽", link: "/total"},
+      {active: "active", title: product, link: "/total/" + product},
+      {active: "active", title: year + "-" + month, link: "/total/" + product + "/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/total/" + product + "/" + year + "/" + month + "/" + week},
+      {active: "active", title: date + " 日", link: "/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date},
       {active: "", title: "機器"}
     ];
 
@@ -140,11 +140,11 @@ module.exports = {
     var machine = req.param("machine");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: product},
-      {active: "active", title: year + "-" + month},
-      {active: "active", title: "第 " + week + " 週"},
-      {active: "active", title: date + " 日"},
+      {active: "active", title: "總覽", link: "/total"},
+      {active: "active", title: product, link: "/total/" + product},
+      {active: "active", title: year + "-" + month, link: "/total/" + product + "/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/total/" + product + "/" + year + "/" + month + "/" + week},
+      {active: "active", title: date + " 日", link: "/total/" + product + "/" + year + "/" + month + "/" + week + "/" + date},
       {active: "active", title: machine }
     ];
 

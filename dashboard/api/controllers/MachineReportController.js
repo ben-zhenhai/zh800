@@ -9,7 +9,7 @@ module.exports = {
 
   overview: function(req, res) {
     var steps = [
-      {active: "active", title: "總覽"},
+      {active: "active", title: "總覽", link: "/machine"},
       {active: "", title: "製程"},
       {active: "", title: "機種"},
       {active: "", title: "機台"}
@@ -29,8 +29,8 @@ module.exports = {
     var step = req.param("step");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: "製程：" + step},
+      {active: "active", title: "總覽", link: "/machine"},
+      {active: "active", title: "製程：" + step, link: "/machine/" + step},
       {active: "", title: "機種"},
       {active: "", title: "機台"}
     ];
@@ -50,9 +50,9 @@ module.exports = {
     var model = req.param("model");
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: "製程：" + step},
-      {active: "active", title: "機種：" + model},
+      {active: "active", title: "總覽", link: "/machine"},
+      {active: "active", title: "製程：" + step, link: "/machine/" + step},
+      {active: "active", title: "機種：" + model, link: "/machine/" + step + "/" + model},
       {active: "", title: "機台"}
     ];
 
@@ -76,9 +76,9 @@ module.exports = {
     var csvURL = "/api/csv/machine/" + step + "/" + model + "/" + machineID;
 
     var steps = [
-      {active: "active", title: "總覽"},
-      {active: "active", title: "製程：" + step},
-      {active: "active", title: "機種：" + model},
+      {active: "active", title: "總覽", link: "/machine"},
+      {active: "active", title: "製程：" + step, link: "/machine/" + step},
+      {active: "active", title: "機種：" + model, link: "/machine/" + step + "/" + model},
       {active: "active", title: "機台：" + machineID}
     ];
 

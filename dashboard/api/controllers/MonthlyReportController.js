@@ -13,7 +13,7 @@ module.exports = {
     var csvURL = "/api/csv/monthly/" + year
 
     var steps = [
-      {active: "active", title: year + " 年"},
+      {active: "active", title: year + " 年", link: "/monthly/" + year},
       {active: "", title: "月份"},
       {active: "", title: "週"},
       {active: "", title: "日期"},
@@ -33,8 +33,8 @@ module.exports = {
     var csvURL = "/api/csv/monthly/" + year + "/" + month;
 
     var steps = [
-      {active: "active", title: year + " 年"},
-      {active: "active", title: month + " 月"},
+      {active: "active", title: year + " 年", link: "/monthly/" + year},
+      {active: "active", title: month + " 月", link: "/monthly/" + year + "/" + month},
       {active: "", title: "週"},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
@@ -54,9 +54,9 @@ module.exports = {
     var csvURL = "/api/csv/monthly/" + year + "/" + month + "/" + week;
 
     var steps = [
-      {active: "active", title: year + " 年"},
-      {active: "active", title: month + " 月"},
-      {active: "active", title: "第 " + week + " 週"},
+      {active: "active", title: year + " 年", link: "/monthly/" + year},
+      {active: "active", title: month + " 月", link: "/monthly/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/monthly/" + year + "/" + month + "/" + week},
       {active: "", title: "日期"},
       {active: "", title: "機器"}
     ];
@@ -77,10 +77,10 @@ module.exports = {
     var csvURL = "/api/csv/monthly/" + year + "/" + month + "/" + week + "/" + date;
 
     var steps = [
-      {active: "active", title: year + " 年"},
-      {active: "active", title: month + " 月"},
-      {active: "active", title: "第 " + week + " 週"},
-      {active: "active", title: date + " 日"},
+      {active: "active", title: year + " 年", link: "/monthly/" + year},
+      {active: "active", title: month + " 月", link: "/monthly/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/monthly/" + year + "/" + month + "/" + week},
+      {active: "active", title: date + " 日", link: "/monthly/" + year + "/" + month + "/" + week + "/" + date},
       {active: "", title: "機器"}
     ];
 
@@ -102,10 +102,10 @@ module.exports = {
     var csvURL = "/api/csv/monthly/" + year + "/" + month + "/" + week + "/" + date + "/" + machine;
 
     var steps = [
-      {active: "active", title: year + " 年"},
-      {active: "active", title: month + " 月"},
-      {active: "active", title: "第 " + week + " 週"},
-      {active: "active", title: date + " 日"},
+      {active: "active", title: year + " 年", link: "/monthly/" + year},
+      {active: "active", title: month + " 月", link: "/monthly/" + year + "/" + month},
+      {active: "active", title: "第 " + week + " 週", link: "/monthly/" + year + "/" + month + "/" + week},
+      {active: "active", title: date + " 日", link: "/monthly/" + year + "/" + month + "/" + week + "/" + date},
       {active: "active", title: machine }
     ];
 
