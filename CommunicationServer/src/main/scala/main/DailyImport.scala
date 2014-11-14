@@ -15,12 +15,19 @@ object DailyImport {
   def main(args: Array[String]) = {
     println(args(0))
     val collection = mongoDB(args(0))
+    var counter = 0
+    val totalCount = collection.count()
 
     collection.find.foreach { doc =>
-
       val record = Record(doc)
-      println("Processing " + record + "...")
-      mongoProcessor.addRecord(record)
+      println(s"Processing record [$counter / $totalCount] ....")
+
+      record.countQty match {
+        case -1 => mongoProcessor.addMachineAlert(record)
+        case  n => mongoProcessor.addRecord(record)
+      }
+
+      counter += 1
     }
   }
 }

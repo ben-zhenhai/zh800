@@ -55,7 +55,21 @@ function daily(tableName, query, callback) {
         var timestampB = objB.timestamp;
         if (timestampA < timestampB) { return -1; }
         if (timestampA > timestampB) { return 1; }
-        if (timestampA == timestampB) { return 0; }
+        if (timestampA == timestampB) { 
+          if (+(objA.count_qty) > +(objB.count_qty)) {
+            return -1;
+          } else if (+(objA.count_qty) < +(objB.count_qty)) {
+            return 1;
+          } else {
+            if (+(objA.defact_id) < +(objB.defact_id)) {
+              return -1;
+            } else if (+(objA.defact_id) > +(objB.defact_id)) {
+              return 1;
+            } else {
+              return 0;
+            }
+          }
+        }
       });
 
       callback(undefined, resultData);
