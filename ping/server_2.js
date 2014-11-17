@@ -24,6 +24,10 @@ app.get('/', function(req, res) {
   res.sendfile('boxStatus.html');
 });
 
+app.get('/pic', function(req, res) {
+  res.sendfile('boxStatusPic.html');
+});
+
 io.on('connection', function(socket) {
   console.log('a user connected');
   n.send('firstInit');
