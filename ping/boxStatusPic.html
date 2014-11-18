@@ -14,7 +14,6 @@
                 $(this).css('fill', '#ffffff');
               });
               var obj = jQuery.parseJSON(msg);
-              // $('#A42').css("fill", "#00ff00");
               $.each(obj, function(index, json) {
                 $('#data table').append('<tr><td width="10%">' + json.ID   + '</td>' +
                                             '<td width="10%">' + json.TYPE + '</td>' +
@@ -22,6 +21,7 @@
                                             '<td width="20%">' + json.NOTE + '</td>' +
                                             '<td width="50%">' + json.DATE + '</td></tr>');
                 $('#' + json.ID).css("fill", "#ff0000");
+                $('.exception').css("fill", "#ffff00");
               });
             });
         </script>
@@ -239,6 +239,7 @@
                    x="968.44452"
                    y="115.98167"
                    id="A48"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="990.78534"
@@ -323,6 +324,7 @@
                    x="968.44452"
                    y="173.85667"
                    id="A44"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="990.78534"
@@ -1079,6 +1081,7 @@
                    x="795.71552"
                    y="115.9815"
                    id="A67"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="814.32648"
@@ -1121,6 +1124,7 @@
                    x="795.71552"
                    y="173.85648"
                    id="A49"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="814.32648"
@@ -1163,6 +1167,7 @@
                    x="795.71552"
                    y="222.60648"
                    id="A57"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="814.32635"
@@ -1205,6 +1210,7 @@
                    x="760.53296"
                    y="173.85648"
                    id="A50"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="778.38428"
@@ -1247,6 +1253,7 @@
                    x="933.3476"
                    y="455.09903"
                    id="A07"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="954.93048"
@@ -1583,6 +1590,7 @@
                    x="933.34778"
                    y="515.57727"
                    id="A05"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="954.93066"
@@ -1877,6 +1885,7 @@
                    x="626.35962"
                    y="515.5777"
                    id="A29"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="641.31372"
@@ -2885,6 +2894,7 @@
                    x="350.46548"
                    y="369.51703"
                    id="T02"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="359.4624"
@@ -3095,6 +3105,7 @@
                    x="385.5625"
                    y="578.13245"
                    id="C01"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="395.31747"
@@ -3137,6 +3148,7 @@
                    x="350.46558"
                    y="578.13245"
                    id="C03"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="359.46237"
@@ -3389,6 +3401,7 @@
                    x="264.62228"
                    y="418.11649"
                    id="T22"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="271.7655"
@@ -3473,6 +3486,7 @@
                    x="299.71951"
                    y="578.13245"
                    id="C08"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="307.62088"
@@ -3515,6 +3529,7 @@
                    x="264.62259"
                    y="578.13245"
                    id="C07"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="271.76578"
@@ -3809,6 +3824,7 @@
                    x="178.0396"
                    y="418.11649"
                    id="T23"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="183.31325"
@@ -4105,7 +4121,8 @@
                    ry="6.9896154"
                    x="937.38641"
                    y="72.577599"
-                   id="A42"
+                   id="K2"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="655.09094"
@@ -4484,7 +4501,8 @@
                    ry="6.9896154"
                    x="861.3858"
                    y="72.577835"
-                   id="E49-S2"
+                   id="S2"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="601.99835"
@@ -4864,6 +4882,7 @@
                    x="784.39569"
                    y="72.577835"
                    id="E101"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="548.21448"
@@ -5242,7 +5261,8 @@
                    ry="6.9896154"
                    x="937.38672"
                    y="13.037639"
-                   id="A42-8"
+                   id="K1"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="655.09119"
@@ -5285,7 +5305,8 @@
                    ry="6.9896154"
                    x="861.38611"
                    y="13.037875"
-                   id="A42-0-3"
+                   id="S3"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="601.9986"
@@ -5329,6 +5350,7 @@
                    x="784.396"
                    y="13.037875"
                    id="E108"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.70499998;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="548.21472"
@@ -5370,7 +5392,8 @@
                    ry="5.9903765"
                    x="742.42096"
                    y="12.919496"
-                   id="E49-S4"
+                   id="S4"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="759.88177"
@@ -5412,7 +5435,8 @@
                    ry="5.9903765"
                    x="707.32397"
                    y="12.919496"
-                   id="E49-S5"
+                   id="S5"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="724.02679"
@@ -5455,6 +5479,7 @@
                    x="742.42096"
                    y="72.459496"
                    id="E102"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="759.88171"
@@ -5496,7 +5521,8 @@
                    ry="5.9903765"
                    x="707.32397"
                    y="72.459328"
-                   id="E49-S1"
+                   id="S1"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="724.02673"
@@ -5874,7 +5900,8 @@
                    ry="5.9903765"
                    x="658.29608"
                    y="12.919504"
-                   id="E49-S6"
+                   id="S6"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="673.94086"
@@ -5916,7 +5943,8 @@
                    ry="5.9903765"
                    x="623.1991"
                    y="12.919504"
-                   id="E49-S7"
+                   id="S7"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="638.08588"
@@ -5958,7 +5986,8 @@
                    ry="5.9903765"
                    x="658.29608"
                    y="72.459503"
-                   id="E49-S8"
+                   id="S8"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="673.9408"
@@ -7009,6 +7038,7 @@
                    x="467.11731"
                    y="130.96533"
                    id="G109"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="478.63315"
@@ -7051,6 +7081,7 @@
                    x="467.11731"
                    y="188.84035"
                    id="G107"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="478.63321"
@@ -7135,6 +7166,7 @@
                    x="389.29398"
                    y="12.919506"
                    id="G111"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="399.12976"
@@ -7219,6 +7251,7 @@
                    x="389.29398"
                    y="72.45932"
                    id="G111"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="399.1297"
@@ -7345,6 +7378,7 @@
                    x="424.3909"
                    y="188.84053"
                    id="G108"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="434.9848"
@@ -7387,6 +7421,7 @@
                    x="389.29398"
                    y="188.84035"
                    id="G93"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="399.1297"
@@ -7429,6 +7464,7 @@
                    x="424.3909"
                    y="247.25552"
                    id="G49"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="434.9848"
@@ -7471,6 +7507,7 @@
                    x="389.29398"
                    y="247.25534"
                    id="G106"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="399.12958"
@@ -7513,6 +7550,7 @@
                    x="389.29398"
                    y="305.46548"
                    id="G103"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="399.1297"
@@ -7917,6 +7955,7 @@
                    x="974.26349"
                    y="412.10645"
                    id="E88"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="996.73145"
@@ -8043,6 +8082,7 @@
                    x="939.16656"
                    y="471.64627"
                    id="E111"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="960.87622"
@@ -8253,6 +8293,7 @@
                    x="897.2735"
                    y="412.10648"
                    id="E112"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="918.0791"
@@ -8463,6 +8504,7 @@
                    x="862.17657"
                    y="530.15228"
                    id="G82"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="882.22388"
@@ -8547,6 +8589,7 @@
                    x="862.17657"
                    y="588.02728"
                    id="E10"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="882.22388"
@@ -8589,6 +8632,7 @@
                    x="819.2865"
                    y="412.10645"
                    id="E11"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="838.40808"
@@ -8715,6 +8759,7 @@
                    x="784.18958"
                    y="471.64627"
                    id="E18"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="802.55286"
@@ -8925,6 +8970,7 @@
                    x="742.29651"
                    y="412.10648"
                    id="E87"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="759.75574"
@@ -9261,6 +9307,7 @@
                    x="658.48505"
                    y="412.10608"
                    id="E20"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="674.13452"
@@ -9513,6 +9560,7 @@
                    x="658.48505"
                    y="588.02716"
                    id="G12"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="674.1344"
@@ -9597,6 +9645,7 @@
                    x="582.48462"
                    y="412.10638"
                    id="E104"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="596.49292"
@@ -10185,6 +10234,7 @@
                    x="505.49463"
                    y="588.0274"
                    id="G17"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="517.83966"
@@ -10605,6 +10655,7 @@
                    x="350.51764"
                    y="412.10641"
                    id="E67"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="359.5163"
@@ -12033,6 +12084,7 @@
                    x="1.3828735"
                    y="412.10645"
                    id="G09"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="2.8425014"
@@ -12327,6 +12379,7 @@
                    x="-40.510178"
                    y="412.10648"
                    id="E84"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="-39.954803"
@@ -12369,6 +12422,7 @@
                    x="-75.607101"
                    y="412.10648"
                    id="G84"
+                   class="exception"
                    style="fill:none;stroke:#000000;stroke-width:0.59259003;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
                 <text
                    x="-75.810013"
