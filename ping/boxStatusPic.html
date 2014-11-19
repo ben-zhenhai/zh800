@@ -7,14 +7,17 @@
         <script src="/socket.io-1.2.0.js"></script>
         <script>
             var socket = io();
+            var tatalData;
 
             socket.on('freeman', function(msg) {
               $('#data table').empty();
               $('svg g rect').each(function() {
                 $(this).css('fill', '#ffffff');
               });
-              var obj = jQuery.parseJSON(msg);
-              $.each(obj, function(index, json) {
+              
+              //var obj = jQuery.parseJSON(msg);
+              tatalData = jQuery.parseJSON(msg);
+              $.each(tatalData, function(index, json) {
                 $('#data table').append('<tr><td width="10%">' + json.ID   + '</td>' +
                                             '<td width="10%">' + json.TYPE + '</td>' +
                                             '<td width="10%">' + json.IP   + '</td>' +
@@ -24,10 +27,32 @@
                 $('.exception').css("fill", "#ffff00");
               });
             });
+            
+            function getCSVfile() {
+                var array  = typeof tatalData != 'object' ? JSON.parse(tatalData) : tatalData;
+                var str = 'ID,TYPE,IP,NOTE\r\n';
+                
+                for(var x = 0; x < array.length; x++) {
+                    var line = '';
+                    for(var index in array[x]) {
+                        if(line != '') line += ',';
+                        line += array[x][index];
+                    }
+                    str += line + '\r\n';
+                }
+                
+                if (navigator.appName != 'Microsoft Internet Explorer') {
+                    window.open('data:text/csv;charset=utf-8,' + escape(str));
+                } else {
+                    var popup = window.open('','csv','');
+                    popup.document.body.innerHTML = '<pre>' + str + '</pre>';
+                }    
+            }
         </script>
     </head>
     <body>    
     
+        <input type="button" value="CSV Report" onclick="getCSVfile()" />
         <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         
         <svg
@@ -4076,7 +4101,11 @@
               </g>
         </svg>
         
-        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         
         <svg
             xmlns:dc="http://purl.org/dc/elements/1.1/"
