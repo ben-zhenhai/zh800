@@ -133,6 +133,15 @@ module.exports.routes = {
   // Alert Dashboard
   "GET /api/json/alert": "AlertJSON.overview",
 
+  // Management
+  "GET /management": "Management.index",
+  "GET /management/workers": "Management.workers",
+  "GET /management/addWorker": "Management.addWorker",
+  "GET /management/editWorker/:objectID": "Management.editWorker",
+  "POST /management/editWorkerImpl": "Management.editWorkerImpl",
+  "POST /management/addWorkerImpl": "Management.addWorkerImpl",
+  "POST /management/deleteWorker": "Management.deleteWorker",
+
   /**********************************************************
    * Hidden URL
    ********************************************************/

@@ -31,5 +31,10 @@ module.exports.policies = {
     "signup": "flash",
     "resetPasswordForm": "flash",
     "*": true
+  },
+  management: {
+    "addWorker": ["sessionAuth", "flash"],
+    "editWorker": ["sessionAuth", "flash"],
+    "*": "sessionAuth"
   }
 };
