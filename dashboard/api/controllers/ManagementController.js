@@ -13,11 +13,44 @@ module.exports = {
 
   workers: function(req, res) {
 
-    Worker.find({sort: {workerID: 0, team: 0, department: 0}}, function(err, workers) {
+    Worker.find({sort: {team: 0}}, function(err, workers) {
 
       if (err) { return next(err); }
 
-      res.view("management/workers", {workers: workers});
+      var departmentMapping = {}
+
+      for (var i = 0; i < workers.length; i++) {
+
+        var department = workers[i].department;
+
+        if (departmentMapping[department]) {
+          departmentMapping[department].workers.push(workers[i]);
+        } else {
+          departmentMapping[department] = {
+            workers: [workers[i]]
+          }
+        }
+
+        if (i == 0) {
+          departmentMapping[department].active = "active";
+        }
+      }
+
+      var departments = [];
+      for (var department in departmentMapping) {
+        departments.push(department);
+      }
+
+      departments.sort(function (objA, objB) {
+        if (objA < objB) { return -1 }
+        else if (objA < objB) { return 1; }
+        else { return 0; }
+      });
+
+      console.log(departmentMapping);
+      console.log(departments);
+
+      res.view("management/workers", {departmentMapping: departmentMapping, departments: departments});
     });
 
   },

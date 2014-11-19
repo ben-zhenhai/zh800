@@ -13,7 +13,7 @@
   <link rel="stylesheet" type="text/css" href="/assets/jQueryUI/jquery-ui.min.css">
 
   <script src="/assets/lib/javascript/jquery-2.1.1.js"></script>
-  <script src="/assets/sementicUI/javascript/semantic.js"></script>
+  <script src="/assets/sementicUI/semantic.js"></script>
   <script src="/assets/jQueryUI/jquery-ui.min.js"></script>
   <script src="/assets/lib/javascript/jquery.mtz.monthpicker.js"></script>
 
@@ -42,32 +42,64 @@
        <a href="/management/addWorker" class="ui right floated labled icon button"><i class="plus icon"></i> 新增員工資料</a>
 
        <div style="clear: both"></div>
-       <table class="ui five column celled table segment">
-         <thead>
-           <tr><th>姓名</th><th>工號</th><th>部門</th><th>組別</th><th>動作</th></tr>
-         </thead>
-         <tbody>
-           <% for (var i = 0; i < workers.length; i++) { %>
-             <tr id="row-<%= workers[i].id %>">
-               <td><%= workers[i].name %></td>
-               <td><%= workers[i].workerID %></td>
-               <td><%= workers[i].department %></td>
-               <td><%= workers[i].team %></td>
 
-               <td>
-                 <div class="ui small buttons">
-                   <a href="/management/editWorker/<%= workers[i].id %>" class="ui icon button"><i class="ui edit icon"></i> 編輯</a>
-                   <div class="or"></div>
-                   <a href="javascript: deleteWorker('<%= workers[i].id %>', '<%= workers[i].name %>');" class="ui icon button"><i class="ui trash icon"></i> 刪除</a>
+       <div id="tab" style="margin-top: 1em;">
+         <div class="">
+           <div class="ui top attached tabular menu">
+             <% 
+                 for (var i = 0; i < departments.length; i++) { 
+             %>
+                   <a class="<%= i == 0 ? 'active' : '' %> item" data-tab="<%= departments[i] %>"><%= departments[i] %></a>
+             <%  } %>
+           </div>
+             <%
+                 for (var key in departmentMapping) {
+                   var activeClass = departmentMapping[key].active ? 'active' : '';
+             %>
+                   <div class="ui bottom attached <%= activeClass %> tab segment" data-tab="<%= key %>">
+                   <table class="ui four column celled table">
+                     <thead>
+                       <tr><th>姓名</th><th>工號</th><th>組別</th><th>動作</th></tr>
+                     </thead>
+                     <tbody>
+       
+             <%
+                   for (var i = 0; i < departmentMapping[key].workers.length; i++) {
+                     var worker = departmentMapping[key].workers[i];
+             %>
+                           <tr id="row-<%= worker.id %>">
+                             <td><%= worker.name %></td>
+                             <td><%= worker.workerID %></td>
+                             <td><%= worker.team %></td>
+       
+                             <td>
+                               <div class="ui small buttons">
+                                 <a href="/management/editWorker/<%= worker.id %>" class="ui icon button"><i class="ui edit icon"></i> 編輯</a>
+                                 <div class="or"></div>
+                                 <a href="javascript: deleteWorker('<%= worker.id %>', '<%= worker.name %>');" class="ui icon button"><i class="ui trash icon"></i> 刪除</a>
+                               </div>
+                             </td>
+                           </tr>
+             <%
+                   }
+             %>
+                     </tbody>
+                   </table>
                  </div>
-               </td>
-             </tr>
-           <% } %>
-         </tbody>
-       </table>
+             <%
+                 }
+             %>
+       
+       
+         </div>
+         <script>
+           $('#tab .menu .item').tab({context: $('#tab')});
+         </script>
+       </div>
     </div>
   </div>
   <script>
+
     function deleteWorker(objectID, name) {
       var result = confirm("確定要刪除員工【" + name + "】嗎？");
       if (result) {
