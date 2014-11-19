@@ -27,7 +27,7 @@ module.exports = {
     });
     code128.getBase64(function (err, barcodeImage) {
       if (err) {
-        next(err);
+        res.next(err);
       }
       res.view("barcode/view", {barcodeImage: barcodeImage, barcodeData: barcodeData});
     });
