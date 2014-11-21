@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html> 
 <html>
     <head>
         <meta charset="utf8" />
@@ -29,6 +29,8 @@
             });
             
             function getCSVfile() {
+                var fileName = "report";
+                
                 var array  = typeof tatalData != 'object' ? JSON.parse(tatalData) : tatalData;
                 var str = 'ID,TYPE,IP,NOTE\r\n';
                 
@@ -41,18 +43,29 @@
                     str += line + '\r\n';
                 }
                 
-                if (navigator.appName != 'Microsoft Internet Explorer') {
-                    window.open('data:text/csv;charset=utf-8,' + escape(str));
-                } else {
-                    var popup = window.open('','csv','');
-                    popup.document.body.innerHTML = '<pre>' + str + '</pre>';
-                }    
+                var uri = 'data:text/csv;charset=utf-8,' + escape(str);
+                
+                var link = document.createElement("a");    
+                link.href = uri;
+                link.style = "visibility:hidden";
+                link.download = fileName + ".csv";
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                //if (navigator.appName != 'Microsoft Internet Explorer') {
+                //    window.open('data:text/csv;charset=utf-8,' + escape(str));
+                //} else {
+                //    var popup = window.open('','csv','');
+                //    popup.document.body.innerHTML = '<pre>' + str + '</pre>';
+                //}    
             }
         </script>
     </head>
     <body>    
     
-        <input type="button" value="CSV Report" onclick="getCSVfile()" />
+        <input type="button" value="CSV Report" onclick="getCSVfile()" /><br />
         <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         
         <svg
