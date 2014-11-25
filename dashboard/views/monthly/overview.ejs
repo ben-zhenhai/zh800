@@ -89,6 +89,9 @@
         <svg class="chart"></svg>
       </div>
     </div>
+    <div>
+      <input type="hidden" id="dataURL" value="<%= dataURL %>"/>
+    </div>
 
     <script>
 
@@ -102,7 +105,9 @@
         extractName: function(data) { return data.name }
       })
 
-      $.ajax("<%= dataURL %>").done(function (data) {
+      var dataURL = $('#dataURL').val()
+
+      $.ajax(dataURL).done(function (data) {
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();
