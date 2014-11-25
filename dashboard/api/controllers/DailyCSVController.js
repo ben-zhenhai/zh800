@@ -74,10 +74,8 @@ module.exports = {
         return;
       }
 
-      var lines = '"日期","錯誤種類","數量"\n'
-
       res.type('text/csv');
-      res.write(new Buffer('"日期","錯誤種類","數量"\n'));
+      res.write(new Buffer('"日期","錯誤種類","數量", "說明"\n'));
 
       for (var i = 0; i < data.length; i++) {
         var record = data[i];
@@ -86,7 +84,10 @@ module.exports = {
           record.name.date.getDate() + " " + record.name.date.getHours() + ":" +
           record.name.date.getMinutes() + ":" + record.name.date.getSeconds();
 
-        res.write(new Buffer('"' + time + '","' + record.name.error + '",' + record.value + "\n"));;
+        var machineModel = sails.config.machineModel[machine]
+        var pin = sails.config.pinDefine[machineModel]["P" + record.defact_id]
+
+        res.write(new Buffer('"' + time + '","' + record.name.error + '",' + record.value + ",'" + pin + "'\n"));;
       }
 
       res.end();

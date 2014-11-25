@@ -163,6 +163,7 @@ module.exports = {
       dataURL: productDataURL,
       steps: steps,
       machineList: sails.config.machineList,
+      machineID: machine,
       csvURL: csvURL
     });
   }

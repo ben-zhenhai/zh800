@@ -164,11 +164,13 @@ module.exports = {
       }
 
       res.type('text/csv');
-      res.write(new Buffer('"日期","生產數量","錯誤數量","錯誤種類"\n'));
+      res.write(new Buffer('"日期","生產數量","錯誤數量","錯誤種類", "說明"\n'));
 
       for (var i = 0; i < data.length; i++) {
         var record = data[i];
-        res.write(new Buffer('"' + record.timestamp + '",' + record.count_qty + ',' + record.bad_qty + ',' + record.defact_id + "\n"));
+        var machineModel = sails.config.machineModel[machine]
+        var pin = sails.config.pinDefine[machineModel]["P" + record.defact_id]
+        res.write(new Buffer('"' + record.timestamp + '",' + record.count_qty + ',' + record.bad_qty + ',' + record.defact_id + ',"' + pin + '"' + "\n"));
       }
 
       res.end();

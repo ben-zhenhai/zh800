@@ -250,7 +250,11 @@
             function (data) { return data.timestamp; },
             function (data) { return data.count_qty == 0 ? "" : data.count_qty },
             function (data) { return data.bad_qty == 0 ? "" : data.bad_qty; },
-            function (data) { return data.bad_qty == 0 ? "" : data.defact_id; }
+            function (data) { 
+              var model = machineModel["<%= machineID %>"];
+              var pin = pinDefine[model]["P" + data.defact_id ];
+              return data.bad_qty == 0 ? "" : "[" + data.defact_id + "] " + pin;
+            }
           ]
         }
       }

@@ -86,7 +86,8 @@ module.exports = {
       pieChartDataURL: pieChartDataURL,
       tableDataURL: tableDataURL,
       csvURL: csvURL,
-      steps: steps
+      steps: steps,
+      machineID: machineID
     }
 
     res.view("machine/detail", variables)

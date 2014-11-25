@@ -69,6 +69,7 @@ module.exports = {
       dataURL: dataURL,
       steps: steps,
       machineList: sails.config.machineList,
+      machineID: machine,
       csvURL: csvURL
     });
   }
