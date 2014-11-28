@@ -1,4 +1,4 @@
-The system is: Linux - 3.17.1-gentoo-r1 - x86_64
+The system is: Linux - 3.17.3-gentoo - x86_64
 Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
 Compiler: /usr/bin/cc 
 Build flags: 
@@ -10,7 +10,7 @@ The output was:
 
 Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
 
-The C compiler identification is GNU, found in "/home/brianhsu/openCV/C/CMakeFiles/3.0.2/CompilerIdC/a.out"
+The C compiler identification is GNU, found in "/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/3.0.2/CompilerIdC/a.out"
 
 Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
 Compiler: /usr/bin/c++ 
@@ -23,73 +23,73 @@ The output was:
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
 
-The CXX compiler identification is GNU, found in "/home/brianhsu/openCV/C/CMakeFiles/3.0.2/CompilerIdCXX/a.out"
+The CXX compiler identification is GNU, found in "/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/3.0.2/CompilerIdCXX/a.out"
 
 Determining if the C compiler works passed with the following output:
-Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp
+Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTryCompileExec3084348137/fast"
-/usr/bin/gmake -f CMakeFiles/cmTryCompileExec3084348137.dir/build.make CMakeFiles/cmTryCompileExec3084348137.dir/build
-gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building C object CMakeFiles/cmTryCompileExec3084348137.dir/testCCompiler.c.o
-/usr/bin/cc    -o CMakeFiles/cmTryCompileExec3084348137.dir/testCCompiler.c.o   -c /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/testCCompiler.c
-Linking C executable cmTryCompileExec3084348137
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3084348137.dir/link.txt --verbose=1
-/usr/bin/cc       CMakeFiles/cmTryCompileExec3084348137.dir/testCCompiler.c.o  -o cmTryCompileExec3084348137 -rdynamic 
-gmake[1]: Leaving directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
+Run Build Command:"/usr/bin/gmake" "cmTryCompileExec2506193042/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec2506193042.dir/build.make CMakeFiles/cmTryCompileExec2506193042.dir/build
+gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec2506193042.dir/testCCompiler.c.o
+/usr/bin/cc    -o CMakeFiles/cmTryCompileExec2506193042.dir/testCCompiler.c.o   -c /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTryCompileExec2506193042
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec2506193042.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTryCompileExec2506193042.dir/testCCompiler.c.o  -o cmTryCompileExec2506193042 -rdynamic 
+gmake[1]: Leaving directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
 
 
 Detecting C compiler ABI info compiled with the following output:
-Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp
+Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTryCompileExec3037026900/fast"
-/usr/bin/gmake -f CMakeFiles/cmTryCompileExec3037026900.dir/build.make CMakeFiles/cmTryCompileExec3037026900.dir/build
-gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building C object CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o
-/usr/bin/cc    -o CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
-Linking C executable cmTryCompileExec3037026900
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3037026900.dir/link.txt --verbose=1
-/usr/bin/cc     -v CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec3037026900 -rdynamic  
+Run Build Command:"/usr/bin/gmake" "cmTryCompileExec469517350/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec469517350.dir/build.make CMakeFiles/cmTryCompileExec469517350.dir/build
+gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o
+/usr/bin/cc    -o CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
+Linking C executable cmTryCompileExec469517350
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec469517350.dir/link.txt --verbose=1
+/usr/bin/cc     -v CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec469517350 -rdynamic  
 使用內建 specs。
 COLLECT_GCC=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3/gcc
 COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/lto-wrapper
 目的：x86_64-pc-linux-gnu
-配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog
+配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog --enable-libsanitizer
 執行緒模型：posix
 gcc version 4.8.3 (Gentoo 4.8.3 p1.1, pie-0.5.9) 
 COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/bin/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec3037026900' '-rdynamic' '-mtune=generic' '-march=x86-64'
- /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec3037026900 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o
-gmake[1]: Leaving directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec469517350' '-rdynamic' '-mtune=generic' '-march=x86-64'
+ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec469517350 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o
+gmake[1]: Leaving directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
 
 
 Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp]
+  ignore line: [Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTryCompileExec3037026900/fast"]
-  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec3037026900.dir/build.make CMakeFiles/cmTryCompileExec3037026900.dir/build]
-  ignore line: [gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp']
-  ignore line: [/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1]
-  ignore line: [Building C object CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/usr/bin/cc    -o CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
-  ignore line: [Linking C executable cmTryCompileExec3037026900]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3037026900.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/cc     -v CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec3037026900 -rdynamic  ]
+  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTryCompileExec469517350/fast"]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec469517350.dir/build.make CMakeFiles/cmTryCompileExec469517350.dir/build]
+  ignore line: [gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp']
+  ignore line: [/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building C object CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/cc    -o CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTryCompileExec469517350]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec469517350.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/cc     -v CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec469517350 -rdynamic  ]
   ignore line: [使用內建 specs。]
   ignore line: [COLLECT_GCC=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3/gcc]
   ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/lto-wrapper]
   ignore line: [目的：x86_64-pc-linux-gnu]
-  ignore line: [配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog]
+  ignore line: [配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog --enable-libsanitizer]
   ignore line: [執行緒模型：posix]
   ignore line: [gcc version 4.8.3 (Gentoo 4.8.3 p1.1, pie-0.5.9) ]
   ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/bin/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec3037026900' '-rdynamic' '-mtune=generic' '-march=x86-64']
-  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec3037026900 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec469517350' '-rdynamic' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec469517350 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o]
     arg [/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2] ==> ignore
     arg [--eh-frame-hdr] ==> ignore
     arg [-m] ==> ignore
@@ -98,7 +98,7 @@ Parsed C implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTryCompileExec3037026900] ==> ignore
+    arg [cmTryCompileExec469517350] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o] ==> ignore
@@ -108,7 +108,7 @@ Parsed C implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../..] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../..]
-    arg [CMakeFiles/cmTryCompileExec3037026900.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [CMakeFiles/cmTryCompileExec469517350.dir/CMakeCCompilerABI.c.o] ==> ignore
     arg [-lgcc] ==> lib [gcc]
     arg [--as-needed] ==> ignore
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -136,70 +136,70 @@ Parsed C implicit link information from above output:
 
 
 Determining if the CXX compiler works passed with the following output:
-Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp
+Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTryCompileExec3384928725/fast"
-/usr/bin/gmake -f CMakeFiles/cmTryCompileExec3384928725.dir/build.make CMakeFiles/cmTryCompileExec3384928725.dir/build
-gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building CXX object CMakeFiles/cmTryCompileExec3384928725.dir/testCXXCompiler.cxx.o
-/usr/bin/c++     -o CMakeFiles/cmTryCompileExec3384928725.dir/testCXXCompiler.cxx.o -c /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
-Linking CXX executable cmTryCompileExec3384928725
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec3384928725.dir/link.txt --verbose=1
-/usr/bin/c++        CMakeFiles/cmTryCompileExec3384928725.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec3384928725 -rdynamic 
-gmake[1]: Leaving directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
+Run Build Command:"/usr/bin/gmake" "cmTryCompileExec4095658149/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec4095658149.dir/build.make CMakeFiles/cmTryCompileExec4095658149.dir/build
+gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec4095658149.dir/testCXXCompiler.cxx.o
+/usr/bin/c++     -o CMakeFiles/cmTryCompileExec4095658149.dir/testCXXCompiler.cxx.o -c /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTryCompileExec4095658149
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec4095658149.dir/link.txt --verbose=1
+/usr/bin/c++        CMakeFiles/cmTryCompileExec4095658149.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec4095658149 -rdynamic 
+gmake[1]: Leaving directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp
+Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTryCompileExec2210906930/fast"
-/usr/bin/gmake -f CMakeFiles/cmTryCompileExec2210906930.dir/build.make CMakeFiles/cmTryCompileExec2210906930.dir/build
-gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
-/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1
-Building CXX object CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o
-/usr/bin/c++     -o CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
-Linking CXX executable cmTryCompileExec2210906930
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec2210906930.dir/link.txt --verbose=1
-/usr/bin/c++      -v CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec2210906930 -rdynamic  
+Run Build Command:"/usr/bin/gmake" "cmTryCompileExec1010381418/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec1010381418.dir/build.make CMakeFiles/cmTryCompileExec1010381418.dir/build
+gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++     -o CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTryCompileExec1010381418
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec1010381418.dir/link.txt --verbose=1
+/usr/bin/c++      -v CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec1010381418 -rdynamic  
 使用內建 specs。
 COLLECT_GCC=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3/c++
 COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/lto-wrapper
 目的：x86_64-pc-linux-gnu
-配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog
+配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog --enable-libsanitizer
 執行緒模型：posix
 gcc version 4.8.3 (Gentoo 4.8.3 p1.1, pie-0.5.9) 
 COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/bin/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec2210906930' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
- /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec2210906930 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o
-gmake[1]: Leaving directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp'
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec1010381418' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec1010381418 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o
+gmake[1]: Leaving directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp'
 
 
 Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp]
+  ignore line: [Change Dir: /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTryCompileExec2210906930/fast"]
-  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec2210906930.dir/build.make CMakeFiles/cmTryCompileExec2210906930.dir/build]
-  ignore line: [gmake[1]: Entering directory '/home/brianhsu/openCV/C/CMakeFiles/CMakeTmp']
-  ignore line: [/usr/bin/cmake -E cmake_progress_report /home/brianhsu/openCV/C/CMakeFiles/CMakeTmp/CMakeFiles 1]
-  ignore line: [Building CXX object CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/bin/c++     -o CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
-  ignore line: [Linking CXX executable cmTryCompileExec2210906930]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec2210906930.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/c++      -v CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec2210906930 -rdynamic  ]
+  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTryCompileExec1010381418/fast"]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec1010381418.dir/build.make CMakeFiles/cmTryCompileExec1010381418.dir/build]
+  ignore line: [gmake[1]: Entering directory '/home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp']
+  ignore line: [/usr/bin/cmake -E cmake_progress_report /home/brianhsu/zh800/camera/FeaturePointsSolutions/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building CXX object CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++     -o CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTryCompileExec1010381418]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec1010381418.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++      -v CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec1010381418 -rdynamic  ]
   ignore line: [使用內建 specs。]
   ignore line: [COLLECT_GCC=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3/c++]
   ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/lto-wrapper]
   ignore line: [目的：x86_64-pc-linux-gnu]
-  ignore line: [配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog]
+  ignore line: [配置為：/var/tmp/portage/sys-devel/gcc-4.8.3/work/gcc-4.8.3/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/4.8.3 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/include/g++-v4 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/4.8.3/python --enable-languages=c,c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo 4.8.3 p1.1, pie-0.5.9' --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --disable-libgcj --enable-libgomp --disable-libmudflap --disable-libssp --enable-lto --without-cloog --enable-libsanitizer]
   ignore line: [執行緒模型：posix]
   ignore line: [gcc version 4.8.3 (Gentoo 4.8.3 p1.1, pie-0.5.9) ]
   ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/bin/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec2210906930' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec2210906930 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec1010381418' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec1010381418 /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../.. CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtend.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crtn.o]
     arg [/usr/libexec/gcc/x86_64-pc-linux-gnu/4.8.3/collect2] ==> ignore
     arg [--eh-frame-hdr] ==> ignore
     arg [-m] ==> ignore
@@ -208,7 +208,7 @@ Parsed CXX implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTryCompileExec2210906930] ==> ignore
+    arg [cmTryCompileExec1010381418] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crt1.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../lib64/crti.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/crtbegin.o] ==> ignore
@@ -218,7 +218,7 @@ Parsed CXX implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../../../x86_64-pc-linux-gnu/lib]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../..] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.3/../../..]
-    arg [CMakeFiles/cmTryCompileExec2210906930.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTryCompileExec1010381418.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-lstdc++] ==> lib [stdc++]
     arg [-lm] ==> lib [m]
     arg [-lgcc_s] ==> lib [gcc_s]
