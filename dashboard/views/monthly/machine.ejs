@@ -146,8 +146,23 @@
       </div>
     </div>
   </div>
+  <div>
+    <input type="hidden" id="productMachine" value="<%= productMachine %>" />
+    <input type="hidden" id="fullYear" value="<%= fullYear %>" />
+    <input type="hidden" id="month" value="<%= month %>" />
+    <input type="hidden" id="week" value="<%= week %>" />
+    <input type="hidden" id="date" value="<%= date %>" />
+    <input type="hidden" id="dataURL" value="<%= dataURL %>" />
+  </div>
   <script>
     
+    var dataURL = $('#dataURL').val()
+    var productMachine = $('#productMachine').val()
+    var fullYear = +($('#fullYear').val())
+    var month = +($('#month').val())
+    var week = +($('#week').val())
+    var date = +($('#date').val())
+
     $("#datepicker").datepicker({
       firstDay: 0,
       onSelect: function(dateText, inst) {
@@ -166,24 +181,19 @@
         var isoDate = strToDate(dateText);
 
         var url = "/monthly/" + isoDate.getFullYear() + "/" + (+isoDate.getMonth()+1) + 
-                  "/" + getWeek(isoDate) + "/" + isoDate.getDate() + "/" + "<%= productMachine %>";
+                  "/" + getWeek(isoDate) + "/" + isoDate.getDate() + "/" + productMachine;
 
         window.location = url;
       }
     });
 
-    $("#datepicker").datepicker("setDate", new Date(<%= fullYear %>, <%= (+month - 1) %>, <%= date %>));
+    $("#datepicker").datepicker("setDate", new Date(fullYear, (+month - 1), date));
 
-    setupMachineList(
-      '#machineList', '<%= productMachine %>',
-      "/monthly/" + <%= fullYear %> + "/" + <%= month %> + "/" + <%= week %> + "/" + <%= date %>
-    );
+    setupMachineList('#machineList', productMachine, "/monthly/" + fullYear + "/" + month + "/" + week + "/" + date)
 
   </script>
   <script>
     $(function() {
-
-
 
       function toPieChartData(dataJSON) {
         var data = {};
@@ -250,12 +260,17 @@
             function (data) { return data.timestamp; },
             function (data) { return data.count_qty == 0 ? "" : data.count_qty },
             function (data) { return data.bad_qty == 0 ? "" : data.bad_qty; },
-            function (data) { return data.bad_qty == 0 ? "" : data.defact_id; }
+            function (data) { 
+              var model = machineModel[productMachine];
+              var eventTable = pinDefine[model];
+              var pin = eventTable ? eventTable["P" + data.defact_id ] : "";
+              return data.bad_qty == 0 ? "" : "[" + data.defact_id + "] " + pin;
+            }
           ]
         }
       }
 
-      $.ajax("<%= dataURL %>", {timeout: 30 * 1000}).done(function(data) {
+      $.ajax(dataURL, {timeout: 30 * 1000}).done(function(data) {
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();

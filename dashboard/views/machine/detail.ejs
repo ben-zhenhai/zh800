@@ -120,13 +120,18 @@
         </div>
       </div>
     </div>
+    <div>
+      <input type="hidden" id="pieChartDataURL" value="<%= pieChartDataURL %>" />
+      <input type="hidden" id="tableDataURL" value="<%= tableDataURL %>" />
+      <input type="hidden" id="machineID" value="<%= machineID %>" />
+    </div>
 
     <script>
+      var pieChartDataURL = $('#pieChartDataURL').val();
+      var tableDataURL = $('#tableDataURL').val();
+      var machineID = $('#machineID').val();
 
-
-    </script>
-    <script>
-      $.ajax("<%= pieChartDataURL %>", {timeout: 30 * 1000}).done(function(data) {
+      $.ajax(pieChartDataURL, {timeout: 30 * 1000}).done(function(data) {
 
 
         if (!data.dataSet || data.dataSet.length == 0) {
@@ -147,13 +152,19 @@
 
         drawPieChart(".pieChart", data.dataSet);
 
-        $.ajax("<%= tableDataURL %>", {timeout: 120 * 1000}).done(function(data) {
+        $.ajax(tableDataURL, {timeout: 120 * 1000}).done(function(data) {
           var tableSchema = {
             'data': data,
             'extractors': [
               function (data) { return data.time; },
               function (data) { return data.bad_qty; },
-              function (data) { return data.defact_id; }
+              function (data) { 
+                var model = machineModel[machineID];
+                var eventTable = pinDefine[model];
+                var pin = eventTable ? eventTable["P" + data.defact_id ] : "";
+                return data.bad_qty == 0 ? "" : "[" + data.defact_id + "] " + pin;
+              }
+
             ]
           };
 

@@ -82,10 +82,14 @@
 
       <svg class="pieChart"></svg>
     </div>
+    <div>
+      <input type="hidden" id="dataURL" value="<%= dataURL %>" />
+    </div>
 
     <script>
 
-      $.ajax("<%= ajaxDataURL %>", {timeout: 30 * 1000}).done(function(data) {
+      var dataURL = $('#dataURL').val()
+      $.ajax(dataURL, {timeout: 30 * 1000}).done(function(data) {
 
         if (!data.dataSet || data.dataSet.length == 0) {
           $('#notFoundBlock').show();

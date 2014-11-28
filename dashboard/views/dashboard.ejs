@@ -16,6 +16,7 @@
   <script src="/assets/sementicUI/javascript/semantic.js"></script>
   <script src="/assets/jQueryUI/jquery-ui.min.js"></script>
   <script src="/assets/lib/javascript/jquery.mtz.monthpicker.js"></script>
+  <script src="/assets/custom/javascript/monthPicker.js"></script>
 
 </head>
 <body>
@@ -38,13 +39,13 @@
     <div class="column">
       <div class="center aligned three column ui page stackable grid">
         <div class="column">
-          <a href="total/" class="ui massive icon button" style="padding: 30px;">
-            <i class="huge dashboard icon"></i>
-            <div style="margin-top: 0.5em">總覽</div>
-          </a>
-        </div>
-        <div class="column">
-          <a href="/monthly/<%= currentYear %>" class="ui massive icon button" style="padding: 30px;">
+          <a href="/total" class="ui massive icon button" style="padding: 30px;">
+          <i class="huge dashboard icon"></i>
+          <div style="margin-top: 0.5em">總覽</div>
+        </a>
+      </div>
+      <div class="column">
+        <a href="/monthly/<%= currentYear %>" class="ui massive icon button" style="padding: 30px;">
             <i class="huge calendar icon"></i>
             <div style="margin-top: 0.5em">月報表</div>
           </a>
@@ -94,68 +95,9 @@
       </div> 
     </div>
   </div>
-  <div class="ui page grid">
-    <div class="column">
-    </div>
-    <script>
-      $('#monthPicker').monthpicker({
-        pattern: 'yyyy-mm',
-        startYear: <%= minYear %>,
-        finalYear: <%= maxYear %>,
-        selectedYear: <%= minYear %>,
-        monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
-      });
-
-      $('#monthPicker').monthpicker().bind('monthpicker-change-year', function (e, year) {
-
-        // Enable all months
-        $('#monthPicker').monthpicker('disableMonths', []);
-
-        // Disable month before our first log
-        if (year === '<%= minYear %>') {
-          var disableMonths = [];
-          for (var i = 1; i < <%= minMonth %>; i++) {
-            disableMonths.push(i);
-          }
-          $('#monthPicker').monthpicker('disableMonths', disableMonths);
-        }
-
-        // Disable month after our last log
-        if (year === '<%= maxYear %>') {
-          var disableMonths = [];
-          for (var i = (+<%= maxMonth %> + 1); i <= 12; i++) {
-            disableMonths.push(i);
-          }
-          $('#monthPicker').monthpicker('disableMonths', disableMonths);
-        }
-      });
-
-      
-      $('#monthPicker').bind('monthpicker-click-month', function(e, month) {
-        var columns = $("#monthPicker").val().split("-");
-        var year = +(columns[0]);
-        var month = +(columns[1]);
-        window.location = "/daily/" + year + "/" + month
-      });
-
-      disableMonths();
-
-      function disableMonths() {
-        var disableMonths = [];
-        for (var i = 1; i < <%= minMonth %>; i++) {
-          disableMonths.push(i);
-        }
-        for (var i = <%= +(maxMonth) + 1 %>; i <= 12; i++) {
-          disableMonths.push(i);
-        }
-
-
-        $('#monthPicker').monthpicker('disableMonths', disableMonths);
-      }
-
-    </script>
-  </div>
-
+  <script>
+    setupMonthChooser(<%= maxYear %>, <%= maxMonth %>, <%= minYear %>, <%= minMonth %>);
+  </script>
 </body>
 
 </html>

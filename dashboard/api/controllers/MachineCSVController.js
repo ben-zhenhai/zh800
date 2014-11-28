@@ -94,11 +94,13 @@ module.exports = {
 
 
       res.type('text/csv');
-      res.write(new Buffer('"日期","數量","錯誤種類"\n'));
+      res.write(new Buffer('"日期","數量","錯誤種類", "說明"\n'));
 
       for (var i = 0; i < result.length; i++) {
         var record = result[i];
-        res.write(new Buffer('"' + record.time + '", "' + record.bad_qty +'",' +  record.defact_id + "\n"));
+        var machineModel = sails.config.machineModel[machineID]
+        var pin = sails.config.pinDefine[machineModel]["P" + record.defact_id]
+        res.write(new Buffer('"' + record.time + '", "' + record.bad_qty +'",' +  record.defact_id + ',"' + pin + '"' + "\n"));
       }
 
       res.end();

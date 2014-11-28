@@ -17,7 +17,7 @@ module.exports = {
 
     var variables = {
       steps: steps,
-      ajaxDataURL: "/api/json/machine",
+      dataURL: "/api/json/machine",
       csvLink: "/api/csv/machine",
       threshold: 0.5
     }
@@ -37,7 +37,7 @@ module.exports = {
 
     var variables = {
       steps: steps,
-      ajaxDataURL: "/api/json/machine/" + step,
+      dataURL: "/api/json/machine/" + step,
       csvLink: "/api/csv/machine/" + step,
       threshold: 0.5
     }
@@ -58,7 +58,7 @@ module.exports = {
 
     var variables = {
       steps: steps,
-      ajaxDataURL: "/api/json/machine/" + step + "/" + model,
+      dataURL: "/api/json/machine/" + step + "/" + model,
       csvLink: "/api/csv/machine/" + step + "/" + model,
       threshold: 0.2
     }
@@ -86,7 +86,8 @@ module.exports = {
       pieChartDataURL: pieChartDataURL,
       tableDataURL: tableDataURL,
       csvURL: csvURL,
-      steps: steps
+      steps: steps,
+      machineID: machineID
     }
 
     res.view("machine/detail", variables)
