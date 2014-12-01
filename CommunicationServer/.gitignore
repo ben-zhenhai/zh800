@@ -1,6 +1,0 @@
-project/project/
-project/target/
-target/
-*.swp
-src/main/resources/*.props
-src/main/resources/props/*
