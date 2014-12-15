@@ -1,2 +1,0 @@
-30 0 * * * /home/zhenhai/SyncTwoSite/dailyImport/import.sh >> /var/log/zhenhai/dailyImport 2>&1
-
