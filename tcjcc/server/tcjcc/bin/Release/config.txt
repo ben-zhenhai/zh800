@@ -1,0 +1,7 @@
+#---start---
+#CompanyNo:J5700777
+#SourceFolder:d:\\temp\\RawData\\
+#TargetFolder:d:\\temp\\OutputData\\
+#ErrorFolder:d:\\temp\\ErrorMachNo\\
+#CompanyControlNo:214
+#---end---

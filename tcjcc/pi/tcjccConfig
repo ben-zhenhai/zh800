@@ -1,0 +1,7 @@
+CompanyNo:123
+TargetId:D01
+FTPServer:ftp://192.168.1.11:8888/
+AccPw:raspberry:1234
+#MachineType:WaterAnalyse
+MachineType:WaterFlow
+MachineId:1
