@@ -68,14 +68,14 @@
 #define Log(s,func, line, opt) StringCat(func);StringCat(opt)
 
 enum{
-    MechSTART = 1,
-    MechSTOP,
-    MechRUNNING,
-    MechREPAIR,
-    MechHUMAN,
-    MechLOCK,
-    MechUNLOCK,
-    MechEND
+    MachRUNNING = 1,
+    MachREPAIRING,
+    MachREPAIRDone,
+    MachJobDone,
+    MachLOCK,
+    MachUNLOCK,
+    MachSTOPForce1,
+    MachSTOPForce2
 };
 
 int WatchDogThreadFlag;
@@ -392,29 +392,32 @@ void * WatchDogForGood(void *argument)
         {
             for(ForCount2 = 0; ForCount2 < 8; ++ForCount2)
             {
-                if(PINCount[ForCount][ForCount2] - PINEXCount[ForCount][ForCount2] > zhMAXOUTPUT)
+                if(PINEXCount[ForCount][ForCount2] != PINCount[ForCount][ForCount2] && ForCount2 == 7 && ForCount == 0)
                 {
-                    fprintf(pfile, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,
+                    if(PINCount[ForCount][ForCount2] - PINEXCount[ForCount][ForCount2] > zhMAXOUTPUT)
+                    {
+                        fprintf(pfile, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,
                                                                                   (long)now.tv_sec,
                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                   ForCount * 8 + ForCount2 + 2, MachineCode, 
-                                                                                  UserNo, MechRUNNING);
-
-                }
-                else if(PINEXCount[ForCount][ForCount2] != PINCount[ForCount][ForCount2] && ForCount2 == 7 && ForCount == 0)
-                {
+                                                                                  UserNo, MachRUNNING);
+                    }
+                    else
+                    {
 #ifdef PrintMode
-                    fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7] - PINEXCount[0][7],
-                                                                                  (long)now.tv_sec,
-                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  ForCount * 8 + ForCount2 + 2, MachineCode, 
-                                                                                  UserNo, MechRUNNING);
+                        fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                                                                                PINCount[0][7] - PINEXCount[0][7],(long)now.tv_sec,
+                                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                ForCount * 8 + ForCount2 + 2, MachineCode, 
+                                                                                UserNo, MachRUNNING);
 #else
-                    fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
-                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  ForCount * 8 + ForCount2 + 2, MachineCode, 
-                                                                                  UserNo, MechRUNNING);
+                        fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                                ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
+                                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                ForCount * 8 + ForCount2 + 2, MachineCode, 
+                                                                                UserNo, MachRUNNING);
 #endif
+                    }
                 }
                 else if(PINEXCount[ForCount][ForCount2] != PINCount[ForCount][ForCount2])
                 {
@@ -424,13 +427,13 @@ void * WatchDogForGood(void *argument)
                                                                                   PINCount[ForCount][ForCount2] - PINEXCount[ForCount][ForCount2],
                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                   ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, 
-                                                                                  MechRUNNING);
+                                                                                  MachRUNNING);
 #else
                     fprintf(pfile, "%s %s %s %ld %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], 
                                                                                     (long)now.tv_sec, PINCount[ForCount][ForCount2],
                                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                     ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, 
-                                                                                    MechRUNNING);
+                                                                                    MachRUNNING);
 #endif
                 }
             }
@@ -685,6 +688,7 @@ int main(int argc ,char *argv[])
     int shmid;
     key_t key;
     struct ifreq ifr;
+    long goodCount;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&mutex_2, NULL);
@@ -761,6 +765,7 @@ int main(int argc ,char *argv[])
     //the mechine always standby
     while(1)
     {
+        unsigned char isNormalStop = 0;
         MasterFlag = 1;
 #ifdef LogMode
         Log(s, __func__, __LINE__, " scan barcode ready\n");
@@ -837,7 +842,7 @@ int main(int argc ,char *argv[])
                 memset(CountNo, 0, sizeof(char)*InputLength);
                 tempPtr = tempString + 3;
                 memcpy(CountNo, tempPtr, sizeof(tempString)-2);
-                
+                goodCount = (atoi(CountNo)*goodrate); 
                 digitalWrite (WiringPiPIN_15, LOW);
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, HIGH);
@@ -858,7 +863,7 @@ int main(int argc ,char *argv[])
                 tempPtr = tempString + 3;
                 memcpy(MachineCode, tempPtr, sizeof(tempString)-2);
                 
-                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_15, Low);
                 digitalWrite (WiringPiPIN_16, HIGH);
                 digitalWrite (WiringPiPIN_18, LOW);
                 
@@ -872,13 +877,13 @@ int main(int argc ,char *argv[])
             sleep(1);
             memset(tempString, 0, sizeof(char)*InputLength);
             gets(tempString);
-            if(strncmp(tempString, "XXX", 3) == 0)
+            if(strncmp(tempString, "XXXP", 4) == 0)
             {
                 memset(UserNo, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(UserNo, tempPtr, sizeof(tempString)-2);
+                tempPtr = tempString + 4;
+                memcpy(UserNo, tempPtr, sizeof(tempString)-3);
                 
-                digitalWrite (WiringPiPIN_15, LOW);
+                digitalWrite (WiringPiPIN_15, HIGH);
                 digitalWrite (WiringPiPIN_16, HIGH);
                 digitalWrite (WiringPiPIN_18, LOW);
                 
@@ -948,6 +953,7 @@ int main(int argc ,char *argv[])
 
         memset(CountNo, 0, sizeof(char)*InputLength);
         strcpy(CountNo, FakeInput[3]);
+        goodCount = (atoi(CountNo)*goodrate);
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
@@ -1101,13 +1107,14 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 sleep(1);
-                if(PINCount[0][7] >= atoi(CountNo))
+                if(PINCount[0][7] >= goodCount)
                 //if(PINCount[0][7] >= 0)
                 {
                     //finish job
                     printf("Houston we are ready to back!\n");
                     zhResetFlag = 1;
                     MasterFlag = 0;
+                    isNormalStop = 1;
 #ifdef LogMode
                     Log(s, __func__, __LINE__, " fininsh job\n");
                     Log(s, __func__, __LINE__, " fininsh job\n");
@@ -1168,7 +1175,6 @@ int main(int argc ,char *argv[])
             pthread_join(WatchDogThread, NULL);
             sleep(1);
 
-            //MechSTOP & MechHUMAN
             //get ip address
             fd = socket(AF_INET, SOCK_DGRAM, 0);
             ifr.ifr_addr.sa_family = AF_INET;
@@ -1176,30 +1182,61 @@ int main(int argc ,char *argv[])
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
 
-            if(MasterFlag == 0)
+            if((MasterFlag == 0) && (isNormalStop == 1) )
             {
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                             MachineCode, UserNo, MechEND);
+                                                                             MachineCode, UserNo, MachJobDone);
 #else
                 fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                             MachineCode, UserNo, MechEND);
+                                                                             MachineCode, UserNo, MachJobDone);
 #endif
                 fclose(pfile);
-            }else
+            }else if(MasterFlag == 0)
+            {
+                if(PINCount[0][7] >= (goodCount / 1.04))
+                {
+                    pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             MachineCode, UserNo, MachSTOPForce1);
+#else
+                    fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             MachineCode, UserNo, MachSTOPForce1);
+#endif
+                    fclose(pfile);
+                }else
+                {
+                    pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             MachineCode, UserNo, MachSTOPForce1);
+#else
+                    fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             MachineCode, UserNo, MachSTOPForce1);
+#endif
+                    fclose(pfile);
+
+                }
+            }
+            else
             {
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                          MachineCode, UserNo, MechLOCK);
+                                                                                          MachineCode, UserNo, MachLOCK);
 #else
                 fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                          MachineCode, UserNo, MechLOCK);
+                                                                                          MachineCode, UserNo, MachLOCK);
 #endif
                 fclose(pfile);
             }
@@ -1235,50 +1272,35 @@ int main(int argc ,char *argv[])
                     sleep(1);
                     memset(tempString, 0, sizeof(char)*InputLength);
                     gets(tempString);
-                    if(strncmp(tempString, "XXX", 3) == 0)
+                    if(strncmp(tempString, "XXXP", 4) == 0)
                     {
                         memset(UserNo, 0, sizeof(char)*InputLength);
-                        tempPtr = tempString + 3;
-                        memcpy(UserNo, tempPtr, sizeof(tempString)-2);
+                        tempPtr = tempString + 4;
+                        memcpy(UserNo, tempPtr, sizeof(tempString)-3);
 
                         digitalWrite (WiringPiPIN_15, LOW);
                         digitalWrite (WiringPiPIN_16, HIGH);
                         digitalWrite (WiringPiPIN_18, LOW);
 
-                        pfile = fopen(UPLoadFile, "a");
-#ifdef PrintMode
-                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,  
-                                                                                     (long)now.tv_sec,
-                                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, UserNo, MechHUMAN);
-#else
-                        fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], 
-                                                                                     (long)now.tv_sec,
-                                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, UserNo, MechHUMAN);
-#endif
-                        fclose(pfile);
-                        
-                        break;
-                    }else if(strncmp(tempString, "VVV", 3) == 0)
+                    }else if(strncmp(tempString, "XXXM", 4) == 0)
                     {
                         char FixerNo[InputLength];
                         pthread_t buttonThread;
                         memset(FixerNo, 0, sizeof(char)*InputLength);
-                        tempPtr = tempString + 3;
-                        memcpy(FixerNo, tempPtr, sizeof(tempString)-2);
+                        tempPtr = tempString + 4;
+                        memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
 
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                                      (long)now.tv_sec,
                                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, FixerNo, MechREPAIR);
+                                                                                     MachineCode, FixerNo, MechREPAIRING);
 #else
                         fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], 
                                                                                      (long)now.tv_sec,
                                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, FixerNo, MechREPAIR);
+                                                                                     MachineCode, FixerNo, MechREPAIRING);
 #endif
                         fclose(pfile);
             
@@ -1301,36 +1323,40 @@ int main(int argc ,char *argv[])
                             sleep(1);
                             memset(tempString, 0, sizeof(char)*InputLength);
                             gets(tempString);
-                            if(strncmp(tempString, "VVV", 3) == 0)
+                            if(strncmp(tempString, "XXXM", 4) == 0)
                             {
-                                memset(FixerNo, 0, sizeof(char)*InputLength);
-                                tempPtr = tempString + 3;
-                                memcpy(FixerNo, tempPtr, sizeof(tempString)-2);
+                                char doubleCheckFixerNo[InputLength];
+                                memset(doubleCheckFixerNo, 0, sizeof(char)*InputLength);
+                                tempPtr = tempString + 4;
+                                memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
                                 
-                                pfile = fopen(UPLoadFile, "a");
+                                if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
+                                {
+                                    pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                                       (long)now.tv_sec,
                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                      MachineCode, FixerNo, MechUNLOCK);
+                                                                                      MachineCode, FixerNo, MachREPAIRDone);
 #else
-                                fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], 
+                                    fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7], 
                                                                                       (long)now.tv_sec,
                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                      MachineCode, FixerNo, MechUNLOCK);
+                                                                                      MachineCode, FixerNo, MachREPAIRDone);
 #endif
-                                fclose(pfile);
+                                    fclose(pfile);
             
-                                FTPFlag = 1;
-                                rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
-                                assert(rc == 0);
-                                sleep(1);
-                                FTPFlag = 0;
-                                pthread_mutex_lock(&mutexFTP);
-                                pthread_cond_signal(&condFTP);
-                                pthread_mutex_unlock(&mutexFTP);
-                                pthread_join(FTPThread, NULL);
-                                break;
+                                    FTPFlag = 1;
+                                    rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+                                    assert(rc == 0);
+                                    sleep(1);
+                                    FTPFlag = 0;
+                                    pthread_mutex_lock(&mutexFTP);
+                                    pthread_cond_signal(&condFTP);
+                                    pthread_mutex_unlock(&mutexFTP);
+                                    pthread_join(FTPThread, NULL);
+                                    break;
+                                }
                             }
                             printf("FixerNo scan error code\n");
                         }
@@ -1344,11 +1370,11 @@ int main(int argc ,char *argv[])
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                                MachineCode, UserNo, MechUNLOCK);
+                                                                                                MachineCode, UserNo, MachUNLOCK);
 #else
                 fprintf(pfile, "%s %s %s %ld %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, PINCount[0][7],(long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                                MachineCode, UserNo, MechUNLOCK);
+                                                                                                MachineCode, UserNo, MachUNLOCK);
 #endif
                 fclose(pfile);
             }*/

@@ -46,7 +46,7 @@
 #define CONFIG_P1 0x07
 
 #define WatchDogCountValue 120
-#define InputLength 20
+#define InputLength 30 
 #define UPLoadFileLength 21
 #define CountPeriod 100
 #define WriteFileCountValue 4200
@@ -65,16 +65,17 @@
 #define Log(s,func, line, opt) StringCat(func);StringCat(opt)
 //#define Logmode
 #define PrintInfo
+#define PrintMode
 
 enum{
-    MechSTART = 1,
-    MechSTOP,
-    MechRUNNING,
-    MechREPAIR,
-    MechHUMAN,
-    MechLOCK,
-    MechUNLOCK,
-    MechEND
+    MachRUNNING = 1,
+    MachREPAIRING,
+    MachREPAIRDone,
+    MachJobDone,
+    MachLOCK,
+    MachUNLOCK,
+    MachSTOPForce1,
+    MachSTOPForce2
 };
 
 enum
@@ -95,7 +96,7 @@ int FileFlag = 0;
 char *shm, *s, *tail;
 char *shm_pop;
 int updateFlag = 0;
-char output[RS232_Length];
+unsigned char output[RS232_Length];
 long Count[AgeCountNumber];
 long ExCount[AgeCountNumber];
 int PrintLeftLog = 0;
@@ -125,15 +126,15 @@ void StringCat(const char *str);
 void * SerialFunction(void *argument);
 void * FTPFunction(void *argument);
 
-double CXResult(char CX1, char CX2, char CX3, char CX4, char CX5, char CX6);
-float DXResult(char DS1, char DS2, char DS3, char DS4, char DS5);
-float LCResult(char LC1, char LC2, char LC3, char LC4, char LC5);
+double CXResult(unsigned char CX1, unsigned char CX2, unsigned char CX3, unsigned char CX4, unsigned char CX5, unsigned char CX6);
+float DXResult(unsigned char DS1, unsigned char DS2, unsigned char DS3, unsigned char DS4, unsigned char DS5);
+float LCResult(unsigned char LC1, unsigned char LC2, unsigned char LC3, unsigned char LC4, unsigned char LC5);
 
-float LCSetter(char LC1, char LC2, char LC3, char LC4);
-double CXSetter(char CX1, char CX2, char CX3);
-double CXUpBoundSetter(char CX1, char CX2, char CX3);
-double CXLowBoundSetter(char CX1, char CX2, char CX3);
-float DXSetter(char DX1, char DX2, char DX3);
+float LCSetter(unsigned char LC1, unsigned char LC2, unsigned char LC3, unsigned char LC4);
+double CXSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3);
+double CXUpBoundSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3);
+double CXLowBoundSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3);
+float DXSetter(unsigned char DX1, unsigned char DX2, unsigned char DX3);
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
 
@@ -310,7 +311,7 @@ void * SerialFunction(void *argument)
     Log(s, __func__, __LINE__, "Serial Function entry\n");
 #endif
     int fd;
-    char temp_output[RS232_Length];
+    unsigned char temp_output[RS232_Length];
     int string_count = 0;
     int getString = 0;
     int readyToStart = 0;
@@ -330,7 +331,7 @@ void * SerialFunction(void *argument)
     {
         while(serialDataAvail(fd))
         {    
-            char temp_char_1;
+            unsigned char temp_char_1;
             temp_char_1 = serialGetchar(fd);
             //printf("%x ", temp_char_1);
             //if(temp_char_1 == 0x7D) printf("\n");
@@ -382,6 +383,10 @@ void * SerialFunction(void *argument)
             fflush (stdout) ;
         }
     }
+    if(fd != NULL)
+    {
+        serialClose(fd);
+    }
 #ifdef LogMode
     Log(s, __func__, __LINE__, "Serial Function exit\n");
 #endif
@@ -401,8 +406,8 @@ void *FileFunction(void *argument)
 
     int ForCount;
     int setAtFirstTime = 1;
-    char charOutput[RS232_Length];
-    char SetOutput[18];
+    unsigned char charOutput[RS232_Length];
+    unsigned char SetOutput[18];
     FILE *pfile;
     float LCCheck, DXUpperBond;
     double CXLowerBond, CXUpperBond, CXCheck;
@@ -477,15 +482,17 @@ void *FileFunction(void *argument)
                 {
                     if((ExCount[ForCount] != Count[ForCount]) && ForCount == 0)
                     {
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t1\t%s\t%s\n", p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,
-                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                   p->MachineCode, p->UserNo);
+                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t1\t%s\t%s\n", 
+                                                                             p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             p->MachineCode, p->UserNo);
                     }else if(ExCount[ForCount] != Count[ForCount])
                     {
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t%ld\t%s\t%d\t%s\t%s\n", p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,
-                                                                                  Count[ForCount],
-                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  ForCount+1, p->MachineCode, p->UserNo);
+                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t%ld\t%s\t%d\t%s\t%s\n", 
+                                                                             p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,
+                                                                             Count[ForCount],
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                             ForCount+1, p->MachineCode, p->UserNo);
                     }
                     else;
                 }
@@ -576,17 +583,34 @@ void *FileFunction(void *argument)
                 {
                     if((ExCount[ForCount] != Count[ForCount]) && ForCount == 0)
                     {
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t0\t%s\t1\t%s\t%s\t%lf\t%lf\t%lf\t%02d\t%02d\n", 
+#ifdef PrintMode
+                        fprintf(pfile, "%s %s %s %ld %ld 0 %s 1 %s %s %lf %lf %lf %02d\n", 
+                                                                               p->ISNo, p->ManagerCard, p->CountNo, 
+                                                                               Count[Good] - ExCount[Good], 
+                                                                               (long)now.tv_sec,
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                               p->MachineCode, p->UserNo, cx, dx, lc, MachRUNNING);
+#else
+                        fprintf(pfile, "%s %s %s %ld %ld 0 %s 1 %s %s %lf %lf %lf %02d\n", 
                                                                                p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,
                                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                               p->MachineCode, p->UserNo, cx, dx, lc, MechRUNNING, MechSTART);
+                                                                               p->MachineCode, p->UserNo, cx, dx, lc, MachRUNNING);
+#endif
                         break; // only have one in all for loop
                     }else if(ExCount[ForCount] != Count[ForCount])
                     {
-                        fprintf(pfile, "%s\t%s\t%s\t%ld\t%ld\t%ld\t%s\t%d\t%s\t%s\t%lf\t%lf\t%lf\t%02d\t%02d\n", 
-                                                                               p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,Count[ForCount],
-                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ForCount+1, 
-                                                                               p->MachineCode, p->UserNo, cx, dx, lc, MechRUNNING, MechSTART);
+#ifdef PrintMode
+                        fprintf(pfile, "%s %s %s 0 %ld %ld %s %d %s %s %lf %lf %lf %02d\n", 
+                                                               p->ISNo, p->ManagerCard, p->CountNo, (long)now.tv_sec,
+                                                               Count[ForCount] - ExCount[ForCount],
+                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ForCount+1, 
+                                                               p->MachineCode, p->UserNo, cx, dx, lc, MachRUNNING);
+#else
+                        fprintf(pfile, "%s %s %s %ld %ld %ld %s %d %s %s %lf %lf %lf %02d\n",
+                                                               p->ISNo, p->ManagerCard, p->CountNo, Count[Good], (long)now.tv_sec,Count[ForCount],
+                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ForCount+1, 
+                                                               p->MachineCode, p->UserNo, cx, dx, lc, MachRUNNING);
+#endif
                         break;
                     }else;
                 }
@@ -724,6 +748,7 @@ int main(int argc ,char *argv[])
     //the mechine always standby
     while(1)
     {
+        unsigned char isNormalStop = 0;
         InputNode *node;
         node = (InputNode *) malloc(sizeof(InputNode));
         if(node == NULL)
@@ -799,22 +824,6 @@ int main(int argc ,char *argv[])
             }
             printf("MachineCode scan error code\n");
         }
-
-        while(1)
-        {
-            memset(tempString, 0, sizeof(char)*InputLength);
-            gets(tempString);
-            if(strncmp(tempString, "XXX", 3) == 0)
-            {
-                memset(node->UserNo, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(node->UserNo, tempPtr, sizeof(tempString)-2);
-                //i2c_smbus_write_byte_data(fd, OUT_P1, 0x02);
-                break;
-            }
-            printf("UserNo scan error code\n");
-        }
-        
         while(1)
         {
             memset(tempString, 0, sizeof(char)*InputLength);
@@ -824,7 +833,6 @@ int main(int argc ,char *argv[])
                 memset(node->CountNo, 0, sizeof(char)*InputLength);
                 tempPtr = tempString + 3;
                 memcpy(node->CountNo, tempPtr, sizeof(tempString)-2);
-                //i2c_smbus_write_byte_data(fd, OUT_P1, 0x06);
                 
                 int tempCount = atoi(node->CountNo);
                 node->BusLength = tempCount/BusSize + 6;
@@ -834,7 +842,21 @@ int main(int argc ,char *argv[])
                 break;
             }
             printf("CountNo scan error code\n");
+        }
+        while(1)
+        {
+            memset(tempString, 0, sizeof(char)*InputLength);
+            gets(tempString);
+            if(strncmp(tempString, "XXXP", 4) == 0)
+            {
+                memset(node->UserNo, 0, sizeof(char)*InputLength);
+                tempPtr = tempString + 4;
+                memcpy(node->UserNo, tempPtr, sizeof(tempString)-3);
+                break;
+            }
+            printf("UserNo scan error code\n");
         }*/
+ 
 
         
         char FakeInput[5][InputLength];
@@ -879,7 +901,6 @@ int main(int argc ,char *argv[])
        
         sleep(1);
         memset(node->ISNo, 0, sizeof(char)*InputLength);
-        //strcpy(ISNo, "01");
         strcpy(node->ISNo, FakeInput[0]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
@@ -887,7 +908,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(node->ManagerCard, 0, sizeof(char)*InputLength);
-        //strcpy(ManagerCard, "BL20123456790");
         strcpy(node->ManagerCard, FakeInput[1]);
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, LOW);
@@ -895,7 +915,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(node->MachineCode, 0 , sizeof(char)*InputLength);
-        //strcpy(MachineCode, "E35");
         strcpy(node->MachineCode, FakeInput[2]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, LOW);
@@ -903,7 +922,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(node->CountNo, 0, sizeof(char)*InputLength);
-        //strcpy(CountNo, "100000");
         strcpy(node->CountNo, FakeInput[3]);
         goodCount = (atoi(node->CountNo)*goodrate);
         digitalWrite (WiringPiPIN_15, HIGH);
@@ -912,7 +930,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(node->UserNo, 0, sizeof(char)*InputLength);
-        //strcpy(UserNo, "6957");
         strcpy(node->UserNo, FakeInput[4]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
@@ -1141,7 +1158,7 @@ void * FTPFunction(void *argument)
     FILE *hd_src;
     struct stat file_info, file_info_2;
     curl_off_t fsize;
-    char UPLoadFile_3[21];
+    char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
@@ -1178,7 +1195,7 @@ void * FTPFunction(void *argument)
             InputNode *p = list;
             if(p != NULL)
             {
-                memset(UPLoadFile_3, 0, sizeof(char)*21);
+                memset(UPLoadFile_3, 0, sizeof(char)*UPLoadFileLength);
                 strcpy(UPLoadFile_3, p->UPLoadFile);
                 gettimeofday(&now, NULL);
                 sprintf(p->UPLoadFile,"%ld%s.txt",(long)now.tv_sec, p->MachineCode);
@@ -1202,6 +1219,34 @@ void * FTPFunction(void *argument)
                     digitalWrite (WiringPiPIN_18, LOW);
                 }
                 if(file_info.st_size > 0)
+                {
+                    pid_t proc = fork();
+                    if(proc < 0)
+                    {
+                        printf("fork child fail\n");
+                        return 0;
+                    }
+                    else if(proc == 0)
+                    {
+                        char filePath[80];
+                        char *pfile2;
+                        memset(filePath, 0, sizeof(char)*80);
+                        //strcpy(filePath, "/home/pi/zhlog/");
+                        //strcpy(filePath, "/home/pi/works/GT1318P/");
+                        strcpy(filePath, UPLoadFile_3);
+                        pfile2 = filePath;                       
+                        printf("%s\n", pfile2);
+
+                        execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
+                        //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+                    }
+                    else
+                    {
+                        int result = -1;
+                        wait(&result);
+                    }
+                }
+                /*if(file_info.st_size > 0)
                 {
                     fsize = (curl_off_t)file_info.st_size;
 
@@ -1245,7 +1290,7 @@ void * FTPFunction(void *argument)
                         }
                     }    
                     curl_global_cleanup();
-                }
+                }*/
                 unlink(UPLoadFile_3);
                 checkFlag = 0;
             }
@@ -1256,8 +1301,8 @@ void * FTPFunction(void *argument)
 #endif
 }
 
-double CXResult(char CX1, char CX2, char CX3, char CX4, char CX5, char CX6)
-{
+double CXResult(unsigned char CX1, unsigned char CX2, unsigned char CX3, unsigned char CX4, unsigned char CX5, unsigned char CX6)
+{ 
     if (CX1 == 0x20 && CX2 == 0x48 && CX3 == 0x49 && CX4 == 0x47 && CX5 == 0x48  && CX6 == 0x20 )
     {
         return -1;
@@ -1270,7 +1315,7 @@ double CXResult(char CX1, char CX2, char CX3, char CX4, char CX5, char CX6)
     {
         double ans = 0;
         double plus = 1;
-        char a1, a2, a3, a4, a5;
+        unsigned char a1, a2, a3, a4, a5;
         
         if(CX6 == 0x75) plus = 1000;
         else if(CX6 == 0x6D) plus = 1000000;
@@ -1326,7 +1371,7 @@ double CXResult(char CX1, char CX2, char CX3, char CX4, char CX5, char CX6)
     }
 }
 
-float DXResult(char DS1, char DS2, char DS3, char DS4, char DS5)
+float DXResult(unsigned char DS1, unsigned char DS2, unsigned char DS3, unsigned char DS4, unsigned char DS5)
 {
     if(DS1 == 0x48 && DS2 == 0x49)
     {
@@ -1345,9 +1390,9 @@ float DXResult(char DS1, char DS2, char DS3, char DS4, char DS5)
     }else return -3;
 }
 
-float LCResult(char LC1, char LC2, char LC3, char LC4, char LC5)
+float LCResult(unsigned char LC1, unsigned char LC2, unsigned char LC3, unsigned char LC4, unsigned char LC5)
 {
-    char a1,a2,a3,a4;    
+    unsigned char a1,a2,a3,a4;    
     float ans =0;
     if(LC1 == 0x20 && LC2 == 0x4f  && LC3 == 0x56 && LC4 == 0x45 && LC5 ==  0x42)
         return -1;
@@ -1397,7 +1442,7 @@ float LCResult(char LC1, char LC2, char LC3, char LC4, char LC5)
     }
 }
 
-float LCSetter(char LC1, char LC2, char LC3, char LC4) 
+float LCSetter(unsigned char LC1, unsigned char LC2, unsigned char LC3, unsigned char LC4) 
 {
     float ans = 0;
     LC1 = (LC1 & 0x0f);
@@ -1408,7 +1453,7 @@ float LCSetter(char LC1, char LC2, char LC3, char LC4)
     return ans;
 }
 
-double CXSetter(char CX1, char CX2, char CX3)
+double CXSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3)
 {
     double ans = 0;
     CX1 = (CX1 & 0x0f);
@@ -1418,7 +1463,7 @@ double CXSetter(char CX1, char CX2, char CX3)
     return ans;
 }
 
-double CXUpBoundSetter(char CX1, char CX2, char CX3)
+double CXUpBoundSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3)
 {
     double ans = 0;
     CX1 = (CX1 & 0x0f);
@@ -1428,18 +1473,18 @@ double CXUpBoundSetter(char CX1, char CX2, char CX3)
     return ans;
 }
 
-double CXLowBoundSetter(char CX1, char CX2, char CX3)
+double CXLowBoundSetter(unsigned char CX1, unsigned char CX2, unsigned char CX3)
 {
     double ans = 0;
     CX1 = (CX1 & 0x0f);
     CX2 = (CX2 & 0x0f);
     CX3 = (CX3 & 0x0f);
     ans = 1 - ((double)CX1)*0.1 - ((double)CX2) * 0.01 - ((double)CX3) * 0.001;
-    printf("%f\n", ans);
+    //printf("%f\n", ans);
     return ans;
 }
 
-float DXSetter(char DX1, char DX2, char DX3)
+float DXSetter(unsigned char DX1, unsigned char DX2, unsigned char DX3)
 {
     float ans = 0;
     DX1 = (DX1 & 0x0f);
