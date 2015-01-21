@@ -1,83 +1,52 @@
-var net = require('net')
+var HOST = '192.168.20.200'
+var username = "zhenhai"
+var password = "zhenhai123456"
+var filename = process.argv.slice(2).toString();
+var rabbitMQ = require('amqplib/callback_api')
+var dataQueue = "rawDataLine"
 
-var PORT = 5566
-var HOST = '192.168.0.181'
+rabbitMQ.connect('amqp://' + username + ":" + password + "@" + HOST, function(err, conn) {
 
-var args = process.argv.slice(2)
-var fs = require('fs')
+  if (err != null) {
+    console.log("[ERROR] cannot connect to rabbitMQ server, error:" + err);
+    return;
+  }
 
-var remaining = ''
-var line = ''
-var index = 0
-var last = 0
-var lineCount = 0;
+  conn.createConfirmChannel(function(err, channel) {
 
-var isLastChunk = false;
-
-function setupListener(input, func) {
-
-    input.on('data', function(data) {
-        remaining += data;
-        readLine(input, func)
-    });
-
-    input.on('end', function() {
-        isLastChunk = true;
-    })
-}
-
-
-function readLine(input, func) {
-    index = remaining.indexOf('\n');
-    last  = 0;
-
-    if (index > -1) {
-        line = remaining.substring(last, index);
-        last = index + 1;
-        func(line);
-        index = remaining.indexOf('\n', last);
-    } else if (isLastChunk) {
-        sendSaveCommand();
+    if (err != null) {
+      console.log("[ERROR] cannot open rabbitMQ channel error:" + err);
+      return;
     }
 
-    remaining = remaining.substring(last);
-}
+    channel.assertQueue(dataQueue);
 
-function sendSaveCommand() {
+    var lineReader = require('line-reader');
+    var totalLines = 0;
+    var counter = 0;
+    var isDone = false;
+    var trim = require("trim");
 
-    var tcpClient =  net.Socket()
+    lineReader.eachLine(filename, function(line, isLast) {
 
-    tcpClient.connect(
-        PORT, HOST,
-        function() {
-            tcpClient.write("saveData",function(){
-                tcpClient.destroy()
-            })
-        }
-    )
-}
+      isDone = isLast;
 
-var count = 0;
+      if (trim(line).length != 0) {
 
-function func(data) {
+        totalLines++;
 
-    var tcpClient =  net.Socket()
+        channel.sendToQueue(dataQueue, new Buffer(line), {persistent: true}, function(err) {
 
-    tcpClient.connect(
-        PORT, HOST,
-        function() {
-            console.log('Start to send data: ' + count + " / " + data)
-            tcpClient.write(data,function(){
-                readLine(inputFile, func)
-                tcpClient.destroy()
-                count++;
-            })
-        }
-    )
+          counter++;
+          console.log("[OK] Send [" + counter + "][" + line + "] to server...");
 
-}
-
-
-var inputFile = fs.createReadStream(args.toString())
-
-setupListener(inputFile, func)
+          if (counter == totalLines && isDone == true) {
+            console.log("END");
+            conn.close();
+            process.exit();
+          }
+        });
+      }
+    });
+  });
+});
