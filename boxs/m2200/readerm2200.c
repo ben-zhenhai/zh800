@@ -544,17 +544,18 @@ void * zhINTERRUPT1(void * argument)
                 second = second >> 1;
             }
 #ifdef PrintInfo      
-        printf("reader 1: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
+            printf("reader 1: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
                x , y, PINCount[0][0], PINCount[0][1], PINCount[0][2], 
                PINCount[0][3], PINCount[0][4], PINCount[0][5], PINCount[0][6], PINCount[0][7],
                PINCount[1][0], PINCount[1][1], PINCount[1][2], PINCount[1][3], PINCount[1][4], PINCount[1][5], PINCount[1][6], PINCount[1][7]);
 #endif   
-	    //pthread_mutex_lock(&mutex_3);
+	        //pthread_mutex_lock(&mutex_3);
             WatchDogFlag = 1;
-	    //pthread_mutex_unlock(&mutex_3);
-                 
+	        //pthread_mutex_unlock(&mutex_3);
         }
-        //Log(s, __func__, __LINE__, " exit\n");
+#ifdef LogMode
+        Log(s, __func__, __LINE__, " exit\n");
+#endif
     }
 }
 
@@ -586,7 +587,7 @@ void * zhINTERRUPT2(void * argument)
     	close(fd);
         if(x != I2CEXValue[2] || y != I2CEXValue[3])
         {
-	    //pthread_mutex_unlock(&mutex_3);
+	        //pthread_mutex_unlock(&mutex_3);
             first = I2CEXValue[2] ^ 0xff;
             first = first & x;
             second = I2CEXValue[3] ^ 0xff;
@@ -618,16 +619,17 @@ void * zhINTERRUPT2(void * argument)
             }
       
 #ifdef PrintInfo
-       printf("reader 2: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
+            printf("reader 2: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
                 x , y, PINCount[2][0], PINCount[2][1], PINCount[2][2], 
                 PINCount[2][3], PINCount[2][4], PINCount[2][5], PINCount[2][6], PINCount[2][7],
                 PINCount[3][0], PINCount[3][1], PINCount[3][2], PINCount[3][3], PINCount[3][4], PINCount[3][5], PINCount[3][6], PINCount[3][7]);
 #endif
-	    //pthread_mutex_lock(&mutex_3);
+	        //pthread_mutex_lock(&mutex_3);
             WatchDogFlag = 1;
-	    //pthread_mutex_unlock(&mutex_3);
-
+	        //pthread_mutex_unlock(&mutex_3);
+#ifdef LogMode
             //Log(s, __func__, __LINE__, " exit\n");
+#endif
         }
     }
 }
@@ -671,7 +673,7 @@ void * zhINTERRUPT3(void * argument)
 #endif  
             //pthread_mutex_lock(&mutex_3);
             WatchDogFlag = 0;
-	    //pthread_mutex_unlock(&mutex_3);
+	        //pthread_mutex_unlock(&mutex_3);
         }
     }
 }
@@ -1105,8 +1107,8 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 sleep(1);
-                if(PINCount[0][7] >= goodCount)
-                //if(PINCount[0][7] >= 0)
+                if(PINCount[0][5] >= goodCount)
+                //if(PINCount[0][5] >= 0)
                 {
                     //finish job
                     printf("Houston we are ready to back!\n");
@@ -1404,9 +1406,9 @@ void * FTPFunction(void *argument)
     //CURL *curl;
     //CURLcode res;
     //FILE *hd_src;
-    struct stat file_info, file_info_2;
     //curl_off_t fsize;
-    char UPLoadFile_3[21];
+    struct stat file_info, file_info_2;
+    char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
@@ -1414,9 +1416,10 @@ void * FTPFunction(void *argument)
     while(FTPFlag){
         //char Remote_url[80] = "ftp://192.168.10.254:21/home/";
         //char Remote_url[80] = "ftp://192.168.2.223:8888/";
-        long size = 0;
-        pthread_mutex_lock(&mutexFTP);
         //struct curl_slist *headerlist=NULL;
+        long size = 0;
+
+        pthread_mutex_lock(&mutexFTP);
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + FTPWakeUpValue;
         outtime.tv_nsec = now.tv_usec * 1000;
@@ -1424,7 +1427,8 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
-        if(!stat(UPLoadFile, &file_info_2))
+
+        if(stat(UPLoadFile, &file_info_2) == 0)
         {
             size = file_info_2.st_size;
             //printf("size:%ld\n", size);
@@ -1434,15 +1438,14 @@ void * FTPFunction(void *argument)
         if(FTPCount == 0 || FTPFlag == 0 || size > 100000)
         {
             pthread_mutex_lock(&mutexFile);
-            memset(UPLoadFile_3, 0, sizeof(char)*21);
+            memset(UPLoadFile_3, 0, sizeof(char)*UPLoadFileLength);
             strcpy(UPLoadFile_3, UPLoadFile);
             gettimeofday(&now, NULL);
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
             pthread_mutex_unlock(&mutexFile);
 
             printf("%s\n", UPLoadFile_3);
-            //strcat(Remote_url,UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info)) {
+            if(stat(UPLoadFile_3, &file_info) < 0) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");
@@ -1451,7 +1454,7 @@ void * FTPFunction(void *argument)
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, LOW);
             }
-            if(file_info.st_size > 0)
+            else if(file_info.st_size > 0)
             {
                 pid_t proc = fork();
                 if(proc < 0)
@@ -1479,8 +1482,9 @@ void * FTPFunction(void *argument)
                     wait(&result);
                 }
             }
-            /*if(file_info.st_size > 0)
+            /*else if(file_info.st_size > 0)
             {
+                strcat(Remote_url,UPLoadFile_3);
                 fsize = (curl_off_t)file_info.st_size;
 
                 curl_global_init(CURL_GLOBAL_ALL);
@@ -1526,6 +1530,7 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
+            else;
             unlink(UPLoadFile_3);
         }
     }

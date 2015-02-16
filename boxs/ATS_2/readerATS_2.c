@@ -133,7 +133,8 @@ void StringCat(const char *str)
         //printf("%c",*s);
         s++;
         str++;
-        if(s >= tail) {
+        if(s >= tail) 
+        {
             s = shm +1;
         }
     }
@@ -361,7 +362,7 @@ void * WatchDogForGood(void *argument)
         pthread_mutex_unlock(&mutex);
 
 #ifdef LogMode
-    Log(s, __func__, __LINE__, " WatchDog wake\n");
+        Log(s, __func__, __LINE__, " WatchDog wake\n");
 #endif
         fd = socket(AF_INET, SOCK_DGRAM, 0);
         ifr.ifr_addr.sa_family = AF_INET;
@@ -372,9 +373,9 @@ void * WatchDogForGood(void *argument)
         if (WatchDogFlag == 1) 
         {
             WatchDogCoolDown = WatchDogCountValue;
-	    //pthread_mutex_lock(&mutex_3);
+	        //pthread_mutex_lock(&mutex_3);
             WatchDogFlag = 0;
-	    //pthread_mutex_unlock(&mutex_3);
+	        //pthread_mutex_unlock(&mutex_3);
         }
         else 
         {
@@ -404,7 +405,7 @@ void * WatchDogForGood(void *argument)
                         fprintf(pfile, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
                                         ISNo, ManagerCard, CountNo, 
                                         (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MechRUNNING);
+                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
                     }
                     else
                     {
@@ -521,7 +522,6 @@ void * zhINTERRUPT1(void * argument)
         //pthread_mutex_lock(&mutex_3);
         //Log(s, __func__, __LINE__, " entry\n");
         char *dev = "/dev/i2c-1";
-
         int fd , r;
     
         fd = open(dev, O_RDWR);
@@ -557,7 +557,6 @@ void * zhINTERRUPT1(void * argument)
 
             for(ForCount = 0; ForCount < 8; ++ForCount)
             {
-                int angSignal = 0;
             
                 if(ForCount == 7 && ((first & 1) == 0))
                 {
@@ -648,7 +647,9 @@ void * zhINTERRUPT2(void * argument)
             //pthread_mutex_lock(&mutex_3);
             WatchDogFlag = 1;
 	        //pthread_mutex_unlock(&mutex_3);
-            //Log(s, __func__, __LINE__, " exit\n");
+#ifdef LogMode
+            Log(s, __func__, __LINE__, " exit\n");
+#endif
         }
     }
 }
@@ -675,24 +676,25 @@ void * zhINTERRUPT3(void * argument)
         x = i2c_smbus_read_byte_data(fd, IN_P0);
         close(fd);
         //pthread_mutex_unlock(&mutex_3);
-        if(I2CEXValue[4] != x){
-        first = I2CEXValue[4] ^ 0xff;
-        first = first & x;
-        
-        I2CEXValue[4] = x;
-       
-        for(ForCount = 0; ForCount < 8; ForCount++)
+        if(I2CEXValue[4] != x)
         {
-            PINCount[4][ForCount] = PINCount[4][ForCount] + (first & 1);
-            first = first >> 1;
-        }
+            first = I2CEXValue[4] ^ 0xff;
+            first = first & x;
+        
+            I2CEXValue[4] = x;
+       
+            for(ForCount = 0; ForCount < 8; ForCount++)
+            {
+                PINCount[4][ForCount] = PINCount[4][ForCount] + (first & 1);
+                first = first >> 1;
+            }
 #ifdef PrintInfo
-        printf("reader 3: %3d,     | %ld %ld %ld %ld %ld %ld %ld %ld \n",x ,PINCount[4][0], PINCount[4][1], PINCount[4][2], 
+            printf("reader 3: %3d,     | %ld %ld %ld %ld %ld %ld %ld %ld \n",x ,PINCount[4][0], PINCount[4][1], PINCount[4][2], 
                                     PINCount[4][3], PINCount[4][4], PINCount[4][5], PINCount[4][6], PINCount[4][7]);
 #endif 
-	//pthread_mutex_lock(&mutex_3);
-        WatchDogFlag = 1;
-	//pthread_mutex_unlock(&mutex_3);
+	        //pthread_mutex_lock(&mutex_3);
+            WatchDogFlag = 1;
+	        //pthread_mutex_unlock(&mutex_3);
         }
     }
 }
@@ -1181,6 +1183,7 @@ int main(int argc ,char *argv[])
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             
             if(MasterFlag == 0)
@@ -1386,12 +1389,14 @@ void * FTPFunction(void *argument)
     struct timespec outtime;
     int FTPCount = 0;
 
-    while(FTPFlag){
+    while(FTPFlag)
+    {
         //char Remote_url[80] = "ftp://192.168.10.254:21/home/";
         //char Remote_url[80] = "ftp://192.168.2.223:8888/";
-        long size = 0;
-        pthread_mutex_lock(&mutexFTP);
         //struct curl_slist *headerlist=NULL;
+        long size = 0;
+
+        pthread_mutex_lock(&mutexFTP);
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + FTPWakeUpValue;
         outtime.tv_nsec = now.tv_usec * 1000;
@@ -1399,7 +1404,8 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
-        if(!stat(UPLoadFile, &file_info_2))
+
+        if(stat(UPLoadFile, &file_info_2) == 0)
         {
             size = file_info_2.st_size;
             //printf("size:%ld\n", size);
@@ -1416,8 +1422,7 @@ void * FTPFunction(void *argument)
             pthread_mutex_unlock(&mutexFile);
 
             printf("%s\n", UPLoadFile_3);
-            //strcat(Remote_url,UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info)) 
+            if(stat(UPLoadFile_3, &file_info) < 0) 
             {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
@@ -1427,7 +1432,7 @@ void * FTPFunction(void *argument)
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, LOW);
             }
-            if(size > 0)
+            else if(file_info.st_size > 0)
             {
                 pid_t proc = fork();
                 if(proc < 0)
@@ -1455,8 +1460,9 @@ void * FTPFunction(void *argument)
                     wait(&result);
                 }
             }
-            /*if(file_info.st_size > 0)
+            /*else if(file_info.st_size > 0)
             {
+                strcat(Remote_url,UPLoadFile_3);
                 fsize = (curl_off_t)file_info.st_size;
 
                 curl_global_init(CURL_GLOBAL_ALL);
@@ -1500,6 +1506,7 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
+            else;
             unlink(UPLoadFile_3);
         }
     }

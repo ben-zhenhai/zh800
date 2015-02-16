@@ -265,7 +265,6 @@ void * zhLogFunction(void *argument)
             }      
     
             fclose(pfile);
-            
             memset(LogString, 0, sizeof(char)*300);
             WriteFileCount = 0;
         }
@@ -1173,13 +1172,13 @@ int main(int argc ,char *argv[])
             pthread_join(WatchDogThread, NULL);
             sleep(1);
 
-            //MechSTOP & MechHUMAN
-            //get ip address
+            //get ip address & time
             fd = socket(AF_INET, SOCK_DGRAM, 0);
             ifr.ifr_addr.sa_family = AF_INET;
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             pthread_mutex_lock(&mutexFile);
             if(MasterFlag == 0 && isNormalStop == 1)
@@ -1286,6 +1285,15 @@ int main(int argc ,char *argv[])
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
+            
+                        //get ip address & time
+                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                        ifr.ifr_addr.sa_family = AF_INET;
+                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                        ioctl(fd, SIOCGIFADDR, &ifr);
+                        close(fd);
+                        gettimeofday(&now, NULL);
+
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
@@ -1324,7 +1332,14 @@ int main(int argc ,char *argv[])
                                 memset(FixerNo, 0, sizeof(char)*InputLength);
                                 tempPtr = tempString + 4;
                                 memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
-                               
+                                //get ip address & time
+                                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                ifr.ifr_addr.sa_family = AF_INET;
+                                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                ioctl(fd, SIOCGIFADDR, &ifr);
+                                close(fd);
+                                gettimeofday(&now, NULL);
+                          
                                 pfile = fopen(UPLoadFile, "a"); 
 #ifdef PrintMode
                                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
@@ -1358,6 +1373,15 @@ int main(int argc ,char *argv[])
                     }else;
                     printf("UserNo scan error code\n");
                 }
+    
+                //get ip address & time
+                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                ifr.ifr_addr.sa_family = AF_INET;
+                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                ioctl(fd, SIOCGIFADDR, &ifr);
+                close(fd);
+                gettimeofday(&now, NULL);
+         
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
@@ -1402,8 +1426,8 @@ void * FTPFunction(void *argument)
     //CURL *curl;
     //CURLcode res;
     //FILE *hd_src;
-    struct stat file_info, file_info_2;
     //curl_off_t fsize;
+    struct stat file_info, file_info_2;
     char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
@@ -1412,9 +1436,10 @@ void * FTPFunction(void *argument)
     while(FTPFlag){
         //char Remote_url[80] = "ftp://192.168.10.254:21/home/";
         //char Remote_url[80] = "ftp://192.168.2.223:8888/";
-        long size = 0;
-        pthread_mutex_lock(&mutexFTP);
         //struct curl_slist *headerlist=NULL;
+        long size = 0;
+
+        pthread_mutex_lock(&mutexFTP);
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + FTPWakeUpValue;
         outtime.tv_nsec = now.tv_usec * 1000;
@@ -1422,7 +1447,7 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
-        if(!stat(UPLoadFile, &file_info_2))
+        if(stat(UPLoadFile, &file_info_2) == 0)
         {
             size = file_info_2.st_size;
             //printf("size:%ld\n", size);
@@ -1439,8 +1464,7 @@ void * FTPFunction(void *argument)
             pthread_mutex_unlock(&mutexFile);
 
             printf("%s\n", UPLoadFile_3);
-            //strcat(Remote_url,UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info)) {
+            if(stat(UPLoadFile_3, &file_info) < 0) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");
@@ -1449,7 +1473,7 @@ void * FTPFunction(void *argument)
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, LOW);
             }
-            if(file_info.st_size > 0)
+            else if(file_info.st_size > 0)
             {
                 pid_t proc = fork();
                 if(proc < 0)
@@ -1477,8 +1501,9 @@ void * FTPFunction(void *argument)
                     wait(&result);
                 }
             }
-            /*if(file_info.st_size > 0)
+            /*else if(file_info.st_size > 0)
             {
+                strcat(Remote_url,UPLoadFile_3);
                 fsize = (curl_off_t)file_info.st_size;
 
                 curl_global_init(CURL_GLOBAL_ALL);
@@ -1524,6 +1549,7 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
+            else;
             unlink(UPLoadFile_3);
         }
     }

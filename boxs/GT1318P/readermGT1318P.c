@@ -11,6 +11,7 @@
 #include <assert.h>
 
 #include <wiringPi.h>
+#include <wiringSerial.h>
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -45,11 +46,9 @@
 #define CONFIG_P0 0x06
 #define CONFIG_P1 0x07
 
-#define WatchDogCountValue 120
 #define InputLength 30 
 #define UPLoadFileLength 21
 #define CountPeriod 100
-#define WriteFileCountValue 4200
 #define BusSize 1
 #define SHMSZ 2000
 #define WriteFilePerSize 300
@@ -383,7 +382,7 @@ void * SerialFunction(void *argument)
             fflush (stdout) ;
         }
     }
-    if(fd != NULL)
+    if(fd >= 0)
     {
         serialClose(fd);
     }
@@ -617,7 +616,8 @@ void *FileFunction(void *argument)
                 fclose(pfile); 
                 memcpy(ExCount, Count, sizeof(long)*AgeCountNumber);
 #ifdef PrintInfo
-                printf("%s %s %s %s %s %ld %ld %ld %ld %ld\n", p->ISNo, p->ManagerCard, p->CountNo, p->MachineCode, p->UserNo ,Count[Good], Count[CX_Bad], Count[DX_Bad],  Count[LC_Over], Count[Total]);
+                printf("%s %s %s %s %s %ld %ld %ld %ld %ld\n",
+                     p->ISNo, p->ManagerCard, p->CountNo, p->MachineCode, p->UserNo ,Count[Good], Count[CX_Bad], Count[DX_Bad],  Count[LC_Over], Count[Total]);
 #endif
             }
             else printf("node = null\n");
@@ -935,18 +935,16 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
         
+        gettimeofday(&now, NULL);
 
         memset(node->UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
-        gettimeofday(&now, NULL);
         sprintf(node->UPLoadFile,"%ld%s.txt", (long)now.tv_sec, node->MachineCode); 
-        
-        printf("%s %s %s %s %s %s\n", node->ISNo, node->ManagerCard, node->MachineCode, node->UserNo, node->CountNo, node->UPLoadFile);
- 
         //[vers| avoid no data income casue ftp upload will fail]
-        pfile = fopen(node->UPLoadFile, "a");
-        fclose(pfile);
+        //pfile = fopen(node->UPLoadFile, "a");
+        //fclose(pfile);
         //[vers| end]
  
+        printf("%s %s %s %s %s %s\n", node->ISNo, node->ManagerCard, node->MachineCode, node->UserNo, node->CountNo, node->UPLoadFile);
         memset(Count, 0, sizeof(long)*AgeCountNumber);
         memset(ExCount, 0, sizeof(long)*AgeCountNumber);
         MasterFlag = 1;
@@ -1153,11 +1151,11 @@ void * FTPFunction(void *argument)
 #ifdef LogMode
     Log(s, __func__, __LINE__, " FTP entry\n");
 #endif
-    CURL *curl;
-    CURLcode res;
-    FILE *hd_src;
+    //CURL *curl;
+    //CURLcode res;
+    //curl_off_t fsize;
+    //FILE *hd_src;
     struct stat file_info, file_info_2;
-    curl_off_t fsize;
     char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
@@ -1165,7 +1163,7 @@ void * FTPFunction(void *argument)
     short checkFlag = 0;
 
     while(FTPFlag){
-        char Remote_url[80] = "ftp://192.168.20.254:21/home/";
+        //char Remote_url[80] = "ftp://192.168.20.254:21/home/";
         //char Remote_url[80] = "ftp://192.168.2.223:8888/";
         long size = 0;
         pthread_mutex_lock(&mutexFTP);
@@ -1199,16 +1197,18 @@ void * FTPFunction(void *argument)
                 strcpy(UPLoadFile_3, p->UPLoadFile);
                 gettimeofday(&now, NULL);
                 sprintf(p->UPLoadFile,"%ld%s.txt",(long)now.tv_sec, p->MachineCode);
-                hd_src = fopen(p->UPLoadFile, "a");
-                fclose(hd_src);
+                //hd_src = fopen(p->UPLoadFile, "a");
+                //if (hd_src != NULL)
+                //{
+                //    fclose(hd_src);
+                //}
                 checkFlag = 1;
             }
             pthread_mutex_unlock(&Mutexlinklist);
             if(checkFlag == 1)
             {
                 printf("%s\n", UPLoadFile_3);
-                strcat(Remote_url,UPLoadFile_3);
-                if(stat(UPLoadFile_3, &file_info)) 
+                if(stat(UPLoadFile_3, &file_info) < 0) 
                 {
                     printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
@@ -1218,7 +1218,7 @@ void * FTPFunction(void *argument)
                     digitalWrite (WiringPiPIN_16, LOW);
                     digitalWrite (WiringPiPIN_18, LOW);
                 }
-                if(file_info.st_size > 0)
+                else if(file_info.st_size > 0)
                 {
                     pid_t proc = fork();
                     if(proc < 0)
@@ -1245,9 +1245,10 @@ void * FTPFunction(void *argument)
                         int result = -1;
                         wait(&result);
                     }
-                }
-                /*if(file_info.st_size > 0)
+                }                
+                /*else if(file_info.st_size > 0)
                 {
+                    strcat(Remote_url,UPLoadFile_3);
                     fsize = (curl_off_t)file_info.st_size;
 
                     curl_global_init(CURL_GLOBAL_ALL);
@@ -1291,6 +1292,7 @@ void * FTPFunction(void *argument)
                     }    
                     curl_global_cleanup();
                 }*/
+                else;
                 unlink(UPLoadFile_3);
                 checkFlag = 0;
             }

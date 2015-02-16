@@ -403,20 +403,36 @@ void * WatchDogForGood(void *argument)
                     }
                     else
                     {
+                        if(PINCount[3][4]-PINCount[3][3]-(PINEXCount[3][4]-PINEXCount[3][3]) >= 0)
+                        {
 #ifdef PrintMode
-                        fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                            fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                         (PINCount[3][4]-PINCount[3][3]) - (PINEXCount[3][4]-PINEXCount[3][3]),
                                                                         (long)now.tv_sec,
                                                                         inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                         ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
 #else
-                        fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                            fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
                                                                         ISNo, ManagerCard, CountNo, PINCount[3][4]-PINCount[3][3], 
                                                                         (long)now.tv_sec,
                                                                         inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, 
-                                                                        MachRUNNING);
+                                                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
 #endif
+                        }else
+                        {
+#ifdef PrintMode
+                            fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                                                                        (long)now.tv_sec,
+                                                                        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
+#else
+                            fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                        ISNo, ManagerCard, CountNo, 
+                                                                        (long)now.tv_sec,
+                                                                        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                        ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
+#endif
+                        }
                     }
                 }
                 else if(PINEXCount[ForCount][ForCount2] != PINCount[ForCount][ForCount2])
@@ -1197,12 +1213,13 @@ int main(int argc ,char *argv[])
             pthread_join(WatchDogThread, NULL);
             sleep(1);
 
-            //get ip address
+            //get ip address & time
             fd = socket(AF_INET, SOCK_DGRAM, 0);
             ifr.ifr_addr.sa_family = AF_INET;
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             pthread_mutex_lock(&mutexFile);
             if(MasterFlag == 0 && isNormalStop == 1)
@@ -1321,6 +1338,15 @@ int main(int argc ,char *argv[])
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
+
+                        //get ip address & time
+                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                        ifr.ifr_addr.sa_family = AF_INET;
+                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                        ioctl(fd, SIOCGIFADDR, &ifr);
+                        close(fd);
+                        gettimeofday(&now, NULL);
+
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,tw
@@ -1362,6 +1388,14 @@ int main(int argc ,char *argv[])
                                 memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
                                 if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
                                 {
+                                    //get ip address & time
+                                    fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                    ifr.ifr_addr.sa_family = AF_INET;
+                                    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                    ioctl(fd, SIOCGIFADDR, &ifr);
+                                    close(fd);
+                                    gettimeofday(&now, NULL);
+
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", 
@@ -1397,6 +1431,14 @@ int main(int argc ,char *argv[])
                     }
                     printf("UserNo scan error code\n");
                 }
+                //get ip address & time
+                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                ifr.ifr_addr.sa_family = AF_INET;
+                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                ioctl(fd, SIOCGIFADDR, &ifr);
+                close(fd);
+                gettimeofday(&now, NULL);
+
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", 

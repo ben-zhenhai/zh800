@@ -12,7 +12,6 @@
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
-#include <termios.h>
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -51,18 +50,16 @@
 #define CONFIG_P1 0x07
 
 #define WatchDogCountValue 126000 //msec
-#define InputLength 30
-#define UPLoadFileLength 21
-#define CountPeriod 100 //msec
+#define InputLength 256
+#define UPLoadFileLength 256
+#define CountPeriod 300 //msec
 #define WriteFileCountValue 4200 // msec
 #define FTPCountValue 300 //sec
 #define FTPWakeUpValue 60 //sec
-#define zhMAXOUTPUT 10
-#define ERRORCHECKMAXRETRY 20
+#define ERRORCHECKMAXRETRY 5 
 
 #define Log(s,func, line, opt) StringCat(func);StringCat(opt)
-#define RS232_Length 5
-#define ErrorType 22
+#define RS232_Length 41
 
 #define goodrate 1
 //#define LogMode
@@ -72,8 +69,8 @@
 enum
 {
     GoodNumber = 0,
-    BadNumber,
-    GoodTotalNumber
+    InsertNumber,
+    TotalNumber
 };
 
 enum
@@ -87,6 +84,22 @@ enum
     MachSTOPForce1,
     MachSTOPForce2
 };
+
+enum
+{
+    Layout1 = 0,
+    Layout2,
+    Ang,
+    Process_1,
+    BadLayout_1,
+    BadLayout_2,
+    BadLayout_3,
+    BadLayout_4,
+    MachineSpeed
+};
+
+long LayoutCount[9][8];
+long ExLayoutCount[9][8];
 
 short SerialThreadFlag;
 short WatchDogFlag = 0;
@@ -108,8 +121,8 @@ pthread_mutex_t mutex, mutex_3, mutex_log, mutex_2, mutexFTP, mutexFile;
 
 long productCountArray[3];
 long ExproductCountArray[3];
-int messageArray[ErrorType];
-int ExmessageArray[ErrorType];
+int messageArray[9];
+int ExmessageArray[9];
 
 char ISNo[InputLength], ManagerCard[InputLength], MachineCode[InputLength], UserNo[InputLength], CountNo[InputLength];
 char RepairNo[InputLength];
@@ -190,7 +203,6 @@ void StringCat(const char *str)
         }
     }
     pthread_mutex_unlock(&mutex_log);
-
 }
 
 void * zhLogFunction(void *argument)
@@ -238,7 +250,7 @@ void * zhLogFunction(void *argument)
     sprintf(LogFileLocation,"/media/usb0/Log_%ld.txt",(long)now.tv_sec);
     FILE *pfile;
     pfile = fopen(LogFileLocation, "a");
-    fprintf(pfile,"tsw303\t%s\t0\t", buff);
+    fprintf(pfile,"m2600\t%s\t0\t", buff);
     fclose(pfile);
     while(*shm_pop != '*')
     {
@@ -263,7 +275,11 @@ void * zhLogFunction(void *argument)
                     gettimeofday(&now, NULL);
                     ts = *localtime(&now.tv_sec);
                     strftime(buff, sizeof(buff), "%Y/%m/%d_%H:%M:%S", &ts);
-                    fprintf(pfile,"tsw303\t%s\t%ld\t",buff,productCountArray[GoodNumber]);
+#ifdef PrintMode
+                    fprintf(pfile,"m2600\t%s\t%ld\t",buff,productCountArray[GoodNumber]-ExproductCountArray[GoodNumber]);
+#else
+                    fprintf(pfile,"m2600\t%s\t%ld\t",buff,productCountArray[GoodNumber]);
+#endif
                 }
             }      
     
@@ -299,10 +315,9 @@ void * SerialFunction(void *argument)
     Log(s, __func__, __LINE__, "Serial Function entry\n");
 #endif
     int fd;
-    char temp_output[RS232_Length];
+    unsigned char temp_output[RS232_Length];
     int count1, count2;
     int string_count = 0;
-    struct termios options;
     count1 = count2 = 0;
 
     memset(temp_output, 0, sizeof(char)*RS232_Length);
@@ -312,48 +327,66 @@ void * SerialFunction(void *argument)
         printf ("Unable to open serial device: %s\n", strerror (errno)) ;
         pthread_exit((void*)"fail");
     }
-
-    tcgetattr(fd, &options);
-    options.c_cflag |= PARENB;
-    tcsetattr(fd, TCSANOW, &options);
-
+    /*if (wiringPiSetup () == -1)
+    {
+        printf ("Unable to start wiringPi: %s\n", strerror (errno)) ;
+        pthread_exit((void*)"fail");
+    }*/
     while(SerialThreadFlag)
     {
         while(serialDataAvail(fd))
         {   
-            char temp_char_1;
+            unsigned char temp_char_1;
             temp_char_1 = serialGetchar(fd);
-            if(count1 == 2 && string_count < RS232_Length - 1)
+            if(count1 < 4)
             {
+                if(temp_char_1 == 0xdd)
+                {
+                    count1++;
+                }
+                else count1 = 0;
+            }
+            else if(count2 == 3 && temp_char_1 == 0xee && string_count < RS232_Length)
+            { 
                 temp_output[string_count] = temp_char_1;
                 string_count++;
-            }else if(count1 == 2 && string_count == (RS232_Length - 1))
-            {
-                //package
-                temp_output[string_count] = '\0';
-                pthread_mutex_lock(&mutex_2);
-                memset(output, 0,sizeof(char)*RS232_Length);
+                //a lock for avoid read write at the same time
                 int vers_test_count = 0;
-                //printf("Ready to Print:");
+		        pthread_mutex_lock(&mutex_2);
+                memset(output, 0, sizeof(char)*RS232_Length);
                 for(vers_test_count = 0; vers_test_count < RS232_Length; vers_test_count++)
                 {
                     output[vers_test_count] = temp_output[vers_test_count];
-                    //printf(" %x", output[vers_test_count]);
                 }
-                //printf("\n");
                 memset(temp_output, 0, sizeof(char)*RS232_Length);
                 count1 = 0;
+                count2 = 0;
                 string_count = 0;
                 updateFlag = 1;
                 pthread_mutex_unlock(&mutex_2);
-            }else if(temp_char_1 == 0x08)
+            }
+            else if( string_count < RS232_Length)
             {
-                count1 = 1;
-            }else if(count1 == 1 && temp_char_1 == 0x06)
+                if(temp_char_1 == 0xee)
+                {
+                    count2++;
+                    temp_output[string_count] = temp_char_1;
+                    string_count++;
+                }
+                else
+                {
+                    count2 = 0;
+                    temp_output[string_count] = temp_char_1;
+                    string_count++;
+                }
+            }else
             {
-                count1 = 2;                
-            }else count1 = 0;
-    
+                printf("array overflow\n");
+                memset(temp_output, 0, sizeof(char)*RS232_Length);
+                count1 = 0;
+                count2 = 0;
+                string_count = 0;
+            }
             fflush (stdout) ;
             //if (SerialThreadFlag == 0) break;
         }
@@ -376,8 +409,8 @@ void * FileFunction(void *argement)
     struct timeval now;
     struct timespec outtime;
     FILE *file_dst;
-    char file_output_temp[RS232_Length];
-    unsigned char countArray[9];
+    unsigned char *string_target;
+    unsigned char file_output_temp[RS232_Length];
 
     int fd;
     struct ifreq ifr;
@@ -385,19 +418,15 @@ void * FileFunction(void *argement)
     int WriteFileCount = 0;
     int watchdogCooldown = WatchDogCountValue;
     short errorCheckCount[3];
-    char result[3]; //remeber last stage 
-    memset(result, 0, sizeof(short)*3);
     memset(errorCheckCount , 0, sizeof(short)*3);   
-    memset(countArray, 0 ,sizeof(char)*9); 
-    memset(messageArray, 0, sizeof(int)*ErrorType);
-
+ 
     while(FileFlag)
     {
         pthread_mutex_lock(&mutex);
         gettimeofday(&now, NULL);
         //outtime.tv_sec = now.tv_sec + CountPeriod;
-        outtime.tv_sec = now.tv_sec;
         //outtime.tv_nsec= now.tv_usec * 1000;
+        outtime.tv_sec = now.tv_sec;
         outtime.tv_nsec= (now.tv_usec + (CountPeriod * 1000) ) * 1000;
         
         if(outtime.tv_nsec > 1000000000)
@@ -415,13 +444,14 @@ void * FileFunction(void *argement)
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             memset(productCountArray, 0, sizeof(long)*3);
- 
+            memset(messageArray, 0, sizeof(int)*9);
             memset(file_output_temp, 0, sizeof(char)*RS232_Length);
 
             pthread_mutex_lock(&mutex_2);
-            strncpy(file_output_temp, output, RS232_Length);
+            //strncpy(file_output_temp, output, RS232_Length);
             int vers_count;
             for(vers_count = 0; vers_count < RS232_Length; vers_count++)
             {
@@ -430,119 +460,49 @@ void * FileFunction(void *argement)
             updateFlag = 0;
             pthread_mutex_unlock(&mutex_2);
 
-            if(file_output_temp[1] == 0x06)
-            {
-                printf("0x06: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-                countArray[3] = file_output_temp[2];
-                countArray[2] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x05)
-            {
-                printf("0x05: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-                countArray[1] = file_output_temp[2];
-                countArray[0] = file_output_temp[3];                
-            }else if(file_output_temp[1] == 0x0C)
-            {
-                printf("0x0C: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
+            string_target = &file_output_temp[3];
+            messageArray[Layout1] = (int)*string_target;
 
-                countArray[6] = file_output_temp[2];
-                countArray[5] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x0D)
-            {
-                printf("0x0D: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
+            string_target = &file_output_temp[4];
+            messageArray[Layout2] = (int)*string_target;
 
-                countArray[8] = file_output_temp[2];
-                countArray[7] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x07)
-            {
-                printf("0x07: %x %x %x %x\n", file_output_temp[0], file_output_temp[1], file_output_temp[2], file_output_temp[3]);
-                countArray[4] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x00)
-            {
-                printf("0x00: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
+            string_target = &file_output_temp[6];
+            messageArray[Ang] = transferFormatINT(*string_target);
 
-                char result1 = result[0] ^ 0xff;
-                result1 = result1 & file_output_temp[3];
-                char result2 = result[1] ^ 0xff;
-                result2 = result2 & file_output_temp[2];
-                
-                result[0] = file_output_temp[3];
-                result[1] = file_output_temp[2];
+            string_target = &file_output_temp[7];
+            messageArray[Process_1] = transferFormatINT(*string_target);
 
-                for(ForCount = 0; ForCount < 8; ForCount++)
-                {
-                    if((result1 & 1) == 1)
-                    {
-                        messageArray[ForCount] = messageArray[ForCount] + 1;
-                    }
-                    if((result2 & 1) == 1)
-                    {
-                        messageArray[ForCount+8] = messageArray[ForCount+8] + 1;
-                    }
-                    result1 = result1 >> 1;
-                    result2 = result2 >> 1; 
-                }
-            }else if(file_output_temp[1] == 0x01)
+            for(ForCount = 2 ; ForCount >= 0 ; ForCount--)
             {
-                printf("0x01: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-
-                char result3 = result[2] ^ 0xff;
-                result3 = result3 & file_output_temp[3];
-                result[2] = file_output_temp[3];
-                for(ForCount = 16; ForCount < 22; ForCount++)
-                {
-                    if((result3 & 1) == 1)
-                    {
-                        messageArray[ForCount] = messageArray[ForCount] + 1;
-                    }
-                    result3 = result3 >> 1;
-                }
+                string_target = &file_output_temp[10 - ForCount];
+		        productCountArray[GoodNumber] = productCountArray[GoodNumber] + transferFormatLONG(*string_target) * pow(256, ForCount);
             }
-            else;
-
-            //[vers|2014.09.02 |assign count value]
-            for(ForCount = 0; ForCount < 5; ++ForCount)
+            for(ForCount = 2 ; ForCount >= 0 ; ForCount--)
             {
-                if(ForCount == 4)
-                {
-                    productCountArray[BadNumber] = transferFormatLONG(countArray[4]);
-                }else
-                {
-                    productCountArray[GoodNumber] = productCountArray[GoodNumber] + transferFormatLONG(countArray[ForCount]) * pow(256, ForCount);
-                    productCountArray[GoodTotalNumber] = 
-                                           productCountArray[GoodTotalNumber] + transferFormatLONG(countArray[ForCount + 5]) * pow(256, ForCount);
-                }
+                string_target = &file_output_temp[13 - ForCount];
+                productCountArray[InsertNumber] =  productCountArray[InsertNumber] + transferFormatLONG(*string_target) * pow(256, ForCount);
             }
-            //[vers|2014.09.02 |end]
+
+            string_target = &file_output_temp[14];
+            messageArray[BadLayout_1] = (int)*string_target;
+       
+            string_target = &file_output_temp[15];
+            messageArray[BadLayout_2] = (int)*string_target;
+       
+            string_target = &file_output_temp[16];
+            messageArray[BadLayout_3] =  (int)*string_target;
+       
+            string_target = &file_output_temp[17];
+            messageArray[BadLayout_4] =  (int)*string_target;
+
+            string_target = &file_output_temp[18];
+            messageArray[MachineSpeed] =  (int)*string_target;
+
+            for(ForCount = 2 ; ForCount >= 0 ; ForCount--)
+            {
+                string_target = &file_output_temp[24 - ForCount];
+                productCountArray[TotalNumber] =  productCountArray[TotalNumber] + transferFormatLONG(*string_target) * pow(256, ForCount);
+            }
 
             //[vers| avoid  wrong info send form machine]
             for(ForCount = 0; ForCount < 3; ++ForCount)
@@ -556,35 +516,53 @@ void * FileFunction(void *argement)
                 {
                     errorCheckCount[ForCount] = 0;
                 }
-            }
-            if(file_output_temp[1] == 0x00 || file_output_temp[1] == 0x01 || file_output_temp[1] == 0x05 || 
-                                              file_output_temp[1] == 0x06 || file_output_temp[1] == 0x07 ||
-                                              file_output_temp[1] == 0x0C || file_output_temp[1] == 0x0D)
-            {
-#ifdef PrintInfo
-                printf("%s %s %s %s %s || ",ISNo, ManagerCard, CountNo, MachineCode, UserNo);
-                printf("%ld %ld %ld\n", productCountArray[GoodNumber], productCountArray[BadNumber], productCountArray[GoodTotalNumber]);
-            
-                for(ForCount = 0; ForCount < 22; ForCount++)
-                {
-                    printf(" %d", messageArray[ForCount]);
-                }
-                printf("\n");
-#endif
-            }
-       }
-       WriteFileCount = (WriteFileCount + CountPeriod) % WriteFileCountValue;
-       if(WriteFileCount == 0 || FileFlag == 0)
-       {
-            short newDataIncome = 0;
+            } 
 
+#ifdef PrintInfo
+            printf("%s %s %s %s %s || ",ISNo, ManagerCard, CountNo, MachineCode, UserNo);
+            printf("1:%x ", messageArray[Layout1]);   
+            printf("2:%x ", messageArray[Layout2]);   
+            printf("3:%d ", messageArray[Ang]);   
+            printf("4:%d ", messageArray[Process_1]);   
+            printf("5:%x ", messageArray[BadLayout_1]);   
+            printf("6:%x ", messageArray[BadLayout_2]);   
+            printf("7:%x ", messageArray[BadLayout_3]);   
+            printf("8:%x ", messageArray[BadLayout_4]);   
+            printf("9:%x ", messageArray[MachineSpeed]);   
+            printf("%ld %ld %ld\n", productCountArray[GoodNumber], productCountArray[InsertNumber], productCountArray[TotalNumber]);
+#endif
+            for(ForCount = 0; ForCount < 9; ForCount++)
+            {
+                if((ForCount != MachineSpeed && ForCount != Ang && ForCount != Process_1) && messageArray[ForCount]!=0)
+                {
+                    int ForCount2;
+                    int messagepaser = messageArray[ForCount];
+                    int messagepaser2 = ExmessageArray[ForCount];
+                    int flag = 0; //確認有新值
+                    for(ForCount2 = 0; ForCount2 < 8; ForCount2++)
+                    {
+                        if(((messagepaser & 1) == 1) &&((messagepaser2 & 1) == 0))
+                        {
+                            LayoutCount[ForCount][ForCount2]++; 
+                            flag = 1;
+                        }
+                        messagepaser = messagepaser >> 1; 
+                        messagepaser2 = messagepaser2 >> 1; 
+                    }
+                    if(flag == 1) ExmessageArray[ForCount] = messageArray[ForCount];
+                }
+            }
+        }
+        WriteFileCount = (WriteFileCount + CountPeriod) % WriteFileCountValue;
+        if(WriteFileCount == 0 || FileFlag == 0)
+        {
+            short newDataIncome = 0;
             //[vers|2014.10.25 | initial count number]
             for(ForCount = 0; ForCount < 3; ++ForCount)
             {
                 //need set ExproductCountArray
                 if(productCountArray[ForCount] < ExproductCountArray[ForCount])
                 {
-                    // count reset
                     ExproductCountArray[ForCount] = 0;
                 }else if((productCountArray[ForCount] != 0) && (ExproductCountArray[ForCount] == 0))
                 {
@@ -596,73 +574,71 @@ void * FileFunction(void *argement)
 
             pthread_mutex_lock(&mutexFile);
             file_dst = fopen(UPLoadFile,"a");
-            for(ForCount = 0 ; ForCount < ErrorType; ++ForCount)
+            for(ForCount = 0 ; ForCount < 9; ForCount++)
             {
-                if(messageArray[ForCount] != ExmessageArray[ForCount] && messageArray[ForCount] != 0)
+                int ForCount2;
+                for(ForCount2 = 0; ForCount2 < 8; ForCount2++)
                 {
+                    if(LayoutCount[ForCount][ForCount2] != ExLayoutCount[ForCount][ForCount2])
+                    {
 #ifdef PrintMode
-                    fprintf(file_dst, "%s %s %s 0 %ld %d %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
-                                                                                    (long)now.tv_sec, 
-                                                                                    messageArray[ForCount] - ExmessageArray[ForCount],
-                                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                    (ForCount+1)+3, MachineCode, UserNo, MachRUNNING);
+                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", 
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
+                                                                LayoutCount[ForCount][ForCount2] - ExLayoutCount[ForCount][ForCount2],
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                (ForCount*8 + ForCount2+1)+3, MachineCode, UserNo, MachRUNNING);
 #else
-                    fprintf(file_dst, "%s %s %s 0 %ld %d %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
-                                                                                    (long)now.tv_sec, messageArray[ForCount],
-                                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                    (ForCount+1)+3, MachineCode, UserNo,
-                                                                                    MachRUNNING);
+                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                                                                              (long)now.tv_sec, LayoutCount[ForCount][ForCount2],
+                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                              (ForCount*8 + ForCount2+1)+3, MachineCode, UserNo, MachRUNNING);
 #endif
-                    if(newDataIncome == 0) newDataIncome = 1;
+                        if(newDataIncome == 0) newDataIncome = 1;
+                    } 
                 }
             }
+            //temp delete Ang and process
             for(ForCount = 0 ; ForCount < 3; ForCount++)
             {
                if(productCountArray[ForCount]!= 0 && ExproductCountArray[ForCount] != productCountArray[ForCount])
                {
-                    if(ForCount == 0)
-                    {
-                        if(productCountArray[GoodNumber] - ExproductCountArray[GoodNumber] > zhMAXOUTPUT)
-                        {
-                            fprintf(file_dst, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
-                                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                      ForCount + 1, MachineCode, UserNo, MachRUNNING);
-                        }
-                        else
-                        {
+                   if(ForCount == 0)
+                   {
 #ifdef PrintMode
-                            fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
-                                                                            ISNo, ManagerCard, CountNo, 
-                                                                            productCountArray[GoodNumber] - ExproductCountArray[GoodNumber],
-                                                                            (long)now.tv_sec,
-                                                                            inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                            ForCount + 1, MachineCode, UserNo, MachRUNNING);
+                       fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                     ISNo, ManagerCard, CountNo, 
+                                                                     productCountArray[GoodNumber] - ExproductCountArray[GoodNumber],
+                                                                     (long)now.tv_sec,
+                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                     ForCount + 1, MachineCode, UserNo, MachRUNNING);
 #else
-                            fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, productCountArray[GoodNumber], (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                ForCount + 1, MachineCode, UserNo, MachRUNNING);
+                       fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                   ISNo, ManagerCard, CountNo, productCountArray[GoodNumber], (long)now.tv_sec,
+                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+i                                                                   ForCount + 1, MachineCode, UserNo, MachRUNNING);
 #endif
-                        }
                    }
                    else
                    {
 #ifdef PrintMode
-                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                     productCountArray[ForCount] - ExproductCountArray[ForCount],
-                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                     ForCount + 1, MachineCode, UserNo, MachRUNNING);
+                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %x %s %s 0 0 0 %02d\n", 
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    productCountArray[ForCount] - ExproductCountArray[ForCount],
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    ForCount + 1, MachineCode, UserNo, MachRUNNING);
 #else
-                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                     productCountArray[ForCount],
-                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                     ForCount + 1, MachineCode, UserNo, MachRUNNING);
+                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %x %s %s 0 0 0 %02d\n", 
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    productCountArray[ForCount],
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    ForCount + 1, MachineCode, UserNo, MachRUNNING);
 #endif
                    }
                    if(newDataIncome == 0) newDataIncome = 1;
                }
+                
             }
             fclose(file_dst);
             pthread_mutex_unlock(&mutexFile);
@@ -681,10 +657,11 @@ void * FileFunction(void *argement)
                 fclose(file_dst);
             }*/
             memcpy(ExproductCountArray, productCountArray, sizeof(long)*3);
-            memcpy(ExmessageArray, messageArray, sizeof(int)*ErrorType);
+            memcpy(ExmessageArray, messageArray, sizeof(int)*9);
+            memcpy(ExLayoutCount, LayoutCount, sizeof(long)*(9*8));
             
             //a timeout mechanism
-            /*if(newDataIncome == 1)
+            if(newDataIncome == 1)
             {
                 watchdogCooldown = WatchDogCountValue;
             }else 
@@ -695,8 +672,27 @@ void * FileFunction(void *argement)
             if(watchdogCooldown <= 0)
             {
                 zhResetFlag = 1;
-            }*/
-       }
+            }
+
+            //check network status
+            int fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+            struct ifreq ethreq;
+            memset(&ethreq, 0, sizeof(ethreq));
+            strncpy(ethreq.ifr_name, ZHNetworkType, IFNAMSIZ);
+            ioctl(fd2, SIOCGIFFLAGS, &ethreq);
+            if(ethreq.ifr_flags & IFF_RUNNING)
+            {
+                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_16, HIGH);
+                digitalWrite (WiringPiPIN_18, LOW);
+            }else
+            {
+                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_16, LOW);
+                digitalWrite (WiringPiPIN_18, LOW);
+            }
+            close(fd2);
+        }
     }
 #ifdef LogMode
     Log(s, __func__, __LINE__, "FileFunction exit\n");
@@ -711,7 +707,6 @@ int main(int argc ,char *argv[])
     int shmid;
     key_t key;
     struct ifreq ifr;
-    short flagFirstRun = 0;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&mutex_2, NULL);
@@ -743,6 +738,7 @@ int main(int argc ,char *argv[])
     * 4. user No
     * 5. Count No
     */
+
 #ifdef LogMode
     rc = pthread_create(&LogThread, NULL, zhLogFunction, NULL);
     assert(rc == 0);
@@ -768,51 +764,14 @@ int main(int argc ,char *argv[])
     while(1)
     {
         unsigned char isNormalStop = 0;
-        
+        MasterFlag = 1;
+
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, HIGH);
-        /*fd = open(dev, O_RDWR);
-        if(fd < 0)
-        {
-            error("Open Fail");
-            return 1;
-        }
-        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_1);
-        if(r < 0)
-        {
-            perror("Selecting i2c device");
-            return 1;
-        }
-        i2c_smbus_write_byte_data(fd, OUT_P0, 0x00);
-        i2c_smbus_write_byte_data(fd, CONFIG_P0, 0x03);
 
-        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
-        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00); 
-
-        close(fd);
-         
+        //lock
         fd = open(dev, O_RDWR);
-        
-        if(fd < 0)
-        {
-            perror("Open Fail");
-            return 1;
-        }
-        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_2);
-        if(r < 0)
-        {
-            perror("Selection i2c device fail");
-            return 1;
-        }
-        i2c_smbus_write_byte_data(fd, OUT_P0, 0x00);
-        i2c_smbus_write_byte_data(fd, CONFIG_P0, 0x03);
-
-        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
-        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
-        close(fd);
-*/
-/*        fd = open(dev, O_RDWR);
         if(fd < 0)
         {
             perror("Open Fail");
@@ -824,28 +783,29 @@ int main(int argc ,char *argv[])
             perror("Selection i2c device fail");
             return 1;
         }
-        i2c_smbus_write_byte_data(fd, OUT_P1, 0x01);
+        i2c_smbus_write_byte_data(fd, OUT_P1, 0x07);
         i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
         close(fd);
-*/
+
 #ifdef PrintInfo
         printf("Ready to work..\n");
 #endif
-/*
         while(1)
         {
             sleep(1);
             memset(tempString, 0, sizeof(char)* InputLength);
             gets(tempString);
-            if(strncmp(tempString, "YYY", 3) == 0)
+            //if(strncmp(tempString, "YYY", 3) == 0)
+            if(strlen(tempString) == 14)
             {
                 memset(ISNo, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(ISNo, tempPtr, sizeof(tempString)-2);
-                // ready for light some led;
-                digitalWrite(WiringPiPIN_15, LOW);
-                digitalWrite(WiringPiPIN_16, HIGH);
-                digitalWrite(WiringPiPIN_18, HIGH);
+                //tempPtr = tempString + 3;
+                //memcpy(ISNo, tempPtr, sizeof(tempString)-2);
+                tempPtr = tempString;
+                memcpy(ISNo, tempPtr, sizeof(tempString));
+                digitalWrite (WiringPiPIN_15, LOW);
+                digitalWrite (WiringPiPIN_16, HIGH);
+                digitalWrite (WiringPiPIN_18, HIGH);
                 break;
             }
             printf("scan ISNo error code\n");
@@ -855,11 +815,14 @@ int main(int argc ,char *argv[])
             sleep(1);
             memset(tempString, 0, sizeof(char)*InputLength);
             gets(tempString);
-            if(strncmp(tempString, "QQQ", 3) == 0)
+            //if(strncmp(tempString, "QQQ", 3) == 0)
+            if(strlen(tempString) == 24)
             {
                 memset(ManagerCard, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(ManagerCard, tempPtr, sizeof(tempString)-2);
+                //tempPtr = tempString + 3;
+                //memcpy(ManagerCard, tempPtr, sizeof(tempString)-2);
+                tempPtr = tempString;
+                memcpy(ManagerCard, tempPtr, sizeof(tempString));
                 digitalWrite (WiringPiPIN_15, HIGH);
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, HIGH);
@@ -867,47 +830,63 @@ int main(int argc ,char *argv[])
             }
             printf("ManagerCard scan error code\n");
         }
-
         while(1)
         {
             sleep(1);
             memset(tempString, 0, sizeof(char)*InputLength);
             gets(tempString);
-            if(strncmp(tempString, "WWW", 3) == 0)
+            int stringLength = strlen(tempString);
+            int arrayCount = 0;
+            short flagFailPass = 0;
+            while(arrayCount < stringLength)
+            {
+                if(tempString[arrayCount] == '0') ;
+                else if(tempString[arrayCount] == '1');
+                else if(tempString[arrayCount] == '2');
+                else if(tempString[arrayCount] == '3');
+                else if(tempString[arrayCount] == '4');
+                else if(tempString[arrayCount] == '5');
+                else if(tempString[arrayCount] == '6');
+                else if(tempString[arrayCount] == '7');
+                else if(tempString[arrayCount] == '8');
+                else if(tempString[arrayCount] == '9');
+                else 
+                {
+                    flagFailPass = 1;
+                    break;
+                }
+                ++arrayCount;
+            }
+            if(flagFailPass == 0 && stringLength > 0)
+            {
+                memset(CountNo, 0, sizeof(char)*InputLength);
+                memcpy(CountNo, tempPtr, sizeof(tempString));
+                goodCount = (atoi(CountNo)*goodrate);
+                if(goodCount > 0)
+                {
+                    printf("need finish: %ld\n", goodCount);
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, LOW);
+                    digitalWrite (WiringPiPIN_18, HIGH);
+                    break;
+                }
+            }
+            /*if(strncmp(tempString, "WWW", 3) == 0)
             {
                 memset(CountNo, 0, sizeof(char)*InputLength);
                 tempPtr = tempString + 3;
                 memcpy(CountNo, tempPtr, sizeof(tempString)-2);
                 goodCount = (atoi(CountNo)*goodrate);
-
-                printf("%d\n", goodCount);
-
-                digitalWrite (WiringPiPIN_15, HIGH);
-                digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, LOW);
-                break;
-            }
-            printf("CountNo scan error code\n");
-        } 
-
-        while(1)
-        {
-            sleep(1);
-            memset(tempString, 0 , sizeof(char)*InputLength);
-            gets(tempString);
-            if(strncmp(tempString, "ZZZ", 3) == 0)
-            {
-                memset(MachineCode, 0 , sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(MachineCode, tempPtr, sizeof(tempString)-2);
+                printf("need finish: %ld\n", goodCount);
                 digitalWrite (WiringPiPIN_15, LOW);
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, HIGH);
+                
                 break;
-            }
-            printf("MachineCode scan error code\n");
-        }
- 
+            }*/
+            printf("CountNo scan error code\n");
+        } 
+     
         while(1)
         {
             sleep(1);
@@ -918,14 +897,16 @@ int main(int argc ,char *argv[])
                 memset(UserNo, 0, sizeof(char)*InputLength);
                 tempPtr = tempString + 4;
                 memcpy(UserNo, tempPtr, sizeof(tempString)-3);
-                digitalWrite (WiringPiPIN_15, LOW);
+                
+                digitalWrite (WiringPiPIN_15, HIGH);
                 digitalWrite (WiringPiPIN_16, HIGH);
                 digitalWrite (WiringPiPIN_18, LOW);
+                
                 break;
             }
             printf("UserNo scan error code\n");
         }
-*/       
+
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
@@ -933,7 +914,7 @@ int main(int argc ,char *argv[])
         char * buffer, * charPosition;
         short FlagNo = 0;        
 
-        pfile = fopen("/home/pi/works/tsw303/barcode","r");
+        pfile = fopen("/home/pi/works/m2600/barcode","r");
         fseek(pfile, 0, SEEK_END);
         filesize = ftell(pfile);
         rewind(pfile);
@@ -964,11 +945,10 @@ int main(int argc ,char *argv[])
             filesize--;
             charPosition++;
         }
-
         free(buffer);
+        /*
         sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
-        //strcpy(ISNo, "01");
         strcpy(ISNo, FakeInput[0]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
@@ -976,20 +956,15 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(ManagerCard, 0, sizeof(char)*InputLength);
-        //strcpy(ManagerCard, "BL20123456790");
         strcpy(ManagerCard, FakeInput[1]);
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
-
+        */
         sleep(1);
         memset(MachineCode, 0 , sizeof(char)*InputLength);
-        //strcpy(MachineCode, "E35");
         strcpy(MachineCode, FakeInput[2]);
-        digitalWrite (WiringPiPIN_15, LOW);
-        digitalWrite (WiringPiPIN_16, LOW);
-        digitalWrite (WiringPiPIN_18, HIGH);
-
+        /*
         sleep(1);
         memset(CountNo, 0, sizeof(char)*InputLength);
         //strcpy(CountNo, "100000");
@@ -1006,26 +981,17 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
-        
+        */
+        memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
         gettimeofday(&now, NULL);
-       
-        if(flagFirstRun == 0)
-        { 
-            memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
-            sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
-            pfile = fopen(UPLoadFile, "a");
-            if(pfile != NULL)
-            {
-                fclose(pfile);
-            }
-            flagFirstRun = 1;
-        }
-
+        sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+        
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
-        MasterFlag = 1;
         
         memset(ExproductCountArray, 0, sizeof(long)*3);
-        memset(ExmessageArray, 0, sizeof(int)*ErrorType);
+        memset(ExmessageArray, 0, sizeof(int)*9);
+        memset(LayoutCount, 0, sizeof(long)*(9*8));
+        memset(ExLayoutCount, 0, sizeof(long)*(9*8));
        
         if(zhTelnetFlag == 0){
             //zhTelnetFlag = 1;
@@ -1034,6 +1000,23 @@ int main(int argc ,char *argv[])
         }
         while(MasterFlag)
         {
+            //unlock
+            fd = open(dev, O_RDWR);
+            if(fd < 0)
+            {
+                perror("Open Fail");
+                return 1;
+            }
+            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+            if(r < 0)
+            {
+                perror("Selection i2c device fail");
+                return 1;
+            }
+            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+            close(fd);
+
             PrintLeftLog = 0;
             zhResetFlag = 0; //reset flag clean
             
@@ -1052,7 +1035,7 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 usleep(100000);
-                if(ExproductCountArray[GoodNumber] >= goodCount)
+                if(productCountArray[GoodNumber] >= goodCount)
                 //if(productCountArray[GoodNumber] >= 0)
                 {
                     //finish job
@@ -1075,7 +1058,7 @@ int main(int argc ,char *argv[])
                     MasterFlag = 0;
                 }
 */
-                /*else if(digitalRead(WiringPiPIN_22) == 0)
+                else if(digitalRead(WiringPiPIN_22) == 0)
                 {
                     //finish job
 #ifdef LogMode
@@ -1088,7 +1071,7 @@ int main(int argc ,char *argv[])
                     printf("Houston we are ready to back!\n");
                     zhResetFlag = 1;
                     MasterFlag = 0;
-                }*/
+                }
                 else;
             }
 
@@ -1104,7 +1087,7 @@ int main(int argc ,char *argv[])
             pthread_join(FileThread, NULL);
             sleep(1);
 
-            //get ip address & time
+            //get ip address
             fd = socket(AF_INET, SOCK_DGRAM, 0);
             ifr.ifr_addr.sa_family = AF_INET;
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
@@ -1112,64 +1095,67 @@ int main(int argc ,char *argv[])
             close(fd);
             gettimeofday(&now, NULL);
 
-            pthread_mutex_lock(&mutexFile);
             if(MasterFlag == 0 && isNormalStop == 1)
             {
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachJobDone);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachJobDone);
 #else
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, , (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachJobDone);
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachJobDone);
 #endif
                 fclose(pfile);
-            }
-            else if(MasterFlag == 0)
+            }else if(MasterFlag == 0)
             {
-                if(productCountArray[GoodNumber] >= goodCount / 1.04 ) 
+                if(productCountArray[GoodNumber] >= (goodCount / 1.04))
                 {
                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachSTOPForce1);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachSTOPForce1);
 #else
                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, , (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachSTOPForce1);
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachSTOPForce1);
 #endif
                     fclose(pfile);
-                }else
+                }
+                else
                 {
                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachSTOPForce2);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachSTOPForce2);
 #else
                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, , (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachSTOPForce2);
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachSTOPForce2);
 #endif
                     fclose(pfile);
-                }   
+                }
             }else
             {
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachLOCK);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachLOCK);
 #else
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -1178,7 +1164,6 @@ int main(int argc ,char *argv[])
 #endif
                 fclose(pfile);
             }
-            pthread_mutex_unlock(&mutexFile);
 
             FTPFlag = 0;
             pthread_mutex_lock(&mutexFTP);
@@ -1187,10 +1172,30 @@ int main(int argc ,char *argv[])
             pthread_join(FTPThread, NULL);
             sleep(1);
             
-            //vers end
-            
-            /*if(MasterFlag)
+            if(MasterFlag)
             {
+                //hint for scan user
+                digitalWrite (WiringPiPIN_15, LOW);
+                digitalWrite (WiringPiPIN_16, LOW);
+                digitalWrite (WiringPiPIN_18, HIGH);
+ 
+                //lock
+                fd = open(dev, O_RDWR);
+                if(fd < 0)
+                {
+                    perror("Open Fail");
+                    return 1;
+                }
+                r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                if(r < 0)
+                {
+                    perror("Selection i2c device fail");
+                    return 1;
+                }
+        
+                i2c_smbus_write_byte_data(fd, OUT_P1, 0x07);
+                i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                close(fd);
                 while(1)
                 {
                     sleep(1);
@@ -1202,10 +1207,24 @@ int main(int argc ,char *argv[])
                         tempPtr = tempString + 4;
                         memcpy(UserNo, tempPtr, sizeof(tempString)-3);
 
-                        digitalWrite (WiringPiPIN_15, LOW);
-                        digitalWrite (WiringPiPIN_16, HIGH);
-                        digitalWrite (WiringPiPIN_18, LOW);
+                        //unlock
+                        fd = open(dev, O_RDWR);
+                        if(fd < 0)
+                        {
+                            perror("Open Fail");
+                            return 1;
+                        }
+                        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                        if(r < 0)
+                        {
+                            perror("Selection i2c device fail");
+                            return 1;
+                        }
         
+                        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                        close(fd);
+
                         break;
                     }
                     else if(strncmp(tempString,"XXXM", 4) == 0)
@@ -1216,7 +1235,24 @@ int main(int argc ,char *argv[])
                         tempPtr = tempString + 4;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
                         
-                        //get ip address & time
+                        //unlock
+                        fd = open(dev, O_RDWR);
+                        if(fd < 0)
+                        {
+                            perror("Open Fail");
+                            return 1;
+                        }
+                        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                        if(r < 0)
+                        {
+                            perror("Selection i2c device fail");
+                            return 1;
+                        }
+        
+                        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                        close(fd);
+                        //get ip address
                         fd = socket(AF_INET, SOCK_DGRAM, 0);
                         ifr.ifr_addr.sa_family = AF_INET;
                         strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
@@ -1225,16 +1261,17 @@ int main(int argc ,char *argv[])
                         gettimeofday(&now, NULL);
 
                         pfile = fopen(UPLoadFile, "a");
-#ifdef PrintMode
+#fidef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, FixerNo, MachREPAIRING);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, FixerNo, MachREPAIRING);
 #else
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, FixerNo, MachREPAIRING);
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, FixerNo, MachREPAIRING);
 #endif
                         fclose(pfile);
 
@@ -1254,36 +1291,37 @@ int main(int argc ,char *argv[])
 
                         while(1)
                         {
+                            sleep(1);
                             memset(tempString, 0, sizeof(char)*InputLength);
                             gets(tempString);
-                            sleep(1);
                             if(strncmp(tempString, "XXXM", 4) == 0)
                             {
-                                char doubleCheckFixerNo[InputLength];
+                                char doubleCheckFixerNo[InputLength];    
                                 memset(doubleCheckFixerNo, 0, sizeof(char)*InputLength);
                                 tempPtr = tempString + 4;
                                 memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
                                 if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
                                 {
-                                    //get ip address & time
+                                    //get ip address
                                     fd = socket(AF_INET, SOCK_DGRAM, 0);
                                     ifr.ifr_addr.sa_family = AF_INET;
                                     strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
                                     ioctl(fd, SIOCGIFADDR, &ifr);
                                     close(fd);
                                     gettimeofday(&now, NULL);
-
+                                    
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                          ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                          MachineCode, FixerNo, MachREPAIRDone);
+                                                                        ISNo, ManagerCard, CountNo, 
+                                                                        (long)now.tv_sec,
+                                                                        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                        MachineCode, FixerNo, MechREPAIRDone);
 #else
                                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                          ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                          MachineCode, FixerNo, MachREPAIRDone);
+                                                                      ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                      MachineCode, FixerNo, MechREPAIRDone);
 #endif
                                     fclose(pfile);
             
@@ -1301,16 +1339,15 @@ int main(int argc ,char *argv[])
                             }
                             printf("FixerNo scan error code\n");
                         }
+
                         ButtonFlag = 0;
                         pthread_join(buttonThread, NULL);
-                        digitalWrite (WiringPiPIN_15, LOW);
-                        digitalWrite (WiringPiPIN_16, HIGH);
-                        digitalWrite (WiringPiPIN_18, LOW);
                         break;
                     }
                     printf("UserNo scan error code\n");
                 }
-                //get ip address & time
+
+                //get ip address
                 fd = socket(AF_INET, SOCK_DGRAM, 0);
                 ifr.ifr_addr.sa_family = AF_INET;
                 strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
@@ -1321,21 +1358,25 @@ int main(int argc ,char *argv[])
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachUNLOCK);
+                                                                    ISNo, ManagerCard, CountNo, 
+                                                                    (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachUNLOCK);
 #else
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, UserNo, MachUNLOCK);
-
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                    MachineCode, UserNo, MachUNLOCK);
 #endif
                 fclose(pfile);
-            }*/
+
+                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_16, HIGH);
+                digitalWrite (WiringPiPIN_18, LOW);
+
+            }
         }
     }
-
     //*shm = '*';
     return 0;
 }
@@ -1370,11 +1411,12 @@ void * FTPFunction(void *argument)
     int FTPCount = 0;
 
     while(FTPFlag){
-        //char Remote_url[80] = "ftp://192.168.10.254:21/home/";
-        //char Remote_url[80] = "ftp://192.168.2.223:8888/";
+        //char Remote_url[UPLoadFileLength] = "ftp://192.168.10.254:21/home/";
+        //char Remote_url[UPLoadFileLength] = "ftp://192.168.2.223:8888/";
+        //struct curl_slist *headerlist=NULL;        
         long size = 0;
-        pthread_mutex_lock(&mutexFTP);
-        //struct curl_slist *headerlist=NULL;
+
+        pthread_mutex_lock(&mutexFTP);        
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + FTPWakeUpValue;
         outtime.tv_nsec = now.tv_usec * 1000;
@@ -1382,6 +1424,7 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
+
         if(stat(UPLoadFile, &file_info_2) == 0)
         {
             size = file_info_2.st_size;
@@ -1398,21 +1441,12 @@ void * FTPFunction(void *argument)
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
             pthread_mutex_unlock(&mutexFile);
 
-            //hd_src = fopen(UPLoadFile, "a");
-            //if(hd_src != NULL)
-            //{
-            //    fclose(hd_src);
-            //}
-
             printf("%s\n", UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info) < 0) {
+            if(stat(UPLoadFile_3, &file_info)< 0) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");
 #endif
-                digitalWrite (WiringPiPIN_15, LOW);
-                digitalWrite (WiringPiPIN_16, LOW);
-                digitalWrite (WiringPiPIN_18, LOW);
             }
             else if(file_info.st_size > 0)
             {
@@ -1424,11 +1458,11 @@ void * FTPFunction(void *argument)
                 }
                 else if(proc == 0)
                 {
-                    char filePath[80];
+                    char filePath[UPLoadFilelength];
                     char *pfile2;
-                    memset(filePath, 0, sizeof(char)*80);
+                    memset(filePath, 0, sizeof(char)*UPLoadFileLength);
                     //strcpy(filePath, "/home/pi/zhlog/");
-                    //strcpy(filePath, "/home/pi/works/tsw303/");
+                    //strcpy(filePath, "/home/pi/works/m2600/");
                     strcpy(filePath, UPLoadFile_3);
                     pfile2 = filePath;                       
                     printf("%s\n", pfile2);

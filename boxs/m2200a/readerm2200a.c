@@ -1181,6 +1181,7 @@ int main(int argc ,char *argv[])
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             if((MasterFlag == 0) && (isNormalStop == 1) )
             {
@@ -1223,7 +1224,6 @@ int main(int argc ,char *argv[])
                                                                              MachineCode, UserNo, MachSTOPForce1);
 #endif
                     fclose(pfile);
-
                 }
             }
             else
@@ -1290,7 +1290,15 @@ int main(int argc ,char *argv[])
                         tempPtr = tempString + 4;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
 
-                        pfile = fopen(UPLoadFile, "a");
+                        //get ip address
+                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                        ifr.ifr_addr.sa_family = AF_INET;
+                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                        ioctl(fd, SIOCGIFADDR, &ifr);
+                        close(fd);
+                        gettimeofday(&now, NULL);
+ 
+                       pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                                      (long)now.tv_sec,
@@ -1332,6 +1340,14 @@ int main(int argc ,char *argv[])
                                 
                                 if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
                                 {
+                                    //get ip address
+                                    fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                    ifr.ifr_addr.sa_family = AF_INET;
+                                    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                    ioctl(fd, SIOCGIFADDR, &ifr);
+                                    close(fd);
+                                    gettimeofday(&now, NULL);
+                                   
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
@@ -1366,6 +1382,14 @@ int main(int argc ,char *argv[])
                     }else;
                     printf("UserNo scan error code\n");
                 }
+                //get ip address
+                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                ifr.ifr_addr.sa_family = AF_INET;
+                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                ioctl(fd, SIOCGIFADDR, &ifr);
+                close(fd);
+                gettimeofday(&now, NULL);
+
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,

@@ -383,7 +383,6 @@ void * WatchDogForGood(void *argument)
         if (WatchDogCoolDown <= 0)
         {
             zhResetFlag = 1;
-
             WatchDogThreadFlag = 0;
         }
         pthread_mutex_lock(&mutexFile);        
@@ -431,9 +430,7 @@ void * WatchDogForGood(void *argument)
                     fprintf(pfile, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                                   (long)now.tv_sec, PINCount[ForCount][ForCount2],
                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, 
-                                                                                  MachRUNNING);
-
+                                                                                  ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
 #endif
                 }
             }
@@ -503,11 +500,11 @@ void * zhINTERRUPT1(void * argument)
         //pthread_mutex_lock(&mutex_3);
         //Log(s, __func__, __LINE__, " entry\n");
         char *dev = "/dev/i2c-1";
-
         int fd , r;
+        int x, y;
+        int ForCount ,first, second;
     
         fd = open(dev, O_RDWR);
-    
         if(fd < 0)
         {
             perror("Open fail");
@@ -520,8 +517,6 @@ void * zhINTERRUPT1(void * argument)
             perror("Selecting i2c device\n");
             exit(0);
         }
-        int x, y;
-        int ForCount ,first, second;
     
         x = i2c_smbus_read_byte_data(fd, IN_P0);
         y = i2c_smbus_read_byte_data(fd, IN_P1);
@@ -591,31 +586,31 @@ void * zhINTERRUPT2(void * argument)
        
         if(I2CEXValue[2] != x || I2CEXValue[3] != y)
         { 
-        first = I2CEXValue[2] ^ 0xff;
-        first = first & x;
-        second = I2CEXValue[3] ^ 0xff;
-        second = second & y;
+            first = I2CEXValue[2] ^ 0xff;
+            first = first & x;
+            second = I2CEXValue[3] ^ 0xff;
+            second = second & y;
 
-        I2CEXValue[2] = x;
-        I2CEXValue[3] = y;
+            I2CEXValue[2] = x;
+            I2CEXValue[3] = y;
 
-        for(ForCount = 0; ForCount < 8; ++ForCount)
-        {
-            PINCount[2][ForCount] = PINCount[2][ForCount] + (first & 1);
-            first = first >> 1;
-            PINCount[3][ForCount] = PINCount[3][ForCount] + (second & 1);
-            second = second >> 1; 
-        }
+            for(ForCount = 0; ForCount < 8; ++ForCount)
+            {
+                PINCount[2][ForCount] = PINCount[2][ForCount] + (first & 1);
+                first = first >> 1;
+                PINCount[3][ForCount] = PINCount[3][ForCount] + (second & 1);
+                second = second >> 1; 
+            }
 #ifdef PrintInfo
-        printf("reader 2: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
+            printf("reader 2: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
                  x , y, PINCount[2][0], PINCount[2][1], PINCount[2][2], 
                  PINCount[2][3], PINCount[2][4], PINCount[2][5], PINCount[2][6], PINCount[2][7],
                  PINCount[3][0], PINCount[3][1], PINCount[3][2], PINCount[3][3], PINCount[3][4], PINCount[3][5], PINCount[3][6], PINCount[3][7]);
 #endif
-        //pthread_mutex_lock(&mutex_3);
-        WatchDogFlag = 1;
-	    //pthread_mutex_unlock(&mutex_3);
-        //Log(s, __func__, __LINE__, " exit\n");
+            //pthread_mutex_lock(&mutex_3);
+            WatchDogFlag = 1;
+	        //pthread_mutex_unlock(&mutex_3);
+            //Log(s, __func__, __LINE__, " exit\n");
         }
     }
 }
@@ -628,8 +623,8 @@ void * zhINTERRUPT3(void * argument)
         int fd, r, x;
         char *dev = "/dev/i2c-1";
         int ForCount, first;
+        
         fd = open(dev, O_RDWR);
-      
         if(fd < 0)
         {
             perror("Open fail");
@@ -642,22 +637,23 @@ void * zhINTERRUPT3(void * argument)
         x = i2c_smbus_read_byte_data(fd, IN_P0);
         close(fd);
         //pthread_mutex_unlock(&mutex_3);
-        if(I2CEXValue[4] != x){
-        first = I2CEXValue[4] ^ 0xff;
-        first = first & x;
-        
-        I2CEXValue[4] = x;
-       
-        for(ForCount = 0; ForCount < 8; ForCount++)
+        if(I2CEXValue[4] != x)
         {
-            PINCount[4][ForCount] = PINCount[4][ForCount] + (first & 1);
-            first = first >> 1;
-        }
+            first = I2CEXValue[4] ^ 0xff;
+            first = first & x;
+        
+            I2CEXValue[4] = x;
+       
+            for(ForCount = 0; ForCount < 8; ForCount++)
+            {
+                PINCount[4][ForCount] = PINCount[4][ForCount] + (first & 1);
+                first = first >> 1;
+            }
 #ifdef PrintInfo
-        printf("reader 3: %3d,     | %ld %ld %ld %ld %ld %ld %ld %ld \n",x ,PINCount[4][0], PINCount[4][1], PINCount[4][2], 
+            printf("reader 3: %3d,     | %ld %ld %ld %ld %ld %ld %ld %ld \n",x ,PINCount[4][0], PINCount[4][1], PINCount[4][2], 
                                     PINCount[4][3], PINCount[4][4], PINCount[4][5], PINCount[4][6], PINCount[4][7]);
 #endif 
-        WatchDogFlag = 1;
+            WatchDogFlag = 1;
         }
     }
 }
@@ -949,10 +945,9 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
 
-        memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
-
         gettimeofday(&now, NULL);
-        sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+        memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+        sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
         
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
  
@@ -961,8 +956,6 @@ int main(int argc ,char *argv[])
         memset(PINEXCount, 0, sizeof(long)*40);
         memset(I2CEXValue, 0, sizeof(int)*6);
         memset(CutRoll, 0, sizeof(short)*2);
-
-        //get ip address
 
         if(zhTelnetFlag == 0)
         {
@@ -1162,6 +1155,7 @@ int main(int argc ,char *argv[])
             strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
             ioctl(fd, SIOCGIFADDR, &ifr);
             close(fd);
+            gettimeofday(&now, NULL);
 
             pthread_mutex_lock(&mutexFile);        
             if(MasterFlag == 0 && isNormalStop == 1)
@@ -1272,6 +1266,14 @@ int main(int argc ,char *argv[])
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
                         memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
+                        //get ip address
+                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                        ifr.ifr_addr.sa_family = AF_INET;
+                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                        ioctl(fd, SIOCGIFADDR, &ifr);
+                        close(fd);
+                        gettimeofday(&now, NULL);
+
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -1311,14 +1313,22 @@ int main(int argc ,char *argv[])
                                 memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
                                 if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
                                 {
-                                pfile = fopen(UPLoadFile, "a");
+                                    //get ip address
+                                    fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                    ifr.ifr_addr.sa_family = AF_INET;
+                                    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                    ioctl(fd, SIOCGIFADDR, &ifr);
+                                    close(fd);
+                                    gettimeofday(&now, NULL);
+
+                                    pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
                                                                                   ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                   MachineCode, FixerNo, MachREPAIRDone);
 #else
-                                fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
                                                                                   ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                   MachineCode, FixerNo, MachREPAIRDone);
@@ -1345,6 +1355,14 @@ int main(int argc ,char *argv[])
                     }
                     printf("UserNo scan error code\n");
                 }
+                //get ip address
+                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                ifr.ifr_addr.sa_family = AF_INET;
+                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                ioctl(fd, SIOCGIFADDR, &ifr);
+                close(fd);
+                gettimeofday(&now, NULL);
+
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -1385,20 +1403,22 @@ void * FTPFunction(void *argument)
 #endif
     //CURL *curl;
     //CURLcode res;
+    //curl_off_t fsize;
     //FILE *hd_src;
     struct stat file_info, file_info_2;
-    //curl_off_t fsize;
     char UPLoadFile_3[21];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
 
-    while(FTPFlag){
+    while(FTPFlag)
+    {
         //char Remote_url[80] = "ftp://192.168.10.254:21/home/";
         //char Remote_url[80] = "ftp://192.168.2.223:8888/";
-        long size = 0;
-        pthread_mutex_lock(&mutexFTP);
         //struct curl_slist *headerlist=NULL;
+        long size = 0;
+    
+        pthread_mutex_lock(&mutexFTP);
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + FTPWakeUpValue;
         outtime.tv_nsec = now.tv_usec * 1000;
@@ -1406,7 +1426,8 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
-        if(!stat(UPLoadFile, &file_info_2))
+        
+        if(stat(UPLoadFile, &file_info_2) == 0)
         {
             size = file_info_2.st_size;
             //printf("size:%ld\n", size);
@@ -1423,8 +1444,7 @@ void * FTPFunction(void *argument)
             pthread_mutex_unlock(&mutexFile);
 
             printf("%s\n", UPLoadFile_3);
-            //strcat(Remote_url,UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info)) {
+            if(stat(UPLoadFile_3, &file_info) < 0) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");
@@ -1433,7 +1453,7 @@ void * FTPFunction(void *argument)
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, LOW);
             }
-            if(file_info.st_size > 0)
+            else if(file_info.st_size > 0)
             {
                 pid_t proc = fork();
                 if(proc < 0)
@@ -1463,6 +1483,7 @@ void * FTPFunction(void *argument)
             }
             /*if(file_info.st_size > 0)
             {
+                strcat(Remote_url,UPLoadFile_3);
                 fsize = (curl_off_t)file_info.st_size;
 
                 curl_global_init(CURL_GLOBAL_ALL);
@@ -1506,6 +1527,7 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
+            else;
             unlink(UPLoadFile_3);
         }
     }

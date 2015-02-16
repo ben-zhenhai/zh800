@@ -178,7 +178,7 @@ int main(int argc,char* argv[])
                 {
                     AccPw[forCount] = configString[forCount+6];
                 }
-                printf("%s|\n", AccPw);
+                //printf("%s|\n", AccPw);
                 memset(configString, 0, sizeof(char)*ExecuteFilePathLength);
             }
             else if(strncmp(configString, "MachineType:", 12) == 0)
@@ -377,7 +377,6 @@ int main(int argc,char* argv[])
     
         //update updatelist 
         //files need to update and  remote file path and local file path
-
         if(curl_handle)
         {
             char RemoteURL[ExecuteFilePathLength];

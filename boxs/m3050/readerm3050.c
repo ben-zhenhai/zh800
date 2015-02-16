@@ -53,16 +53,18 @@
 #define WatchDogCountValue 126000 //msec
 #define InputLength 30
 #define UPLoadFileLength 21
-#define CountPeriod 100 //msec
+#define CountPeriod 4 
 #define WriteFileCountValue 4200 // msec
 #define FTPCountValue 300 //sec
 #define FTPWakeUpValue 60 //sec
 #define zhMAXOUTPUT 10
-#define ERRORCHECKMAXRETRY 20
+#define ErrorCheckMAXTRY 3
 
 #define Log(s,func, line, opt) StringCat(func);StringCat(opt)
-#define RS232_Length 5
+#define RS232SenderLength 18
+#define RS232ReceiverLength 200
 #define ErrorType 22
+#define CountSize 40
 
 #define goodrate 1
 //#define LogMode
@@ -71,9 +73,11 @@
 
 enum
 {
-    GoodNumber = 0,
-    BadNumber,
-    GoodTotalNumber
+    GoodTotalNumber = 0,
+    GoodNumber,
+    HalfNumner,
+    InsertNumber,
+    BadTotalNumber
 };
 
 enum
@@ -101,18 +105,14 @@ short MasterFlag = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
-unsigned char output[RS232_Length];
 
 pthread_cond_t cond,condFTP;
 pthread_mutex_t mutex, mutex_3, mutex_log, mutex_2, mutexFTP, mutexFile;
 
-long productCountArray[3];
-long ExproductCountArray[3];
-int messageArray[ErrorType];
-int ExmessageArray[ErrorType];
+long ProductCountArray[CountSize];
+long ExProductCountArray[CountSize];
 
 char ISNo[InputLength], ManagerCard[InputLength], MachineCode[InputLength], UserNo[InputLength], CountNo[InputLength];
-char RepairNo[InputLength];
 char UPLoadFile[UPLoadFileLength];
 
 void * zhLogFunction(void *argument);
@@ -190,7 +190,6 @@ void StringCat(const char *str)
         }
     }
     pthread_mutex_unlock(&mutex_log);
-
 }
 
 void * zhLogFunction(void *argument)
@@ -238,7 +237,7 @@ void * zhLogFunction(void *argument)
     sprintf(LogFileLocation,"/media/usb0/Log_%ld.txt",(long)now.tv_sec);
     FILE *pfile;
     pfile = fopen(LogFileLocation, "a");
-    fprintf(pfile,"tsw303\t%s\t0\t", buff);
+    fprintf(pfile,"FTO-3050\t%s\t0\t", buff);
     fclose(pfile);
     while(*shm_pop != '*')
     {
@@ -263,12 +262,10 @@ void * zhLogFunction(void *argument)
                     gettimeofday(&now, NULL);
                     ts = *localtime(&now.tv_sec);
                     strftime(buff, sizeof(buff), "%Y/%m/%d_%H:%M:%S", &ts);
-                    fprintf(pfile,"tsw303\t%s\t%ld\t",buff,productCountArray[GoodNumber]);
+                    fprintf(pfile,"FTO-3050\t%s\t%ld\t",buff,ExProductCountArray[GoodNumber]);
                 }
             }      
-    
             fclose(pfile);
-            
             memset(LogString, 0, sizeof(char)*300);
             WriteFileCount = 0;
         }
@@ -298,65 +295,564 @@ void * SerialFunction(void *argument)
 #ifdef LogMode
     Log(s, __func__, __LINE__, "Serial Function entry\n");
 #endif
-    int fd;
-    char temp_output[RS232_Length];
-    int count1, count2;
-    int string_count = 0;
+    int fd, fd2;
+    int count1 , count2;
     struct termios options;
+    struct timeval now;
+    struct timespec outtime;
     count1 = count2 = 0;
-
-    memset(temp_output, 0, sizeof(char)*RS232_Length);
+    FILE *fileDst;
+    struct ifreq ifr;
+    short errorCheckCount[CountSize];
+    memset(errorCheckCount, 0, sizeof(short)*CountSize);
 
     if ((fd = serialOpen ("/dev/ttyAMA0", 9600)) < 0)
     {
         printf ("Unable to open serial device: %s\n", strerror (errno)) ;
         pthread_exit((void*)"fail");
     }
-
     tcgetattr(fd, &options);
     options.c_cflag |= PARENB;
-    tcsetattr(fd, TCSANOW, &options);
+    options.c_cflag &= ~PARODD;
+    options.c_cflag |= CSTOPB;
+    //options.c_cflag |= PARENB;
+    //options.c_cflag &= ~PARODD;
+    options.c_cflag &= ~CSIZE;
+    options.c_cflag |= CS7;
+    tcsetattr(fd, TCSANOW, &options); 
+    //tcsetattr(fd, &options); 
 
     while(SerialThreadFlag)
     {
+        char arraySender[RS232SenderLength];
+        int forCount = 0;
+        int charCount = 0;
+        unsigned char arrayReceiver[RS232ReceiverLength];
+        unsigned char prefixCheck[7];
+        short flagPack = 0;
+        short newDataIncome = 0;
+        memset(ProductCountArray, 0, sizeof(long)*CountSize);
+
+        //send to Server
+        //1
+        memset(arraySender, 0 , sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        strcpy(arraySender, "@11RD4900000853*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
         while(serialDataAvail(fd))
-        {   
-            char temp_char_1;
-            temp_char_1 = serialGetchar(fd);
-            if(count1 == 2 && string_count < RS232_Length - 1)
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            //printf("%c ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
             {
-                temp_output[string_count] = temp_char_1;
-                string_count++;
-            }else if(count1 == 2 && string_count == (RS232_Length - 1))
-            {
-                //package
-                temp_output[string_count] = '\0';
-                pthread_mutex_lock(&mutex_2);
-                memset(output, 0,sizeof(char)*RS232_Length);
-                int vers_test_count = 0;
-                //printf("Ready to Print:");
-                for(vers_test_count = 0; vers_test_count < RS232_Length; vers_test_count++)
+                int localCharCount = 0;
+                forCount = 0;
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 8)
                 {
-                    output[vers_test_count] = temp_output[vers_test_count];
-                    //printf(" %x", output[vers_test_count]);
+                    ProductCountArray[forCount] = 
+                        transferFormatLONG(arrayReceiver[localCharCount+4]) * 268435456 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+5]) * 16777216 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+6]) * 1048576 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+7]) * 65536 + 
+                        transferFormatLONG(arrayReceiver[localCharCount]) * 4096 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+1]) * 256 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+2]) * 16 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+3]);
+                
+                   forCount++;
+                   //printf("%ld %ld %ld %ldl\n",(long)arrayReceiver[localCharCount], (long)arrayReceiver[localCharCount+1], 
+                   //         (long)arrayReceiver[localCharCount+2] , (long)arrayReceiver[localCharCount+3]);
                 }
-                //printf("\n");
-                memset(temp_output, 0, sizeof(char)*RS232_Length);
-                count1 = 0;
-                string_count = 0;
-                updateFlag = 1;
-                pthread_mutex_unlock(&mutex_2);
-            }else if(temp_char_1 == 0x08)
+                flagPack = 0;
+            }else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
             {
                 count1 = 1;
-            }else if(count1 == 1 && temp_char_1 == 0x06)
+                prefixCheck[0] = tempChar1;
+            }else
             {
-                count1 = 2;                
-            }else count1 = 0;
-    
-            fflush (stdout) ;
-            //if (SerialThreadFlag == 0) break;
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+            fflush(stdout);
         }
+        usleep(100000);
+        //printf("\n");
+        
+        //2
+        memset(arraySender, 0, sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        strcpy(arraySender, "@11RD5410000254*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            //printf("%c ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
+            {
+                ProductCountArray[4] = 
+                    transferFormatLONG(arrayReceiver[4]) * 268435456 + 
+                    transferFormatLONG(arrayReceiver[5]) * 16777216 + 
+                    transferFormatLONG(arrayReceiver[6]) * 1048576 + 
+                    transferFormatLONG(arrayReceiver[7]) * 65536 + 
+                    transferFormatLONG(arrayReceiver[0]) * 4096 + 
+                    transferFormatLONG(arrayReceiver[1]) * 256 + 
+                    transferFormatLONG(arrayReceiver[2]) * 16 + 
+                    transferFormatLONG(arrayReceiver[3]);
+
+                   //printf("%c %c %c %c\n", arrayReceiver[0], arrayReceiver[1],  arrayReceiver[2], arrayReceiver[3]);
+                flagPack = 0;
+            }
+            else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+           fflush(stdout);
+        }
+        usleep(200000);
+        //printf("\n");
+
+        //3
+        memset(arraySender, 0, sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        strcpy(arraySender, "@11RD5420001054*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+          
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            if(flagPack == 1 && tempChar1 == '*')
+            {   
+                int localCharCount = 0;
+                forCount = 0;
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
+                {
+                    ProductCountArray[forCount+5] = 
+                            transferFormatLONG(arrayReceiver[localCharCount]) * 4096 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+1]) * 256 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+2]) * 16 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+3]);
+                    forCount++;
+                }
+                flagPack = 0;
+            }
+            else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+            fflush(stdout);
+        }
+        usleep(100000);
+        //printf("\n");
+        
+        //4
+        memset(arraySender, 0, sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        //strcpy(arraySender, "@11RD6200002959*");
+        strcpy(arraySender, "@11RD6200001053*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            //printf("%c ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
+            {   
+                int localCharCount = 0;
+                forCount = 0;
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
+                {
+                    ProductCountArray[forCount+15] = 
+                            transferFormatLONG(arrayReceiver[localCharCount]) * 4096 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+1]) * 256 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+2]) * 16 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+3]);
+
+                    forCount++;
+                }
+                flagPack = 0; 
+            }
+            else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+            fflush(stdout);
+        }
+        //printf("\n");
+        usleep(100000);
+
+        //5
+        memset(arraySender, 0, sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        //strcpy(arraySender, "@11RD6200002959*");
+        strcpy(arraySender, "@11RD6210001052*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            //printf("%c ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
+            {   
+                int localCharCount = 0;
+                forCount = 0;
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
+                {
+                    ProductCountArray[forCount+25] = 
+                        transferFormatLONG(arrayReceiver[localCharCount]) * 4096 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+1]) * 256 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+2]) * 16 + 
+                        transferFormatLONG(arrayReceiver[localCharCount+3]);
+                    forCount++;
+                }
+                flagPack = 0; 
+            }
+            else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+            fflush(stdout);
+        }
+        //printf("\n");
+        usleep(100000);
+
+        //6
+        memset(arraySender, 0, sizeof(char)*RS232SenderLength);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232ReceiverLength);
+        memset(prefixCheck, 0, sizeof(unsigned char)*7);
+        //strcpy(arraySender, "@11RD6200002959*");
+        strcpy(arraySender, "@11RD6220001051*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            //printf("%c ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
+            {   
+                int localCharCount = 0;
+                forCount = 0;
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
+                {
+                    if(localCharCount == 4 || localCharCount == 8 || localCharCount == 12 || localCharCount == 16);
+                    else
+                    {
+                        ProductCountArray[forCount+35] = 
+                            transferFormatLONG(arrayReceiver[localCharCount]) * 4096 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+1]) * 256 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+2]) * 16 + 
+                            transferFormatLONG(arrayReceiver[localCharCount+3]);
+                         forCount++;
+                    }
+                }
+                flagPack = 0; 
+            }
+            else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strcmp(prefixCheck, "@11RD00") == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount; 
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*7);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232ReceiverLength);
+                count1 = 0;
+                charCount = 0;
+            }
+            fflush(stdout);
+        }
+        //printf("\n");
+        
+        printf("%s %s %s %s %s| ", ISNo, ManagerCard, CountNo, MachineCode, UserNo);
+        for(forCount = 0; forCount < 39; ++forCount)
+        {
+            printf("%ld ", ProductCountArray[forCount]);
+        }
+        printf("\n");
+
+        for(forCount = 0; forCount < CountSize; ++forCount)
+        {
+            //need set ExproductCountArray
+            if(ProductCountArray[forCount] < ExProductCountArray[forCount])
+            {
+                // count reset
+                ExProductCountArray[forCount] = 0;
+            }else if((ProductCountArray[forCount] != 0) && (ExProductCountArray[forCount] == 0))
+            {
+                ExProductCountArray[forCount] = ProductCountArray[forCount];
+            }
+            else;
+        }
+        
+        //avoid wrong info send form machine
+        for(forCount = 0; forCount < CountSize; ++forCount)
+        {
+            if(abs(ExProductCountArray[forCount] - ProductCountArray[forCount]) > 220 && errorCheckCount[forCount] < ErrorCheckMAXTRY)
+            {
+                ProductCountArray[forCount] = ExProductCountArray[forCount];
+                errorCheckCount[forCount]++;
+            }
+            else
+            {
+                errorCheckCount[forCount] = 0;
+            }
+        }
+
+        fd2 = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd2, SIOCGIFADDR, &ifr);
+        close(fd2);
+        gettimeofday(&now, NULL);
+
+        pthread_mutex_lock(&mutexFile);
+        fileDst = fopen(UPLoadFile,"a");
+        if(fileDst != NULL)
+        {
+            for(forCount = 0 ; forCount < CountSize; ++forCount)
+            {
+                if((ProductCountArray[forCount] != ExProductCountArray[forCount]) && ProductCountArray[forCount] > 0)
+                {
+                    if(forCount == GoodNumber)
+                    {
+#ifdef PrintMode
+                        fprintf(fileDst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,                    
+                                                                              ProductCountArray[GoodNumber]-ExProductCountArray[GoodNumber],
+                                                                              (long)now.tv_sec,
+                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                              forCount+1, MachineCode, UserNo, MachRUNNING);
+#else
+                        fprintf(fileDst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,
+                                                                                   ProductCountArray[GoodNumber],
+                                                                                   (long)now.tv_sec,
+                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                   forCount+1, MachineCode, UserNo, MachRUNNING);
+#endif
+                    }
+                    else
+                    {
+#ifdef PrintMode
+                        fprintf(fileDst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
+                                                                                   ProductCountArray[forCount] - ExProductCountArray[forCount],
+                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                   forCount+1, MachineCode, UserNo, MachRUNNING);
+#else
+                        fprintf(fileDst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
+                                                                                   (long)now.tv_sec, ProductCountArray[forCount],
+                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                   forCount+1, MachineCode, UserNo, MachRUNNING);
+#endif
+                    }
+                    if(newDataIncome == 0) newDataIncome = 1;
+                }
+            }
+            fclose(fileDst);
+        }
+        pthread_mutex_unlock(&mutexFile);
+        memcpy(ExProductCountArray, ProductCountArray, sizeof(long)*CountSize);
+        //a timeout mechanism
+        /*if(newDataIncome == 1)
+        {
+            watchdogCooldown = WatchDogCountValue;
+        }else 
+        {
+            watchdogCooldown = watchdogCooldown - WriteFileCountValue;
+            printf("%d\n", watchdogCooldown);   
+        }if(watchdogCooldown <= 0)
+        {
+            zhResetFlag = 1;
+        }*/
+
+        pthread_mutex_lock(&mutex);
+        gettimeofday(&now, NULL);
+        outtime.tv_sec = now.tv_sec + CountPeriod;
+        outtime.tv_nsec= now.tv_usec * 1000;
+        pthread_cond_timedwait(&cond, &mutex, &outtime);
+        pthread_mutex_unlock(&mutex);
+
     }
     if(fd >= 0)
     {
@@ -365,341 +861,6 @@ void * SerialFunction(void *argument)
     printf("serial function exit\n");
 #ifdef LogMode
     Log(s, __func__, __LINE__, "Serial Function exit\n");
-#endif
-}
-
-void * FileFunction(void *argement)
-{
-#ifdef LogMode
-    Log(s, __func__, __LINE__, "File Function entry\n");
-#endif
-    struct timeval now;
-    struct timespec outtime;
-    FILE *file_dst;
-    char file_output_temp[RS232_Length];
-    unsigned char countArray[9];
-
-    int fd;
-    struct ifreq ifr;
-    int ForCount = 0;
-    int WriteFileCount = 0;
-    int watchdogCooldown = WatchDogCountValue;
-    short errorCheckCount[3];
-    char result[3]; //remeber last stage 
-    memset(result, 0, sizeof(short)*3);
-    memset(errorCheckCount , 0, sizeof(short)*3);   
-    memset(countArray, 0 ,sizeof(char)*9); 
-    memset(messageArray, 0, sizeof(int)*ErrorType);
-
-    while(FileFlag)
-    {
-        pthread_mutex_lock(&mutex);
-        gettimeofday(&now, NULL);
-        //outtime.tv_sec = now.tv_sec + CountPeriod;
-        outtime.tv_sec = now.tv_sec;
-        //outtime.tv_nsec= now.tv_usec * 1000;
-        outtime.tv_nsec= (now.tv_usec + (CountPeriod * 1000) ) * 1000;
-        
-        if(outtime.tv_nsec > 1000000000)
-        {
-            outtime.tv_sec += 1;
-            outtime.tv_nsec = outtime.tv_nsec % 1000000000;
-        }
-
-        pthread_cond_timedwait(&cond, &mutex, &outtime);
-        pthread_mutex_unlock(&mutex);
-        if(updateFlag == 1)
-        {
-            fd = socket(AF_INET, SOCK_DGRAM, 0);
-            ifr.ifr_addr.sa_family = AF_INET;
-            strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
-            ioctl(fd, SIOCGIFADDR, &ifr);
-            close(fd);
-
-            memset(productCountArray, 0, sizeof(long)*3);
- 
-            memset(file_output_temp, 0, sizeof(char)*RS232_Length);
-
-            pthread_mutex_lock(&mutex_2);
-            strncpy(file_output_temp, output, RS232_Length);
-            int vers_count;
-            for(vers_count = 0; vers_count < RS232_Length; vers_count++)
-            {
-                file_output_temp[vers_count] = output[vers_count];
-            }
-            updateFlag = 0;
-            pthread_mutex_unlock(&mutex_2);
-
-            if(file_output_temp[1] == 0x06)
-            {
-                printf("0x06: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-                countArray[3] = file_output_temp[2];
-                countArray[2] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x05)
-            {
-                printf("0x05: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-                countArray[1] = file_output_temp[2];
-                countArray[0] = file_output_temp[3];                
-            }else if(file_output_temp[1] == 0x0C)
-            {
-                printf("0x0C: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-
-                countArray[6] = file_output_temp[2];
-                countArray[5] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x0D)
-            {
-                printf("0x0D: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-
-                countArray[8] = file_output_temp[2];
-                countArray[7] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x07)
-            {
-                printf("0x07: %x %x %x %x\n", file_output_temp[0], file_output_temp[1], file_output_temp[2], file_output_temp[3]);
-                countArray[4] = file_output_temp[3];
-            }else if(file_output_temp[1] == 0x00)
-            {
-                printf("0x00: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-
-                char result1 = result[0] ^ 0xff;
-                result1 = result1 & file_output_temp[3];
-                char result2 = result[1] ^ 0xff;
-                result2 = result2 & file_output_temp[2];
-                
-                result[0] = file_output_temp[3];
-                result[1] = file_output_temp[2];
-
-                for(ForCount = 0; ForCount < 8; ForCount++)
-                {
-                    if((result1 & 1) == 1)
-                    {
-                        messageArray[ForCount] = messageArray[ForCount] + 1;
-                    }
-                    if((result2 & 1) == 1)
-                    {
-                        messageArray[ForCount+8] = messageArray[ForCount+8] + 1;
-                    }
-                    result1 = result1 >> 1;
-                    result2 = result2 >> 1; 
-                }
-            }else if(file_output_temp[1] == 0x01)
-            {
-                printf("0x01: ");
-                for(ForCount = 0; ForCount < 5; ForCount++)
-                {
-                    printf("%x ", file_output_temp[ForCount]);
-                }
-                printf("\n");
-
-                char result3 = result[2] ^ 0xff;
-                result3 = result3 & file_output_temp[3];
-                result[2] = file_output_temp[3];
-                for(ForCount = 16; ForCount < 22; ForCount++)
-                {
-                    if((result3 & 1) == 1)
-                    {
-                        messageArray[ForCount] = messageArray[ForCount] + 1;
-                    }
-                    result3 = result3 >> 1;
-                }
-            }
-            else;
-
-            //[vers|2014.09.02 |assign count value]
-            for(ForCount = 0; ForCount < 5; ++ForCount)
-            {
-                if(ForCount == 4)
-                {
-                    productCountArray[BadNumber] = transferFormatLONG(countArray[4]);
-                }else
-                {
-                    productCountArray[GoodNumber] = productCountArray[GoodNumber] + transferFormatLONG(countArray[ForCount]) * pow(256, ForCount);
-                    productCountArray[GoodTotalNumber] = 
-                                           productCountArray[GoodTotalNumber] + transferFormatLONG(countArray[ForCount + 5]) * pow(256, ForCount);
-                }
-            }
-            //[vers|2014.09.02 |end]
-
-            //[vers| avoid  wrong info send form machine]
-            for(ForCount = 0; ForCount < 3; ++ForCount)
-            {
-                if(abs(ExproductCountArray[ForCount]-productCountArray[ForCount]) > 220 && errorCheckCount[ForCount] < ERRORCHECKMAXRETRY)
-                {
-                    productCountArray[ForCount] = ExproductCountArray[ForCount];
-                    errorCheckCount[ForCount]++;
-                }
-                else
-                {
-                    errorCheckCount[ForCount] = 0;
-                }
-            }
-            if(file_output_temp[1] == 0x00 || file_output_temp[1] == 0x01 || file_output_temp[1] == 0x05 || 
-                                              file_output_temp[1] == 0x06 || file_output_temp[1] == 0x07 ||
-                                              file_output_temp[1] == 0x0C || file_output_temp[1] == 0x0D)
-            {
-#ifdef PrintInfo
-                printf("%s %s %s %s %s || ",ISNo, ManagerCard, CountNo, MachineCode, UserNo);
-                printf("%ld %ld %ld\n", productCountArray[GoodNumber], productCountArray[BadNumber], productCountArray[GoodTotalNumber]);
-            
-                for(ForCount = 0; ForCount < 22; ForCount++)
-                {
-                    printf(" %d", messageArray[ForCount]);
-                }
-                printf("\n");
-#endif
-            }
-       }
-       WriteFileCount = (WriteFileCount + CountPeriod) % WriteFileCountValue;
-       if(WriteFileCount == 0 || FileFlag == 0)
-       {
-            short newDataIncome = 0;
-
-            //[vers|2014.10.25 | initial count number]
-            for(ForCount = 0; ForCount < 3; ++ForCount)
-            {
-                //need set ExproductCountArray
-                if(productCountArray[ForCount] < ExproductCountArray[ForCount])
-                {
-                    // count reset
-                    ExproductCountArray[ForCount] = 0;
-                }else if((productCountArray[ForCount] != 0) && (ExproductCountArray[ForCount] == 0))
-                {
-                    ExproductCountArray[ForCount] = productCountArray[ForCount];
-                }
-                else;
-            }
-            //[vers|2014.10.25|end] 
-
-            pthread_mutex_lock(&mutexFile);
-            file_dst = fopen(UPLoadFile,"a");
-            for(ForCount = 0 ; ForCount < ErrorType; ++ForCount)
-            {
-                if(messageArray[ForCount] != ExmessageArray[ForCount] && messageArray[ForCount] != 0)
-                {
-#ifdef PrintMode
-                    fprintf(file_dst, "%s %s %s 0 %ld %d %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
-                                                                                    (long)now.tv_sec, 
-                                                                                    messageArray[ForCount] - ExmessageArray[ForCount],
-                                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                    (ForCount+1)+3, MachineCode, UserNo, MachRUNNING);
-#else
-                    fprintf(file_dst, "%s %s %s 0 %ld %d %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
-                                                                                    (long)now.tv_sec, messageArray[ForCount],
-                                                                                    inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                    (ForCount+1)+3, MachineCode, UserNo,
-                                                                                    MachRUNNING);
-#endif
-                    if(newDataIncome == 0) newDataIncome = 1;
-                }
-            }
-            for(ForCount = 0 ; ForCount < 3; ForCount++)
-            {
-               if(productCountArray[ForCount]!= 0 && ExproductCountArray[ForCount] != productCountArray[ForCount])
-               {
-                    if(ForCount == 0)
-                    {
-                        if(productCountArray[GoodNumber] - ExproductCountArray[GoodNumber] > zhMAXOUTPUT)
-                        {
-                            fprintf(file_dst, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
-                                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                      ForCount + 1, MachineCode, UserNo, MachRUNNING);
-                        }
-                        else
-                        {
-#ifdef PrintMode
-                            fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
-                                                                            ISNo, ManagerCard, CountNo, 
-                                                                            productCountArray[GoodNumber] - ExproductCountArray[GoodNumber],
-                                                                            (long)now.tv_sec,
-                                                                            inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                            ForCount + 1, MachineCode, UserNo, MachRUNNING);
-#else
-                            fprintf(file_dst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, productCountArray[GoodNumber], (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                ForCount + 1, MachineCode, UserNo, MachRUNNING);
-#endif
-                        }
-                   }
-                   else
-                   {
-#ifdef PrintMode
-                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                     productCountArray[ForCount] - ExproductCountArray[ForCount],
-                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                     ForCount + 1, MachineCode, UserNo, MachRUNNING);
-#else
-                       fprintf(file_dst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", 
-                                                                     ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                     productCountArray[ForCount],
-                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                     ForCount + 1, MachineCode, UserNo, MachRUNNING);
-#endif
-                   }
-                   if(newDataIncome == 0) newDataIncome = 1;
-               }
-            }
-            fclose(file_dst);
-            pthread_mutex_unlock(&mutexFile);
-            //check good count
-            /*if(productCountArray[GoodNumber] < ExproductCountArray[GoodNumber])
-            {
-                int forCount = 0; 
-                file_dst = fopen("aaaa", "a");
-                
-                for(forCount = 0; forCount < RS232_Length; forCount++)
-                {
-                    fprintf(file_dst, "%x ", file_output_temp[forCount]);
-                }
-
-                fprintf(file_dst, "%ld %ld \n", productCountArray[GoodNumber], ExproductCountArray[GoodNumber]);
-                fclose(file_dst);
-            }*/
-            memcpy(ExproductCountArray, productCountArray, sizeof(long)*3);
-            memcpy(ExmessageArray, messageArray, sizeof(int)*ErrorType);
-            
-            //a timeout mechanism
-            /*if(newDataIncome == 1)
-            {
-                watchdogCooldown = WatchDogCountValue;
-            }else 
-            {
-                watchdogCooldown = watchdogCooldown - WriteFileCountValue;
-                printf("%d\n", watchdogCooldown);   
-            }
-            if(watchdogCooldown <= 0)
-            {
-                zhResetFlag = 1;
-            }*/
-       }
-    }
-#ifdef LogMode
-    Log(s, __func__, __LINE__, "FileFunction exit\n");
 #endif
 }
 
@@ -933,7 +1094,7 @@ int main(int argc ,char *argv[])
         char * buffer, * charPosition;
         short FlagNo = 0;        
 
-        pfile = fopen("/home/pi/works/tsw303/barcode","r");
+        pfile = fopen("/home/pi/works/m3050/barcode","r");
         fseek(pfile, 0, SEEK_END);
         filesize = ftell(pfile);
         rewind(pfile);
@@ -968,7 +1129,6 @@ int main(int argc ,char *argv[])
         free(buffer);
         sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
-        //strcpy(ISNo, "01");
         strcpy(ISNo, FakeInput[0]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
@@ -976,7 +1136,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(ManagerCard, 0, sizeof(char)*InputLength);
-        //strcpy(ManagerCard, "BL20123456790");
         strcpy(ManagerCard, FakeInput[1]);
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, LOW);
@@ -984,7 +1143,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(MachineCode, 0 , sizeof(char)*InputLength);
-        //strcpy(MachineCode, "E35");
         strcpy(MachineCode, FakeInput[2]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, LOW);
@@ -992,7 +1150,6 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(CountNo, 0, sizeof(char)*InputLength);
-        //strcpy(CountNo, "100000");
         strcpy(CountNo, FakeInput[3]);
         goodCount = (atoi(CountNo)*goodrate);
         digitalWrite (WiringPiPIN_15, HIGH);
@@ -1001,16 +1158,15 @@ int main(int argc ,char *argv[])
 
         sleep(1);
         memset(UserNo, 0, sizeof(char)*InputLength);
-        //strcpy(UserNo, "6957");
         strcpy(UserNo, FakeInput[4]);
         digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
         
         gettimeofday(&now, NULL);
-       
+
         if(flagFirstRun == 0)
-        { 
+        {
             memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
             pfile = fopen(UPLoadFile, "a");
@@ -1023,9 +1179,7 @@ int main(int argc ,char *argv[])
 
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
         MasterFlag = 1;
-        
-        memset(ExproductCountArray, 0, sizeof(long)*3);
-        memset(ExmessageArray, 0, sizeof(int)*ErrorType);
+        memset(ExProductCountArray, 0, sizeof(long)*CountSize);
        
         if(zhTelnetFlag == 0){
             //zhTelnetFlag = 1;
@@ -1041,9 +1195,9 @@ int main(int argc ,char *argv[])
             rc = pthread_create(&SerialThread, NULL, SerialFunction, NULL);
             assert(rc == 0);
 
-            FileFlag = 1;
-            rc = pthread_create(&FileThread, NULL, FileFunction, NULL);
-            assert(rc == 0);
+            //FileFlag = 1;
+            //rc = pthread_create(&FileThread, NULL, FileFunction, NULL);
+            //assert(rc == 0);
 
             FTPFlag = 1;
             rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
@@ -1052,8 +1206,8 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 usleep(100000);
-                if(ExproductCountArray[GoodNumber] >= goodCount)
-                //if(productCountArray[GoodNumber] >= 0)
+                if(ExProductCountArray[GoodNumber] >= goodCount)
+                //if(ProductCountArray[GoodNumber] >= 0)
                 {
                     //finish job
                     sleep(10);
@@ -1097,12 +1251,12 @@ int main(int argc ,char *argv[])
             pthread_join(SerialThread, NULL);
             sleep(1);
 
-            FileFlag = 0;
-            pthread_mutex_lock(&mutex);
-            pthread_cond_signal(&cond);
-            pthread_mutex_unlock(&mutex);
-            pthread_join(FileThread, NULL);
-            sleep(1);
+            //FileFlag = 0;
+            //pthread_mutex_lock(&mutex);
+            //pthread_cond_signal(&cond);
+            //pthread_mutex_unlock(&mutex);
+            //pthread_join(FileThread, NULL);
+            //sleep(1);
 
             //get ip address & time
             fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1131,7 +1285,7 @@ int main(int argc ,char *argv[])
             }
             else if(MasterFlag == 0)
             {
-                if(productCountArray[GoodNumber] >= goodCount / 1.04 ) 
+                if(ProductCountArray[GoodNumber] >= goodCount / 1.04 ) 
                 {
                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
@@ -1362,7 +1516,7 @@ void * FTPFunction(void *argument)
     //CURL *curl;
     //CURLcode res;
     //curl_off_t fsize;
-    //FILE *hd_src;
+    FILE *hd_src;
     struct stat file_info, file_info_2;
     char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
@@ -1382,7 +1536,7 @@ void * FTPFunction(void *argument)
         pthread_mutex_unlock(&mutexFTP);
         FTPCount = (FTPCount + FTPWakeUpValue) % FTPCountValue;
         pthread_mutex_lock(&mutexFile);
-        if(stat(UPLoadFile, &file_info_2) == 0)
+        if(!stat(UPLoadFile, &file_info_2))
         {
             size = file_info_2.st_size;
             //printf("size:%ld\n", size);
@@ -1396,16 +1550,14 @@ void * FTPFunction(void *argument)
             strcpy(UPLoadFile_3, UPLoadFile);
             gettimeofday(&now, NULL);
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
+            hd_src = fopen(UPLoadFile, "a");
+            if(hd_src != NULL)
+            {
+                fclose(hd_src);
+            }
             pthread_mutex_unlock(&mutexFile);
 
-            //hd_src = fopen(UPLoadFile, "a");
-            //if(hd_src != NULL)
-            //{
-            //    fclose(hd_src);
-            //}
-
-            printf("%s\n", UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info) < 0) {
+            if(stat(UPLoadFile_3, &file_info)) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");
@@ -1414,7 +1566,7 @@ void * FTPFunction(void *argument)
                 digitalWrite (WiringPiPIN_16, LOW);
                 digitalWrite (WiringPiPIN_18, LOW);
             }
-            else if(file_info.st_size > 0)
+            if(file_info.st_size > 0)
             {
                 pid_t proc = fork();
                 if(proc < 0)
@@ -1424,14 +1576,14 @@ void * FTPFunction(void *argument)
                 }
                 else if(proc == 0)
                 {
+                    printf("ready to upload\n");
                     char filePath[80];
-                    char *pfile2;
+                    //char *pfile2;
                     memset(filePath, 0, sizeof(char)*80);
                     //strcpy(filePath, "/home/pi/zhlog/");
                     //strcpy(filePath, "/home/pi/works/tsw303/");
                     strcpy(filePath, UPLoadFile_3);
-                    pfile2 = filePath;                       
-                    printf("%s\n", pfile2);
+                    //pfile2 = filePath;                       
 
                     execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
                     //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
@@ -1442,7 +1594,7 @@ void * FTPFunction(void *argument)
                     wait(&result);
                 }
             }
-            /*else if(file_info.st_size > 0)
+            /*if(file_info.st_size > 0)
             {
                 strcat(Remote_url,UPLoadFile_3);
                 fsize = (curl_off_t)file_info.st_size;
@@ -1488,7 +1640,6 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
-            else;
             unlink(UPLoadFile_3);
         }
     }
@@ -1505,7 +1656,24 @@ int transferFormatINT(unsigned char x)
 }
 long transferFormatLONG(unsigned char x)
 {
-    long ans = (long)x;
+    //long ans = (long)x;
+    long ans = 0;
+    if(x == 0x31) ans = 1;
+    else if(x == 0x32) ans = 2;
+    else if(x == 0x33) ans = 3;
+    else if(x == 0x34) ans = 4;
+    else if(x == 0x35) ans = 5;
+    else if(x == 0x36) ans = 6;
+    else if(x == 0x37) ans = 7;
+    else if(x == 0x38) ans = 8;
+    else if(x == 0x39) ans = 9;
+    else if(x == 0x41) ans = 10;
+    else if(x == 0x42) ans = 11;
+    else if(x == 0x43) ans = 12;
+    else if(x == 0x44) ans = 13;
+    else if(x == 0x45) ans = 14;
+    else if(x == 0x46) ans = 15;
+    else ans = 0;
     return ans;
 }
 
