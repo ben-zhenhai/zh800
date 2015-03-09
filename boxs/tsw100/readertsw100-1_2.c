@@ -906,7 +906,7 @@ int main(int argc ,char *argv[])
             if(flagFailPass == 0 && stringLength > 0)
             {
                 memset(CountNo, 0, sizeof(char)*InputLength);
-                memcpy(CountNo, tempPtr, sizeof(tempString)-2);
+                memcpy(CountNo, tempPtr, sizeof(tempString));
                 goodCount = (atoi(CountNo)*goodrate);
                 if(goodCount > 0)
                 {

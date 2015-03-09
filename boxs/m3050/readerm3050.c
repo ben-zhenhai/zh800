@@ -747,14 +747,10 @@ void * SerialFunction(void *argument)
         //printf("\n");
         
         printf("%s %s %s %s %s| ", ISNo, ManagerCard, CountNo, MachineCode, UserNo);
-        for(forCount = 0; forCount < 39; ++forCount)
-        {
-            printf("%ld ", ProductCountArray[forCount]);
-        }
-        printf("\n");
 
         for(forCount = 0; forCount < CountSize; ++forCount)
         {
+            printf("%ld ", ProductCountArray[forCount]);
             //need set ExproductCountArray
             if(ProductCountArray[forCount] < ExProductCountArray[forCount])
             {
@@ -766,7 +762,7 @@ void * SerialFunction(void *argument)
             }
             else;
         }
-        
+        printf("\n");
         //avoid wrong info send form machine
         for(forCount = 0; forCount < CountSize; ++forCount)
         {
