@@ -49,7 +49,7 @@ function errorAction(ip) {
 }
 
 function addIpNotice(ipTable) {
-  console.log('iptable: ' + ipTable);
+  //console.log('iptable: ' + ipTable);
   fs.appendFile('ip.log', '---' + '\n' + JSON.stringify(ipTable) + '\r\n', function(args) {
     // body
   });
