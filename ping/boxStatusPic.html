@@ -14,7 +14,7 @@
               $('#data table').empty();
               $('svg g rect').each(function() {
                 var objId = $(this).attr('id').toString();
-                console.log("hi~~~~~~> " + objId);
+                //console.log("hi~~~~~~> " + objId);
                 if(objId.indexOf(keyWord) == -1) {
                   $(this).css('fill', '#00ff00');
                 }
@@ -31,6 +31,10 @@
                 $('#' + json.ID).css("fill", "#ff0000");
                 $('.exception').css("fill", "#cccccc");
               });
+            });
+
+            socket.on('dailyCount', function() {
+              var data = jQuery.parseJSON(msg);
             });
             
             function getCSVfile() {
@@ -71,7 +75,28 @@
     <body>    
     
         <input type="button" value="CSV Report" onclick="getCSVfile()" /><br />
-        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+
+        <div id="dailySum">
+            <table border="1" width="80%">
+                <thead>
+                    <tr>
+                        <th /><th>加締卷取</th><th>組立</th><th>老化</th><th>選別</th><th>加工切角</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>>
+                        <td>大</td><td id="BIG_E"/><td id="BIG_G"/><td id="BIG_A"/><td id="BIG_A4"/><td id="BIG_TC"/>
+                    </tr>
+                    <tr>
+                        <td>中</td><td id="MEDIUM_E"/><td id="MEDIUM_G"/><td id="MEDIUM_A"/><td id="MEDIUM_A4"/><td id="MEDIUM_TC"/>
+                    </tr>
+                    <tr>
+                        <td>小</td><td id="SMALL_E"/><td id="SMALL_G"/><td id="SMALL_A"/><td id="SMALL_A4"/><td id="SMALL_TC"/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         
         <svg
             xmlns:dc="http://purl.org/dc/elements/1.1/"
