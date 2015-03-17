@@ -19,6 +19,7 @@ const TYPE_A = 3;
 const TYPE_A4 = 4;
 const TYPE_TC = 5;
 
+/*
 var BIG_E = 0;
 var BIG_G = 0;
 var BIG_A = 0;
@@ -36,11 +37,33 @@ var SMALL_G = 0;
 var SMALL_A = 0;
 var SMALL_A4 = 0;
 var SMALL_TC = 0;
+*/
 
+function queryDatabase() {
 MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
   if(err) { return console.dir(err); }
 
   var collection = db.collection('daily');
+  
+  var BIG_E = 0;
+  var BIG_G = 0;
+  var BIG_A = 0;
+  var BIG_A4 = 0;
+  var BIG_TC = 0;
+
+  var MEDIUM_E = 0;
+  var MEDIUM_G = 0;
+  var MEDIUM_A = 0;
+  var MEDIUM_A4 = 0;
+  var MEDIUM_TC = 0;
+
+  var SMALL_E = 0;
+  var SMALL_G = 0;
+  var SMALL_A = 0;
+  var SMALL_A4 = 0;
+  var SMALL_TC = 0;
+
+  var data = {};
 /*
   collection.find({"shiftDate":today}).toArray(function(err, items) {
     console.log(items);
@@ -56,19 +79,19 @@ MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
   stream.on("data", function(item) {
     //console.log(item.mach_id);
     if (item.capacityRange === BIG && item.machineType === TYPE_E) {
-      console.log("big e:" + item.count_qty);
+      //console.log("big e:" + item.count_qty);
       BIG_E += item.count_qty;
     } else if (item.capacityRange === BIG && item.machineType === TYPE_G) {
-      console.log("big g:" + item.count_qty);
+      //console.log("big g:" + item.count_qty);
       BIG_G += item.count_qty;
     } else if (item.capacityRange === BIG && item.machineType === TYPE_A) {
-      console.log("big a:" + item.count_qty);
+      //console.log("big a:" + item.count_qty);
       BIG_A += item.count_qty;
     } else if (item.capacityRange === BIG && item.machineType === TYPE_A4) {
-      console.log("big a4:" + item.count_qty);
+      //console.log("big a4:" + item.count_qty);
       BIG_A4 += item.count_qty;
     } else if (item.capacityRange === BIG && item.machineType === TYPE_TC) {
-      console.log("big tc:" + item.count_qty);
+      //console.log("big tc:" + item.count_qty);
       BIG_TC += item.count_qty;
     } else if (item.capacityRange === MEDIUM && item.machineType === TYPE_E) {
       MEDIUM_E += item.count_qty;
@@ -97,6 +120,23 @@ MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
   stream.on("end", function() {
     db.close();
 
+    data["BIG_E"] = BIG_E;
+    data["BIG_G"] = BIG_G;
+    data["BIG_A"] = BIG_A;
+    data["BIG_A4"] = BIG_A4;
+    data["BIG_TC"] = BIG_TC;
+
+    data["MEDIUM_E"] = MEDIUM_E;
+    data["MEDIUM_G"] = MEDIUM_G;
+    data["MEDIUM_A"] = MEDIUM_A;
+    data["MEDIUM_A4"] = MEDIUM_A4;
+    data["MEDIUM_TC"] = MEDIUM_TC;
+
+    data["SMALL_E"] = SMALL_E;
+    data["SMALL_G"] = SMALL_G;
+    data["SMALL_A"] = SMALL_A;
+    data["SMALL_A4"] = SMALL_A4;
+    data["SMALL_TC"] = SMALL_TC;
     console.log("---------------------------------------------------");
     console.log(BIG_E);
     console.log(BIG_G);
@@ -115,5 +155,17 @@ MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
     console.log(SMALL_A);
     console.log(SMALL_A4);
     console.log(SMALL_TC);
+    console.log("---------------------------------------------------");
+    process.send(data);
   });
 });
+}
+
+process.on("message", function(msg) {
+  console.log("dailyCount.js get process msg: "+ msg);
+  if (msg === 'init') {
+    queryDatabase();
+  }
+});
+
+setInterval(queryDatabase, 420000);

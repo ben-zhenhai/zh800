@@ -27,13 +27,6 @@ fs.readFile(ipMappingFile, 'utf8', function(err, data) {
   //console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>>>>' + tmp[0].ID);
 });
 
-process.on('message', function(msg) {
-  //console.log('child get ' + msg);
-  if(msg == 'firstInit') {
-    checkAliveResult(10);
-  }
-});
-
 function initIpArray(ipRange, upper, lower, ignoreIPs) {
   for (var x = parseInt(lower); x <= parseInt(upper); x++) {
     pingSet[ipRange+x] = 0;
@@ -62,28 +55,38 @@ function checkAlive() {
 function checkAliveResult(errorTimes) {
   var failedIp = [];
   for(var ip in pingSet) {
-    //console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
+    console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
     if(pingSet[ip] >= errorTimes) { 
       var tmp = ipMappingData.filter(function(obj) {
         return obj.IP === ip;
       });
       var data = {};
-      //console.log('>>>>>>>>>>>>>> ' + ip);
       data["ID"] = tmp[0].ID;
       //console.log('~~~~~~~~>>>' + data["ID"]);
       data["TYPE"] = tmp[0].TYPE;
+      //console.log('~~~~~~~~>>>' + data["TYPE"]);
       data["IP"] = ip;
+      //console.log('~~~~~~~~>>>' + data["IP"]);
       data["NOTE"] = tmp[0].NOTE;
+      //console.log('~~~~~~~~>>>' + data["NOTE"]);
       data["DATE"] = Date();
+      //console.log('~~~~~~~~>>>' + data["DATE"]);
       failedIp.push(data);
-      pingSet[ip] = parseInt(errorTimes);
+      pingSet[ip] = 5;
+      //console.log('~~~~~~~~>>>' + pingSet[ip]);
     }
   }
   process.send(failedIp);
 }
 
+process.on('message', function(msg) {
+  console.log('ping_2.js get process msg: ' + msg);
+  if(msg === 'init') {
+    checkAliveResult(1);
+  }
+});
+
 var iniRead = require('./iniRead.js')(function(iniData) {
-  //console.log(iniData.ignoreIP.ip[0]);
   initIpArray(iniData.ipRange1.range, iniData.ipRange1.upper, iniData.ipRange1.lower, iniData.ipRange1.ignore);
   initIpArray(iniData.ipRange2.range, iniData.ipRange2.upper, iniData.ipRange2.lower, iniData.ipRange2.ignore);
   setInterval(checkAlive, iniData.pingTime);

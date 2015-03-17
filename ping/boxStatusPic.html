@@ -10,11 +10,11 @@
             var tatalData;
             var keyWord = 'rect';
 
-            socket.on('freeman', function(msg) {
+            socket.on('alive', function(msg) {
               $('#data table').empty();
               $('svg g rect').each(function() {
                 var objId = $(this).attr('id').toString();
-                //console.log("hi~~~~~~> " + objId);
+                console.log("hi~~~~~~> " + objId);
                 if(objId.indexOf(keyWord) == -1) {
                   $(this).css('fill', '#00ff00');
                 }
@@ -33,8 +33,25 @@
               });
             });
 
-            socket.on('dailyCount', function() {
+            socket.on('dailyCount', function(msg) {
               var data = jQuery.parseJSON(msg);
+              $('#BIG_E').html(data.BIG_E);
+              $('#BIG_G').html(data.BIG_G);
+              $('#BIG_A').html(data.BIG_A);
+              $('#BIG_A4').html(data.BIG_A4);
+              $('#BIG_TC').html(data.BIG_TC);
+
+              $('#MEDIUM_E').html(data.MEDIUM_E);
+              $('#MEDIUM_G').html(data.MEDIUM_G)
+              $('#MEDIUM_A').html(data.MEDIUM_A);
+              $('#MEDIUM_A4').html(data.MEDIUM_A4);
+              $('#MEDIUM_TC').html(data.MEDIUM_TC);
+
+              $('#SMALL_E').html(data.SMALL_E);
+              $('#SMALL_G').html(data.SMALL_G);
+              $('#SMALL_A').html(data.SMALL_A);
+              $('#SMALL_A4').html(data.SMALL_A4);
+              $('#SMALL_TC').html(data.SMALL_TC);
             });
             
             function getCSVfile() {
@@ -70,6 +87,11 @@
                 //    popup.document.body.innerHTML = '<pre>' + str + '</pre>';
                 //}    
             }
+
+            $(document).ready(function() {
+                console.log('webpage loaded');
+                socket.emit('boxStatusPic','loadFinish');
+            });
         </script>
     </head>
     <body>    
@@ -83,8 +105,8 @@
                         <th /><th>加締卷取</th><th>組立</th><th>老化</th><th>選別</th><th>加工切角</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>>
+                <tbody align="center">
+                    <tr>
                         <td>大</td><td id="BIG_E"/><td id="BIG_G"/><td id="BIG_A"/><td id="BIG_A4"/><td id="BIG_TC"/>
                     </tr>
                     <tr>
@@ -13306,7 +13328,3 @@
             <table border="1" width="80%">
                 <tbody>
                 </tbody>
-            </table>
-        </div>
-    </body>
-</html>

@@ -6,16 +6,23 @@ var io = require('socket.io')(http);
 var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
+var dailyCount = child_process.fork('./dailySum.js');
 
 console.log("Alive server start.");
-//n.send('firstInit');
 
 n.on('message',function(m){
-  io.emit('freeman', JSON.stringify(m));
-  for (var i = 0; i < m.length; i++) {
-    console.log(m[i]);
-  }
+  io.emit('alive', JSON.stringify(m));
+  console.log("-------->> get alive data!");
+  //for (var i = 0; i < m.length; i++) {
+  //  console.log(m[i]);
+  //}
   //console.log(JSON.stringify(m));
+});
+
+dailyCount.on('message', function(m) {
+  console.log("-------->> get daily count data!");
+  io.emit('dailyCount', JSON.stringify(m));
+  console.log(m);
 });
 
 app.use(express.static(__dirname + '/javascript'));
@@ -30,7 +37,15 @@ app.get('/pic', function(req, res) {
 
 io.on('connection', function(socket) {
   console.log('a user connected');
-  n.send('firstInit');
+
+  //n.send('init');
+  //dailyCount.send('init');
+
+  socket.on('boxStatusPic', function(msg) {
+    n.send('init');
+    dailyCount.send('init');
+    console.log('get boxStatusPic.html msg:' + msg);
+  });
   socket.on('disconnect', function() {
     console.log('user disconnected');
   });
