@@ -93,13 +93,13 @@
     "ID":"G09",
     "TYPE":"FTO-2200A",
     "IP":"192.168.10.16",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"E10",
     "TYPE":"TSW-880B",
     "IP":"192.168.10.17",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"G10",
@@ -111,7 +111,7 @@
     "ID":"E11",
     "TYPE":"TSW-168T",
     "IP":"192.168.10.19",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"E12",
@@ -123,7 +123,7 @@
     "ID":"G12",
     "TYPE":"FTO-2400",
     "IP":"192.168.10.21",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"E13",
@@ -1879,15 +1879,15 @@
   },
   {
     "ID":"C01",
-    "TYPE":"fu xin cheng",
+    "TYPE":"富信成",
     "IP":"192.168.20.62",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"C03",
-    "TYPE":"fu xin cheng",
+    "TYPE":"富信成",
     "IP":"192.168.20.63",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"C04",
@@ -1909,15 +1909,15 @@
   },
   {
     "ID":"C07",
-    "TYPE":"fu xin cheng",
+    "TYPE":"富信成",
     "IP":"192.168.20.67",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"C08",
-    "TYPE":"fu xin cheng",
+    "TYPE":"富信成",
     "IP":"192.168.20.68",
-    "NOTE":"Not Install"
+    "NOTE":"未安裝"
   },
   {
     "ID":"B01",
