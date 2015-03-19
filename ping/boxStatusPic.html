@@ -52,6 +52,8 @@
               $('#SMALL_A').html(data.SMALL_A);
               $('#SMALL_A4').html(data.SMALL_A4);
               $('#SMALL_TC').html(data.SMALL_TC);
+
+              updateDate();
             });
             
             function getCSVfile() {
@@ -88,6 +90,23 @@
                 //}    
             }
 
+            Number.prototype.padLeft = function(base,chr){
+                var  len = (String(base || 10).length - String(this).length)+1;
+                return len > 0? new Array(len).join(chr || '0')+this : this;
+            }
+
+            function updateDate() {
+                var d = new Date,
+                    dformat = [ d.getFullYear(),
+                               (d.getMonth()+1).padLeft(),
+                                d.getDate().padLeft()].join('/')+
+                                ' ' +
+                              [ d.getHours().padLeft(),
+                                d.getMinutes().padLeft(),
+                                d.getSeconds().padLeft()].join(':');
+                $('#nowTime').html(dformat);
+            }
+
             $(document).ready(function() {
                 console.log('webpage loaded');
                 socket.emit('boxStatusPic','loadFinish');
@@ -95,11 +114,11 @@
         </script>
     </head>
     <body>    
-    
-        <input type="button" value="CSV Report" onclick="getCSVfile()" /><br />
+        <div><input type="button" value="CSV Report" onclick="getCSVfile()" /></div><br />
 
         <div id="dailySum">
             <table border="1" width="80%">
+                <caption>今日良品數統計，<br />統計時間:<b id="nowTime"></b></caption>
                 <thead>
                     <tr>
                         <th /><th>加締卷取</th><th>組立</th><th>老化</th><th>選別</th><th>加工切角</th>
