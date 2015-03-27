@@ -14,10 +14,11 @@
 //#define Version "tcjcc_ver"
 //#define FrontNameLength 9
 #define VersionNumberLength 8
-#define FileNameSize 30
+#define FileNameSize 40
 #define ExecuteFilePathLength 80
 #define MaxRetryCount 5
 #define updatelist "updatelist"
+#define TempFilepath "/home/pi/zhlog/"
 
 struct FtpFile
 {
@@ -44,7 +45,7 @@ void GetNewFileName(char *a)
 
     if(dp != NULL)
     {
-        while(ep = readdir(dp))
+        while((ep = readdir(dp)))
         {
             char *target = ep->d_name;
             
@@ -344,7 +345,7 @@ int main(int argc,char* argv[])
             strcat(RemoteURL, newestFile);
             curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
             curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL);
-            strcpy(tempNewestFile,"/home/pi/zhlog/");
+            strcpy(tempNewestFile,TempFilepath);
             strcat(tempNewestFile, newestFile);
             ftpfile.stream = NULL;
             ftpfile.filename = tempNewestFile;
@@ -387,7 +388,7 @@ int main(int argc,char* argv[])
             strcat(RemoteURL, updatelist);
             curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
             curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL);
-            strcpy(updatelistFilePath,"/home/pi/zhlog/");
+            strcpy(updatelistFilePath,TempFilepath);
             strcat(updatelistFilePath, updatelist);
             ftpfile.stream = NULL;
             ftpfile.filename = updatelistFilePath;
@@ -469,7 +470,7 @@ int main(int argc,char* argv[])
                 memset(machineType, 0, sizeof(char)*FileNameSize);
                 filesize3 = filesize2;
                 charPosition2 = buffer2;
-
+                
                 while(filesize3 > 0)
                 {
                     if(*charPosition2 != '\n' && *charPosition2 != 0x0d) 
@@ -558,41 +559,101 @@ int main(int argc,char* argv[])
                                     unsigned short crcResult = crcSlow(crcBuffer, fileSize);
                                     printf("crc result:%d %d\n", crcResult, atoi(crcCheckValue));
                                     free(crcBuffer);
+                                    
                                     if(crcResult == atoi(crcCheckValue))
                                     {
                                         updateSuccess = updateSuccess + 1;            
                                         //printf("crc result:%d %d\n", crcResult, atoi(crcCheckValue));
-
-                                        pid_t proc = fork();
-                                        if(proc < 0)
+                                        char *checkFilename;
+                                        int i = 0, j = 0;
+                                        char c;
+                                        checkFilename = (char *)malloc(sizeof(char)*strlen(ftpfile2.filename));
+                                        strcpy(checkFilename, ftpfile2.filename);
+                                        
+                                        for(i = 0, j = strlen(checkFilename)-1; i < j; i++, j--)
                                         {
-                                            printf("fork fail\n");
-                                            return -1;
-                                        }else if(proc == 0)
-                                        {
-                                            execlp("chmod", "chmod", "744", ftpfile2.filename, (char *) 0);
-                                            return 0;
-                                        }else
-                                        { 
-                                            int result = -1;
-                                            wait(&result);
+                                            c = checkFilename[i];
+                                            checkFilename[i] = checkFilename[j];
+                                            checkFilename[j] = c;
                                         }
+                                        if(strncmp(checkFilename, "pmet.zg.rat", 11) == 0)
+                                        {
+                                            pid_t proc = fork();
+                                            if(proc < 0)
+                                            {
+                                                printf("fork fail\n");
+                                                return -1;
+                                            }else if(proc == 0)
+                                            {
+                                                execlp("mv", "mv", ftpfile2.filename, actualFileName, (char *) 0);
+                                                return 0;
+                                            }else
+                                            {
+                                                int  result = -1;
+                                                wait(&result);
+                                            }
+                                            printf("%s\n", actualFileName);
+                                            pid_t proc2 = fork();
+                                            if(proc2 < 0)
+                                            {
+                                                printf("fork fail\n");
+                                                return -1;
+                                            }else if(proc2 == 0)
+                                            {
+                                                execlp("rm" , "rm", "-rvf" , "/home/pi/mongodb", (char *) 0); 
+                                            }else
+                                            {
+                                                int result = -1;
+                                                wait(&result);
+                                            }
+                                            proc2 = fork();
+                                            if(proc2 < 0)
+                                            {
+                                                printf("fork fail\n");
+                                                return -1;
+                                            }else if(proc2 == 0)
+                                            {
+                                                execlp("tar", "tar", "zxvf", actualFileName, "-C","/home/pi/", (char *) 0);
+                                            }else
+                                            {
+                                                int result = -1;
+                                                wait(&result);
+                                            }
 
-                                        pid_t proc_2 = fork();
-                                        if(proc_2 < 0)
-                                        {
-                                            printf("fork fail\n");
-                                            return -1;
-                                        }else if(proc_2 == 0)
-                                        {
-                                            execlp("mv", "mv", ftpfile2.filename, actualFileName, (char *) 0);
-                                            return 0;
-                                        }else
-                                        { 
-                                            int result = -1;
-                                            wait(&result);
                                         }
+                                        else
+                                        {
+                                            pid_t proc = fork();
+                                            if(proc < 0)
+                                            {
+                                                printf("fork fail\n");
+                                                return -1;
+                                            }else if(proc == 0)
+                                            {
+                                                execlp("chmod", "chmod", "744", ftpfile2.filename, (char *) 0);
+                                                return 0;
+                                            }else
+                                            { 
+                                                int result = -1;
+                                                wait(&result);
+                                            }
 
+                                            pid_t proc_2 = fork();
+                                            if(proc_2 < 0)
+                                            {
+                                                printf("fork fail\n");
+                                                return -1;
+                                            }else if(proc_2 == 0)
+                                            {
+                                                execlp("mv", "mv", ftpfile2.filename, actualFileName, (char *) 0);
+                                                return 0;
+                                            }else
+                                            { 
+                                                int result = -1;
+                                                wait(&result);
+                                            }
+                                        }
+                                        free(checkFilename);
                                         break;
                                     }
                                 }

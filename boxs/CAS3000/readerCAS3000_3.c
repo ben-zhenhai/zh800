@@ -472,7 +472,7 @@ void * FileFunction(void *argument)
             {
                 digitalWrite (WiringPiPIN_15, HIGH);
                 digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, HIGH);
+                digitalWrite (WiringPiPIN_18, LOW);
             }else
             {
                 digitalWrite (WiringPiPIN_15, HIGH);
@@ -676,17 +676,19 @@ void * BarcodeInputFunction(void *argument)
 
         node->link = NULL;
 
-        digitalWrite (WiringPiPIN_15, HIGH);
-        digitalWrite (WiringPiPIN_16, HIGH);
-        digitalWrite (WiringPiPIN_18, HIGH);
-
+        if(list == NULL)
+        {
+            digitalWrite (WiringPiPIN_15, HIGH);
+            digitalWrite (WiringPiPIN_16, HIGH);
+            digitalWrite (WiringPiPIN_18, HIGH);
+        }
         printf("Ready to work!!\n");
         while(1)
         {
             memset(tempString, 0, sizeof(char)* InputLength);
             gets(tempString);
             //if(strncmp(tempString, "YYY", 3) == 0)
-            if(strlen(tempString) == 7)
+            if(strlen(tempString) == 14)
             {
                 memset(node->ISNo, 0, sizeof(char)*InputLength);
                 //tempPtr = tempString + 3;
@@ -766,11 +768,14 @@ void * BarcodeInputFunction(void *argument)
             {
                 memset(node->CountNo, 0, sizeof(char)*InputLength);
                 memcpy(node->CountNo, tempPtr, sizeof(tempString));
-                printf("need finish: %s\n", node->CountNo);
-                digitalWrite (WiringPiPIN_15, LOW);
-                digitalWrite (WiringPiPIN_16, LOW);
-                digitalWrite (WiringPiPIN_18, HIGH);
-                break;
+                if(atol(node-CountNo) > 0)
+                {
+                    printf("need finish: %s\n", node->CountNo);
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, LOW);
+                    digitalWrite (WiringPiPIN_18, HIGH);
+                    break;
+                }
             }
             printf("CountNo scan error code\n");
         }
@@ -944,7 +949,7 @@ void * WatchDogFunction(void *argument)
         fptr = fopen(list->UPLoadFile, "a");
         if(fptr != NULL)
         {
-            unsigned long goodCount = (unsigned long)atoi(list->CountNo);
+            unsigned long goodCount = (unsigned long)atol(list->CountNo);
             if(PINCount[1][6] >= (goodCount / 1.04))
             {
 #ifdef PrintMode

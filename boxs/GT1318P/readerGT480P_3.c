@@ -96,6 +96,7 @@ short SerialThreadFlag = 0;
 short FileFlag = 0;
 short WatchDogFlag = 0;
 short updateFlag = 0;
+short InRepairMode = 0;
 short FlagStopUpdateNetworkStatus = 0;
 short IsBarcodeInputDone = 1;
 
@@ -624,7 +625,7 @@ void *FileFunction(void *argument)
                     {
                         digitalWrite (WiringPiPIN_15, HIGH);
                         digitalWrite (WiringPiPIN_16, HIGH);
-                        digitalWrite (WiringPiPIN_18, LOW);
+                        digitalWrite (WiringPiPIN_18, HIGH);
                     }else
                     {
                         digitalWrite (WiringPiPIN_15, HIGH);
@@ -727,6 +728,7 @@ int main(int argc, char *argv[])
             }
             else if(strncmp(inputString, "XXXM", 4) == 0)
             {
+                InRepairMode = 1;
                 char FixerNo[InputLength];
                 memset(FixerNo, 0, sizeof(char)*InputLength);
                 tempPtr = inputString + 4;
@@ -822,9 +824,13 @@ int main(int argc, char *argv[])
                         }
                     }
                     printf("FixerNo scan error code\n");       
-                }
-                break; 
+                } 
             }else;
+            if(InRepairMode == 1)
+            {
+                InRepairMode = 0;
+                break;
+            }
             printf("UserNo scan error code\n");
         }
         FlagStopUpdateNetworkStatus = 0;
@@ -862,12 +868,9 @@ void * BarcodeInputFunction(void *argument)
 
         node->link = NULL;
 
-        if(list == NULL)
-        {
-            digitalWrite (WiringPiPIN_15, HIGH);
-            digitalWrite (WiringPiPIN_16, HIGH);
-            digitalWrite (WiringPiPIN_18, HIGH);
-        }
+        digitalWrite (WiringPiPIN_15, HIGH);
+        digitalWrite (WiringPiPIN_16, HIGH);
+        digitalWrite (WiringPiPIN_18, HIGH);
         //3rd i3c board will control 3*8 control
 
         printf("Ready to work!!\n");
@@ -876,7 +879,7 @@ void * BarcodeInputFunction(void *argument)
             memset(tempString, 0, sizeof(char)* InputLength);
             gets(tempString);
             //if(strncmp(tempString, "YYY", 3) == 0)
-            if(strlen(tempString) == 14)
+            if(strlen(tempString) == 7)
             {
                 memset(node->ISNo, 0, sizeof(char)*InputLength);
                 //tempPtr = tempString + 3;
@@ -959,15 +962,11 @@ void * BarcodeInputFunction(void *argument)
             {
                 memset(node->CountNo, 0, sizeof(char)*InputLength);
                 memcpy(node->CountNo, tempPtr, sizeof(tempString));
-                unsigned long goodCount = (unsigned long)atoi(node->CountNo);
-                if(goodCount > 0)
-                {
-                    printf("need finish: %s\n", goodCount);
-                    digitalWrite (WiringPiPIN_15, LOW);
-                    digitalWrite (WiringPiPIN_16, LOW);
-                    digitalWrite (WiringPiPIN_18, HIGH);
-                    break;
-                }
+                printf("need finish: %s\n", node->CountNo);
+                digitalWrite (WiringPiPIN_15, LOW);
+                digitalWrite (WiringPiPIN_16, LOW);
+                digitalWrite (WiringPiPIN_18, HIGH);
+                break;
             }
             printf("CountNo scan error code\n");
             /*
@@ -1122,89 +1121,125 @@ void * WatchDogFunction(void *argument)
 
         while(digitalRead(WiringPiPIN_22)== 1)
         {
+            if(InRepairMode == 1)
+            {
+                break;
+            }
             usleep(100000);
         }
-        printf("get finish event\n");
+        if(InRepairMode == 1)
+        {
+            printf("enter repair mode\n");
    
-        SerialThreadFlag = 0;
-        pthread_join(SerialThread, NULL);
-        sleep(1);
+            SerialThreadFlag = 0;
+            pthread_join(SerialThread, NULL);
+            sleep(1);
 
-        FileFlag = 0;
-        pthread_mutex_lock(&mutex);
-        pthread_cond_signal(&cond);
-        pthread_mutex_unlock(&mutex);
-        pthread_join(FileThread, NULL);
-        sleep(1);
+            FileFlag = 0;
+            pthread_mutex_lock(&mutex);
+            pthread_cond_signal(&cond);
+            pthread_mutex_unlock(&mutex);
+            pthread_join(FileThread, NULL);
+            sleep(1);
 
-        fd = socket(AF_INET, SOCK_DGRAM, 0);
-        ifr.ifr_addr.sa_family = AF_INET;
-        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
-        ioctl(fd, SIOCGIFADDR, &ifr);
-        close(fd);
-        gettimeofday(&now, NULL);
-
-        pthread_mutex_lock(&Mutexlinklist);
-        fptr = fopen(list->UPLoadFile, "a");
-        if(fptr != NULL)
-        {   
-            unsigned long goodCount = (unsigned long)atoi(list->CountNo);
-            printf("need to do %ld\n", goodCount);
-            if(Count[Good] >= (goodCount / 1.04))
+            FTPFlag = 0;
+            pthread_mutex_lock(&mutexFTP);
+            pthread_cond_signal(&condFTP);
+            pthread_mutex_unlock(&mutexFTP);
+            pthread_join(FTPThread, NULL);
+            sleep(1);
+            
+            while(InRepairMode == 1)
             {
-#ifdef PrintMode
-                fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                          list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
-                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                          list->MachineCode, list->UserNo, MachSTOPForce1);
-#else
-                fprintf(fptr, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                          list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
-                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                          list->MachineCode, list->UserNo, MachSTOPForce1);
-#endif
-            }else
-            {
-#ifdef PrintMode
-                fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                          list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
-                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                          list->MachineCode, list->UserNo, MachSTOPForce2);
-#else
-                fprintf(pfile, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                          list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
-                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                          list->MachineCode, list->UserNo, MachSTOPForce2);
-#endif
+                usleep(100000);
             }
-            fclose(fptr);
+            printf("leave repair mode\n");
         }
-        pthread_mutex_unlock(&Mutexlinklist);
-
-        FTPFlag = 0;
-        pthread_mutex_lock(&mutexFTP);
-        pthread_cond_signal(&condFTP);
-        pthread_mutex_unlock(&mutexFTP);
-        pthread_join(FTPThread, NULL);
-        sleep(1);
-
-        memset(Count, 0, sizeof(long)*AgeCountNumber);
-        memset(ExCount, 0, sizeof(long)*AgeCountNumber);
-
-        pthread_mutex_lock(&Mutexlinklist);
-        InputNode *p = list;
-        if(p->link!=NULL)
+        else
         {
-            list = list->link;
-            free(p);
+            printf("get finish event\n");
+   
+            SerialThreadFlag = 0;
+            pthread_join(SerialThread, NULL);
+            sleep(1);
+
+            FileFlag = 0;
+            pthread_mutex_lock(&mutex);
+            pthread_cond_signal(&cond);
+            pthread_mutex_unlock(&mutex);
+            pthread_join(FileThread, NULL);
+            sleep(1);
+
+            fd = socket(AF_INET, SOCK_DGRAM, 0);
+            ifr.ifr_addr.sa_family = AF_INET;
+            strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+            ioctl(fd, SIOCGIFADDR, &ifr);
+            close(fd);
+            gettimeofday(&now, NULL);
+
+            pthread_mutex_lock(&Mutexlinklist);
+            fptr = fopen(list->UPLoadFile, "a");
+            if(fptr != NULL)
+            {   
+                unsigned long goodCount = (unsigned long)atoi(list->CountNo);
+                printf("need to do %ld\n", goodCount);
+                if(Count[Good] >= (goodCount / 1.04))
+                {
+#ifdef PrintMode
+                    fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                              list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                              list->MachineCode, list->UserNo, MachSTOPForce1);
+#else
+                    fprintf(fptr, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                              list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
+                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                              list->MachineCode, list->UserNo, MachSTOPForce1);
+#endif
+                }else
+                {
+#ifdef PrintMode
+                    fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                              list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                              list->MachineCode, list->UserNo, MachSTOPForce2);
+#else
+                    fprintf(pfile, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                              list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
+                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                              list->MachineCode, list->UserNo, MachSTOPForce2);
+#endif
+                }
+                fclose(fptr);
+            }
+            pthread_mutex_unlock(&Mutexlinklist);
+
+            FTPFlag = 0;
+            pthread_mutex_lock(&mutexFTP);
+            pthread_cond_signal(&condFTP);
+            pthread_mutex_unlock(&mutexFTP);
+            pthread_join(FTPThread, NULL);
+            sleep(1);
+
+            memset(Count, 0, sizeof(long)*AgeCountNumber);
+            memset(ExCount, 0, sizeof(long)*AgeCountNumber);
+
+            pthread_mutex_lock(&Mutexlinklist);
+            InputNode *p = list;
+            if(p->link!=NULL)
+            {
+                list = list->link;
+                free(p);
+            }
+            else if(p->link == NULL)
+            {
+                //printf("link is empty\n");
+                free(p);
+                list = NULL;
+        
+            }else;
+            pthread_mutex_unlock(&Mutexlinklist);
         }
-        else if(p->link == NULL)
-        {
-            //printf("link is empty\n");
-            free(p);
-            list = NULL;
-        }else;
-        pthread_mutex_unlock(&Mutexlinklist);
     }
 }
 

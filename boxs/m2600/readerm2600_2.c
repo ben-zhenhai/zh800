@@ -1261,7 +1261,7 @@ int main(int argc ,char *argv[])
                         gettimeofday(&now, NULL);
 
                         pfile = fopen(UPLoadFile, "a");
-#fidef PrintMode
+#ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                                     ISNo, ManagerCard, CountNo, 
                                                                     (long)now.tv_sec,
@@ -1316,12 +1316,12 @@ int main(int argc ,char *argv[])
                                                                         ISNo, ManagerCard, CountNo, 
                                                                         (long)now.tv_sec,
                                                                         inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                        MachineCode, FixerNo, MechREPAIRDone);
+                                                                        MachineCode, FixerNo, MachREPAIRDone);
 #else
                                     fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                                       ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                      MachineCode, FixerNo, MechREPAIRDone);
+                                                                      MachineCode, FixerNo, MachREPAIRDone);
 #endif
                                     fclose(pfile);
             
@@ -1458,7 +1458,7 @@ void * FTPFunction(void *argument)
                 }
                 else if(proc == 0)
                 {
-                    char filePath[UPLoadFilelength];
+                    char filePath[UPLoadFileLength];
                     char *pfile2;
                     memset(filePath, 0, sizeof(char)*UPLoadFileLength);
                     //strcpy(filePath, "/home/pi/zhlog/");
