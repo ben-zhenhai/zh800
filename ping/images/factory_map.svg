@@ -24,16 +24,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.5256284"
-     inkscape:cx="961.74977"
-     inkscape:cy="480.68321"
+     inkscape:zoom="1.4867016"
+     inkscape:cx="1383.2276"
+     inkscape:cy="1677.2073"
      inkscape:current-layer="layer1"
      inkscape:document-units="px"
      showgrid="true"
      inkscape:window-width="1920"
-     inkscape:window-height="1033"
-     inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-height="1058"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      fit-margin-top="15"
      fit-margin-left="15"
@@ -7003,7 +7003,7 @@
        inkscape:transform-center-y="-7.0514593" />
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-K2"
+       id="K2"
        width="85.038452"
        height="42.586491"
        x="1223.7233"
@@ -7036,7 +7036,7 @@
          style="font-size:14px">E49-K2</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-K1"
+       id="K1"
        width="85.038452"
        height="42.586491"
        x="1223.7233"
@@ -7069,7 +7069,7 @@
          style="font-size:14px">E49-K1</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S2"
+       id="S2"
        width="85.038452"
        height="42.586491"
        x="1128.4473"
@@ -7102,7 +7102,7 @@
          style="font-size:14px">E49-S2</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S3"
+       id="S3"
        width="85.038452"
        height="42.586491"
        x="1128.4473"
@@ -7201,7 +7201,7 @@
          style="font-size:14px">E108</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E94-S4"
+       id="S4"
        width="42.762035"
        height="42.762035"
        x="978.38763"
@@ -7234,7 +7234,7 @@
          style="font-size:14px">E49-S4</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S5"
+       id="S5"
        width="42.762035"
        height="42.762035"
        x="935.93652"
@@ -7300,7 +7300,7 @@
          style="font-size:14px">E102</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S1"
+       id="S1"
        width="42.762035"
        height="42.762035"
        x="935.93652"
@@ -7333,7 +7333,7 @@
          style="font-size:14px">E49-S1</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S6"
+       id="S6"
        width="42.762035"
        height="42.762035"
        x="882.87964"
@@ -7366,7 +7366,7 @@
          style="font-size:14px">E49-S6</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S7"
+       id="S7"
        width="42.762035"
        height="42.762035"
        x="840.42853"
@@ -7399,7 +7399,7 @@
          style="font-size:14px">E49-S7</tspan></text>
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.43099999;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       id="E49-S8"
+       id="S8"
        width="42.762035"
        height="42.762035"
        x="882.87964"
