@@ -20,10 +20,8 @@
                 }
               });
               
-              var first_floor = document.getElementById("firstFloor");
-              var second_floor = document.getElementById("secondFloor");
-              var first_doc = first_floor.contentDocument;
-              var second_doc = second_floor.contentDocument;
+              var factoryMap = document.getElementById("factory_map");
+              var mapDoc = factoryMap.contentDocument;
 
               //var obj = jQuery.parseJSON(msg);
               tatalData = jQuery.parseJSON(msg);
@@ -34,8 +32,7 @@
                                             '<td width="20%">' + json.NOTE + '</td>' +
                                             '<td width="50%">' + json.DATE + '</td></tr>');
                 //$('#' + json.ID).css("fill", "#ff0000");
-                first_doc.getElementById(json.ID).css("fill", "#ff0000");
-                second_doc.getElementById(json.ID).css("fill", "#ff0000");
+                mapDoc.getElementById(json.ID)..style.fill = "#ff0000";
                 $('.exception').css("fill", "#cccccc");
               });
             });
@@ -146,9 +143,7 @@
         </div>
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
 
-        <object data="/2f.svg" type="image/svg+xml" id="firstFloor" width="100%" height="100%"></object>        
-        <br />
-        <object data="/1f.svg" type="image/svg+xml" id="secondFloor" width="100%" height="100%"></object>
+        <object data="/factory_map.svg" type="image/svg+xml" id="factory_map" width="100%" height="100%"></object>        
         
         <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
