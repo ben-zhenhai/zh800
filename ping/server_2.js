@@ -26,6 +26,7 @@ dailyCount.on('message', function(m) {
 });
 
 app.use(express.static(__dirname + '/javascript'));
+app.use(express.static(__dirname + '/images'));
 
 app.get('/', function(req, res) {
   res.sendfile('boxStatus.html');
@@ -33,6 +34,10 @@ app.get('/', function(req, res) {
 
 app.get('/pic', function(req, res) {
   res.sendfile('boxStatusPic.html');
+});
+
+app.get('/pic2', function(req, res) {
+  res.sendfile('boxStatusPic2.html');
 });
 
 io.on('connection', function(socket) {

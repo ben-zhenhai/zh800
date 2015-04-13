@@ -1,0 +1,162 @@
+<!doctype html> 
+<html>
+    <head>
+        <meta charset="utf8" />
+        <title>Box Connection Status</title>
+        <script src="/jquery-1.11.1.min.js"></script>
+        <script src="/socket.io-1.2.0.js"></script>
+        <script>
+            var socket = io();
+            var tatalData;
+            var keyWord = 'rect';
+
+            socket.on('alive', function(msg) {
+              $('#data table').empty();
+              $('svg g rect').each(function() {
+                var objId = $(this).attr('id').toString();
+                console.log("hi~~~~~~> " + objId);
+                if(objId.indexOf(keyWord) == -1) {
+                  $(this).css('fill', '#00ff00');
+                }
+              });
+              
+              var first_floor = document.getElementById("firstFloor");
+              var second_floor = document.getElementById("secondFloor");
+              var first_doc = first_floor.contentDocument;
+              var second_doc = second_floor.contentDocument;
+
+              //var obj = jQuery.parseJSON(msg);
+              tatalData = jQuery.parseJSON(msg);
+              $.each(tatalData, function(index, json) {
+                $('#data table').append('<tr><td width="10%">' + json.ID   + '</td>' +
+                                            '<td width="10%">' + json.TYPE + '</td>' +
+                                            '<td width="10%">' + json.IP   + '</td>' +
+                                            '<td width="20%">' + json.NOTE + '</td>' +
+                                            '<td width="50%">' + json.DATE + '</td></tr>');
+                //$('#' + json.ID).css("fill", "#ff0000");
+                first_doc.getElementById(json.ID).css("fill", "#ff0000");
+                second_doc.getElementById(json.ID).css("fill", "#ff0000");
+                $('.exception').css("fill", "#cccccc");
+              });
+            });
+
+            socket.on('dailyCount', function(msg) {
+              var data = jQuery.parseJSON(msg);
+              $('#BIG_E').html(data.BIG_E);
+              $('#BIG_G').html(data.BIG_G);
+              $('#BIG_A').html(data.BIG_A);
+              $('#BIG_A4').html(data.BIG_A4);
+              $('#BIG_TC').html(data.BIG_TC);
+
+              $('#MEDIUM_E').html(data.MEDIUM_E);
+              $('#MEDIUM_G').html(data.MEDIUM_G)
+              $('#MEDIUM_A').html(data.MEDIUM_A);
+              $('#MEDIUM_A4').html(data.MEDIUM_A4);
+              $('#MEDIUM_TC').html(data.MEDIUM_TC);
+
+              $('#SMALL_E').html(data.SMALL_E);
+              $('#SMALL_G').html(data.SMALL_G);
+              $('#SMALL_A').html(data.SMALL_A);
+              $('#SMALL_A4').html(data.SMALL_A4);
+              $('#SMALL_TC').html(data.SMALL_TC);
+
+              updateDate();
+            });
+            
+            function getCSVfile() {
+                var fileName = "report";
+                
+                var array  = typeof tatalData != 'object' ? JSON.parse(tatalData) : tatalData;
+                var str = 'ID,TYPE,IP,NOTE,DATE\r\n';
+                
+                for(var x = 0; x < array.length; x++) {
+                    var line = '';
+                    for(var index in array[x]) {
+                        if(line != '') line += ',';
+                        line += array[x][index];
+                    }
+                    str += line + '\r\n';
+                }
+                
+                var uri = 'data:text/csv;charset=utf-8,' + escape(str);
+                
+                var link = document.createElement("a");    
+                link.href = uri;
+                link.style = "visibility:hidden";
+                link.download = fileName + ".csv";
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                //if (navigator.appName != 'Microsoft Internet Explorer') {
+                //    window.open('data:text/csv;charset=utf-8,' + escape(str));
+                //} else {
+                //    var popup = window.open('','csv','');
+                //    popup.document.body.innerHTML = '<pre>' + str + '</pre>';
+                //}    
+            }
+
+            Number.prototype.padLeft = function(base,chr){
+                var  len = (String(base || 10).length - String(this).length)+1;
+                return len > 0? new Array(len).join(chr || '0')+this : this;
+            }
+
+            function updateDate() {
+                var d = new Date,
+                    dformat = [ d.getFullYear(),
+                               (d.getMonth()+1).padLeft(),
+                                d.getDate().padLeft()].join('/')+
+                                ' ' +
+                              [ d.getHours().padLeft(),
+                                d.getMinutes().padLeft(),
+                                d.getSeconds().padLeft()].join(':');
+                $('#nowTime').html(dformat);
+            }
+
+            $(document).ready(function() {
+                console.log('webpage loaded');
+                socket.emit('boxStatusPic','loadFinish');
+            });
+        </script>
+    </head>
+    <body>    
+        <div><input type="button" value="CSV Report" onclick="getCSVfile()" /></div><br />
+
+        <div id="dailySum">
+            <table border="1" width="80%">
+                <caption>今日良品數統計，<br />統計時間:<b id="nowTime"></b></caption>
+                <thead>
+                    <tr>
+                        <th /><th>加締卷取</th><th>組立</th><th>老化</th><th>選別</th><th>加工切角</th>
+                    </tr>
+                </thead>
+                <tbody align="center">
+                    <tr>
+                        <td>&#934; 16 - 18</td><td id="BIG_E"/><td id="BIG_G"/><td id="BIG_A"/><td id="BIG_A4"/><td id="BIG_TC"/>
+                    </tr>
+                    <tr>
+                        <td>&#934; 10 - 12.5</td><td id="MEDIUM_E"/><td id="MEDIUM_G"/><td id="MEDIUM_A"/><td id="MEDIUM_A4"/><td id="MEDIUM_TC"/>
+                    </tr>
+                    <tr>
+                        <td>&#934; 5 - 8</td><td id="SMALL_E"/><td id="SMALL_G"/><td id="SMALL_A"/><td id="SMALL_A4"/><td id="SMALL_TC"/>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+
+        <object data="/2f.svg" type="image/svg+xml" id="firstFloor" width="100%" height="100%"></object>        
+        <br />
+        <object data="/1f.svg" type="image/svg+xml" id="secondFloor" width="100%" height="100%"></object>
+        
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <! -- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+
+        <div id="data">
+            <table border="1" width="80%">
+                <tbody>
+                </tbody>
