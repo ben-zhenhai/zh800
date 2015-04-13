@@ -32,8 +32,10 @@
                                             '<td width="20%">' + json.NOTE + '</td>' +
                                             '<td width="50%">' + json.DATE + '</td></tr>');
                 //$('#' + json.ID).css("fill", "#ff0000");
-                mapDoc.getElementById(json.ID)..style.fill = "#ff0000";
-                $('.exception').css("fill", "#cccccc");
+                if (mapDoc.getElementById(json.ID)) {
+                  mapDoc.getElementById(json.ID).style.fill = "#ff0000";
+                }
+                //$('.exception').css("fill", "#cccccc");
               });
             });
 
