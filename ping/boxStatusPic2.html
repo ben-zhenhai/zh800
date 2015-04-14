@@ -8,22 +8,19 @@
         <script>
             var socket = io();
             var tatalData;
-            //var keyWord = 'rect';
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
-              $('svg g rect').each(function() {
-                var objId = $(this).attr('id').toString();
-                console.log("hi~~~~~~> " + objId);
-                if(objId.indexOf(keyWord) == -1) {
-                  $(this).css('fill', '#00ff00');
-                }
-              });
               
               var factoryMap = document.getElementById("factory_map");
               var mapDoc = factoryMap.contentDocument;
 
-              //var obj = jQuery.parseJSON(msg);
+              var allMachine = mapDoc.getElementsByClassName("machine");
+              var m;
+              for (m = 0; x < allMachine.length; m++) {
+                allMachine[m].style.fill = "#00ff00";
+              }
+
               tatalData = jQuery.parseJSON(msg);
               $.each(tatalData, function(index, json) {
                 $('#data table').append('<tr><td width="10%">' + json.ID   + '</td>' +
@@ -31,11 +28,13 @@
                                             '<td width="10%">' + json.IP   + '</td>' +
                                             '<td width="20%">' + json.NOTE + '</td>' +
                                             '<td width="50%">' + json.DATE + '</td></tr>');
-                //$('#' + json.ID).css("fill", "#ff0000");
                 if (mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#ff0000";
                 }
-                //$('.exception').css("fill", "#cccccc");
+                
+                if ((json.NOTE !== "") && mapDoc.getElementById(json.ID)) {
+                  mapDoc.getElementById(json.ID).style.fill = "#cccccc";
+                }
               });
             });
 
