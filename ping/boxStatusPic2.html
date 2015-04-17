@@ -110,6 +110,7 @@
                                 d.getMinutes().padLeft(),
                                 d.getSeconds().padLeft()].join(':');
                 $('#nowTime').html(dformat);
+                $('#nowTime_2').html(dformat);
             }
 
             /*
@@ -124,7 +125,7 @@
     </head>
     <body>    
         <div><input type="button" value="CSV Report" onclick="getCSVfile()" /></div><br />
-
+        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         <div id="dailySum">
             <table border="1" width="80%">
                 <caption>今日良品數統計，<br />統計時間:<b id="nowTime"></b></caption>
@@ -147,30 +148,41 @@
             </table>
         </div>
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
+        <br />
+        <div id="Availability">
+            <table border="1" width="80%">
+                <caption>目前稼動率，<br />統計時間:<b id="nowTime_2"></b></caption>
+                <thead>
+                    <tr>
+                        <th>類型</th><th>圖例</th><th>總裝機數</th><th>開機</th><th>停機(異常)</th><th>稼動率</th>
+                    </tr>
+                </thead>
+                <tbody align="center">
+                    <tr>
+                        <td>加締</td><td><object data="/square.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="SQUARE_TOTAL">11</td><td id="SQUARE_ON">22</td><td id="SQUARE_OFF">33</td><td id="SQUARE_AVAILABILITY">44</td>
+                    </tr>
+                    <tr>
+                        <td>組立</td><td><object data="/triangle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="TRIANGLE_TOTAL">11</td><td id="TRIANGLE_ON">22</td><td id="TRIANGLE_OFF">33</td><td id="TRIANGLE_AVAILABILITY">44</td>
+                    </tr>
+                    <tr>
+                        <td>老化</td><td><object data="/circle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="CIRCLE_TOTAL">11</td><td id="CIRCLE_ON">22</td><td id="CIRCLE_OFFL">33</td><td id="CIRCLE_AVAILABILITY">44</td>
+                    </tr>
+                    <tr>
+                        <td>其他(選別，加工，切角)</td><td><object data="/pentagon.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="PENTAGON_TOTAL">11</td><td id="PENTAGON_ON">22</td><td id="PENTAGON_OFF">33</td><td id="PENTAGON_AVAILABILITY">44</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-
         <object onload="loadMapOK();" data="/optimized.svg" type="image/svg+xml" id="factory_map" width="100%" height="100%"></object>        
-        
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-
         <div id="data">
             <table border="1" width="80%">
                 <tbody>
                 </tbody>
             </table>
         </div>
+
+        
     </body>
 </html>
