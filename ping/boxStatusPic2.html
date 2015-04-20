@@ -41,7 +41,7 @@
                 // failed machine will fill with RED color
                 if (mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#ff0000";
-                  if (json.ID.indexOf('E') !== -1 || json.ID.indexOf('S') !== -1) {            // 加締
+                  if (json.ID.indexOf('E') > -1 || json.ID.indexOf('S') > -1) {            // 加締
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyE++;
                       console.log('ESESES: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
@@ -49,7 +49,7 @@
                       failE++;
                       console.log('ESESES: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
                     }
-                  } else if (json.ID.indexOf('G') !== '-1') {                                  // 組立
+                  } else if (json.ID.indexOf('G') > -1) {                                  // 組立
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyG++;
                       console.log('GGGGGG: ' + json.ID + ', notReady count: ' + notReadyG + ', note: '+ json.NOTE);
@@ -57,7 +57,7 @@
                       failG++;
                       console.log('GGGGGG: ' + json.ID + ', fail count: ' + failG + ', note: ' + json.NOTE);
                     }
-                  } else if (json.ID.indexOf('A') !== '-1') {                                  // 老化
+                  } else if (json.ID.indexOf('A') > '-1') {                                  // 老化
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyA++;
                       console.log('AAAAAA: ' + json.ID + ', notReady count: ' + notReadyA + ', note: '+ json.NOTE);
@@ -65,7 +65,7 @@
                       failA++;
                       console.log('AAAAAA: ' + json.ID + ', fail count: ' + failA + ', note: ' + json.NOTE);
                     }
-                  } else if (json.ID.indexOf('T') !== '-1' || json.ID.indexOf('C') !== '-1') { // 其他
+                  } else if (json.ID.indexOf('T') > '-1' || json.ID.indexOf('C') > '-1') { // 其他
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyTC++;
                       console.log('TCTCTC: ' + json.ID + ', notReady count: ' + notReadyTC + ', note: '+ json.NOTE);
@@ -85,16 +85,16 @@
               var elementsE = mapDoc.getElementsByTagName('rect');
               for (var x = 0; x < elementsE.length; x++) {
                 var objId = elementsE[x].getAttribute('id');
-                if (objId.indexOf('E') !== -1 || objId.indexOf('S') !== -1) {                  // 加締
+                if (objId.indexOf('E') > -1 || objId.indexOf('S') > -1) {                  // 加締
                   totalE++;
                   console.log('ESESES: ' + objId + ', count: ' + totalE);
-                } else if (objId.indexOf('G') !== -1) {                                        // 組立
+                } else if (objId.indexOf('G') > -1) {                                        // 組立
                   totalG++;
                   console.log('GGGGGG: ' + objId + ', count: ' + totalG);
-                } else if (objId.indexOf('A') !== -1) {                                        // 老化
+                } else if (objId.indexOf('A') > -1) {                                        // 老化
                   totalA++;
                   console.log('AAAAAA: ' + objId + ', count: ' + totalA);
-                } else if (objId.indexOf('T') !== -1 || objId.indexOf('C') !== -1) {           // 其他
+                } else if (objId.indexOf('T') > -1 || objId.indexOf('C') > -1) {           // 其他
                   totalTC++;
                   console.log('TCTCTC: ' + objId + ', count: ' + totalTC);
                 }
