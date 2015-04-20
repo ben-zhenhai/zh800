@@ -17,9 +17,9 @@
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
-              totalE,    totalG,    totalA,    totalTC = 0;
-              notReadyE, notReadyG, notReadyA, notReadyTC = 0;
-              failE,     failG,     failA,     failTC = 0;
+	      totalE = 0,    totalG = 0,    totalA = 0,    totalTC = 0;
+              notReadyE = 0, notReadyG = 0, notReadyA = 0, notReadyTC = 0;
+              failE = 0,     failG = 0,     failA = 0,     failTC = 0;
 
               if (mapDoc == null) { 
                 var factoryMap = document.getElementById("factory_map");
