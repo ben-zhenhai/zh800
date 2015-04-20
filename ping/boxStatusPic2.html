@@ -112,17 +112,17 @@
               $('#TRIANGLE_FAIL').html(failG);
               $('#TRIANGLE_AVAILABILITY').html(workG/(totalG - notReadyG));
 
-              $('#TRIANGLE_TOTAL').html(totalA - notReadyA);
+              $('#CIRCLE_TOTAL').html(totalA - notReadyA);
               workA = totalA - notReadyA - failA;
-              $('#TRIANGLE_ON').html(workA);
-              $('#TRIANGLE_FAIL').html(failA);
-              $('#TRIANGLE_AVAILABILITY').html(workA/(totalA - notReadyA));
+              $('#CIRCLE_ON').html(workA);
+              $('#CIRCLE_FAIL').html(failA);
+              $('#CIRCLE_AVAILABILITY').html(workA/(totalA - notReadyA));
                
-              $('#TRIANGLE_TOTAL').html(totalTC - notReadyTC);
+              $('#PENTAGON_TOTAL').html(totalTC - notReadyTC);
               workTC = totalTC - notReadyTC - failTC;
-              $('#TRIANGLE_ON').html(workTC);
-              $('#TRIANGLE_FAIL').html(failTC);
-              $('#TRIANGLE_AVAILABILITY').html(workTC(totalTC - notReadyTC));
+              $('#PENTAGON_ON').html(workTC);
+              $('#PENTAGON_FAIL').html(failTC);
+              $('#PENTAGON_AVAILABILITY').html(workTC/(totalTC - notReadyTC));
             });
 
             socket.on('dailyCount', function(msg) {
