@@ -8,16 +8,27 @@
         <script>
             var socket = io();
             var tatalData;
+            var mapDoc;
+
+            var totalE = 0;
+            var notReadyE = 0;
+            //var workE = 0;
+            var failE = 0;
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
-              
-              var factoryMap = document.getElementById("factory_map");
-              var mapDoc = factoryMap.contentDocument;
+              totalE = 0;
+              notReadyE = 0;
+              //workE = 0;
+              failE = 0;
+
+              if (mapDoc == null) { 
+                var factoryMap = document.getElementById("factory_map");
+                mapDoc = factoryMap.contentDocument;
+              }
 
               var allMachine = mapDoc.getElementsByClassName("machine");
-              var m;
-              for (m = 0; m < allMachine.length; m++) {
+              for (var m = 0; m < allMachine.length; m++) {
                 allMachine[m].style.fill = "#00ff00";
               }
 
@@ -28,14 +39,34 @@
                                             '<td width="10%">' + json.IP   + '</td>' +
                                             '<td width="20%">' + json.NOTE + '</td>' +
                                             '<td width="50%">' + json.DATE + '</td></tr>');
+                // failed machine will fill with RED color
                 if (mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#ff0000";
+                  if (json.ID.indexOf('E') !== -1 || json.ID.indexOf('S') !== -1) { // 加締
+                    if (json.NOTE != '') { // 仍未裝機
+                      notReadyE++;
+                      console.log('HELLO: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
+                    } else {               // 錯誤(非未裝機)
+                      failE++;
+                      console.log('HELLO: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
+                    }
+                  }
                 }
                 
+                // not ready machine will fill with GRAY color
                 if ((json.NOTE !== "") && mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#cccccc";
                 }
               });
+
+              var elementsE = mapDoc.getElementsByTagName('rect');
+              for (var x = 0; x < elementsE.length; x++) {
+                var objId = elementsE[x].getAttribute('id');
+                if (objId.indexOf('E') !== -1 || objId.indexOf('S') !== -1) { // 加締
+                  totalE++;
+                  console.log('HELLO: ' + objId + ', count: ' + totalE);
+                }
+              }
             });
 
             socket.on('dailyCount', function(msg) {
@@ -119,6 +150,8 @@
                 socket.emit('boxStatusPic','loadFinish');
             });*/
             function loadMapOK() {
+                var factoryMap = document.getElementById("factory_map");
+                mapDoc = factoryMap.contentDocument;
                 socket.emit('boxStatusPic','loadFinish');
             }
         </script>
@@ -159,16 +192,16 @@
                 </thead>
                 <tbody align="center">
                     <tr>
-                        <td>加締</td><td><object data="/square.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="SQUARE_TOTAL">11</td><td id="SQUARE_ON">22</td><td id="SQUARE_OFF">33</td><td id="SQUARE_AVAILABILITY">44</td>
+                        <td>加締</td><td><object data="/square.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="SQUARE_TOTAL">11</td><td id="SQUARE_ON">12</td><td id="SQUARE_OFF">13</td><td id="SQUARE_AVAILABILITY">14</td>
                     </tr>
                     <tr>
-                        <td>組立</td><td><object data="/triangle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="TRIANGLE_TOTAL">11</td><td id="TRIANGLE_ON">22</td><td id="TRIANGLE_OFF">33</td><td id="TRIANGLE_AVAILABILITY">44</td>
+                        <td>組立</td><td><object data="/triangle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="TRIANGLE_TOTAL">21</td><td id="TRIANGLE_ON">22</td><td id="TRIANGLE_OFF">23</td><td id="TRIANGLE_AVAILABILITY">24</td>
                     </tr>
                     <tr>
-                        <td>老化</td><td><object data="/circle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="CIRCLE_TOTAL">11</td><td id="CIRCLE_ON">22</td><td id="CIRCLE_OFFL">33</td><td id="CIRCLE_AVAILABILITY">44</td>
+                        <td>老化</td><td><object data="/circle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="CIRCLE_TOTAL">31</td><td id="CIRCLE_ON">32</td><td id="CIRCLE_OFFL">33</td><td id="CIRCLE_AVAILABILITY">34</td>
                     </tr>
                     <tr>
-                        <td>其他(選別，加工，切角)</td><td><object data="/pentagon.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="PENTAGON_TOTAL">11</td><td id="PENTAGON_ON">22</td><td id="PENTAGON_OFF">33</td><td id="PENTAGON_AVAILABILITY">44</td>
+                        <td>其他(選別，加工，切角)</td><td><object data="/pentagon.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="PENTAGON_TOTAL">41</td><td id="PENTAGON_ON">42</td><td id="PENTAGON_OFF">43</td><td id="PENTAGON_AVAILABILITY">44</td>
                     </tr>
                 </tbody>
             </table>
