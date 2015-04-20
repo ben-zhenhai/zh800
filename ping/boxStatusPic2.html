@@ -10,17 +10,16 @@
             var tatalData;
             var mapDoc;
 
-            var totalE = 0;
-            var notReadyE = 0;
-            //var workE = 0;
-            var failE = 0;
+            var totalE,    totalG,    totalA,    totalTC = 0;
+            var notReadyE, notReadyG, notReadyA, notReadyTC = 0;
+            var workE,     workG,     workA,     workTC = 0;
+            var failE,     failG,     failA,     failTC = 0;
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
-              totalE = 0;
-              notReadyE = 0;
-              //workE = 0;
-              failE = 0;
+              totalE,    totalG,    totalA,    totalTC = 0;
+              notReadyE, notReadyG, notReadyA, notReadyTC = 0;
+              failE,     failG,     failA,     failTC = 0;
 
               if (mapDoc == null) { 
                 var factoryMap = document.getElementById("factory_map");
@@ -42,13 +41,37 @@
                 // failed machine will fill with RED color
                 if (mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#ff0000";
-                  if (json.ID.indexOf('E') !== -1 || json.ID.indexOf('S') !== -1) { // 加締
+                  if (json.ID.indexOf('E') !== -1 || json.ID.indexOf('S') !== -1) {            // 加締
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyE++;
-                      console.log('HELLO: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
+                      console.log('ESESES: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
                     } else {               // 錯誤(非未裝機)
                       failE++;
-                      console.log('HELLO: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
+                      console.log('ESESES: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
+                    }
+                  } else if (json.ID.indexOf('G') !== '-1') {                                  // 組立
+                    if (json.NOTE != '') { // 仍未裝機
+                      notReadyG++;
+                      console.log('GGGGGG: ' + json.ID + ', notReady count: ' + notReadyG + ', note: '+ json.NOTE);
+                    } else {               // 錯誤(非未裝機)
+                      failG++;
+                      console.log('GGGGGG: ' + json.ID + ', fail count: ' + failG + ', note: ' + json.NOTE);
+                    }
+                  } else if (json.ID.indexOf('A') !== '-1') {                                  // 老化
+                    if (json.NOTE != '') { // 仍未裝機
+                      notReadyA++;
+                      console.log('AAAAAA: ' + json.ID + ', notReady count: ' + notReadyA + ', note: '+ json.NOTE);
+                    } else {               // 錯誤(非未裝機)
+                      failA++;
+                      console.log('AAAAAA: ' + json.ID + ', fail count: ' + failA + ', note: ' + json.NOTE);
+                    }
+                  } else if (json.ID.indexOf('T') !== '-1' || json.ID.indexOf('C') !== '-1') { // 其他
+                    if (json.NOTE != '') { // 仍未裝機
+                      notReadyTC++;
+                      console.log('TCTCTC: ' + json.ID + ', notReady count: ' + notReadyTC + ', note: '+ json.NOTE);
+                    } else {               // 錯誤(非未裝機)
+                      failTC++;
+                      console.log('TCTCTC: ' + json.ID + ', fail count: ' + failTC + ', note: ' + json.NOTE);
                     }
                   }
                 }
@@ -62,11 +85,44 @@
               var elementsE = mapDoc.getElementsByTagName('rect');
               for (var x = 0; x < elementsE.length; x++) {
                 var objId = elementsE[x].getAttribute('id');
-                if (objId.indexOf('E') !== -1 || objId.indexOf('S') !== -1) { // 加締
+                if (objId.indexOf('E') !== -1 || objId.indexOf('S') !== -1) {                  // 加締
                   totalE++;
-                  console.log('HELLO: ' + objId + ', count: ' + totalE);
+                  console.log('ESESES: ' + objId + ', count: ' + totalE);
+                } else if (objId.indexOf('G') !== -1) {                                        // 組立
+                  totalG++;
+                  console.log('GGGGGG: ' + objId + ', count: ' + totalG);
+                } else if (objId.indexOf('A') !== -1) {                                        // 老化
+                  totalA++;
+                  console.log('AAAAAA: ' + objId + ', count: ' + totalA);
+                } else if (objId.indexOf('T') !== -1 || objId.indexOf('C') !== -1) {           // 其他
+                  totalTC++;
+                  console.log('TCTCTC: ' + objId + ', count: ' + totalTC);
                 }
               }
+
+              $('#SQUARE_TOTAL').html(totalE - notReadyE);
+              workE = totalE - notReadyE - failE;
+              $('#SQUARE_ON').html(workE);
+              $('#SQUARE_FAIL').html(failE);
+              $('#SQUARE_AVAILABILITY').html(workE/(totalE - notReadyE));
+               
+              $('#TRIANGLE_TOTAL').html(totalG - notReadyG);
+              workG = totalG - notReadyG - failG;
+              $('#TRIANGLE_ON').html(workG);
+              $('#TRIANGLE_FAIL').html(failG);
+              $('#TRIANGLE_AVAILABILITY').html(workG/(totalG - notReadyG));
+
+              $('#TRIANGLE_TOTAL').html(totalA - notReadyA);
+              workA = totalA - notReadyA - failA;
+              $('#TRIANGLE_ON').html(workA);
+              $('#TRIANGLE_FAIL').html(failA);
+              $('#TRIANGLE_AVAILABILITY').html(workA/(totalA - notReadyA));
+               
+              $('#TRIANGLE_TOTAL').html(totalTC - notReadyTC);
+              workTC = totalTC - notReadyTC - failTC;
+              $('#TRIANGLE_ON').html(workTC);
+              $('#TRIANGLE_FAIL').html(failTC);
+              $('#TRIANGLE_AVAILABILITY').html(workTC(totalTC - notReadyTC));
             });
 
             socket.on('dailyCount', function(msg) {
@@ -192,16 +248,16 @@
                 </thead>
                 <tbody align="center">
                     <tr>
-                        <td>加締</td><td><object data="/square.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="SQUARE_TOTAL">11</td><td id="SQUARE_ON">12</td><td id="SQUARE_OFF">13</td><td id="SQUARE_AVAILABILITY">14</td>
+                        <td>加締</td><td><object data="/square.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="SQUARE_TOTAL">11</td><td id="SQUARE_ON">12</td><td id="SQUARE_FAIL">13</td><td id="SQUARE_AVAILABILITY">14</td>
                     </tr>
                     <tr>
-                        <td>組立</td><td><object data="/triangle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="TRIANGLE_TOTAL">21</td><td id="TRIANGLE_ON">22</td><td id="TRIANGLE_OFF">23</td><td id="TRIANGLE_AVAILABILITY">24</td>
+                        <td>組立</td><td><object data="/triangle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="TRIANGLE_TOTAL">21</td><td id="TRIANGLE_ON">22</td><td id="TRIANGLE_FAIL">23</td><td id="TRIANGLE_AVAILABILITY">24</td>
                     </tr>
                     <tr>
-                        <td>老化</td><td><object data="/circle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="CIRCLE_TOTAL">31</td><td id="CIRCLE_ON">32</td><td id="CIRCLE_OFFL">33</td><td id="CIRCLE_AVAILABILITY">34</td>
+                        <td>老化</td><td><object data="/circle.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="CIRCLE_TOTAL">31</td><td id="CIRCLE_ON">32</td><td id="CIRCLE_FAIL">33</td><td id="CIRCLE_AVAILABILITY">34</td>
                     </tr>
                     <tr>
-                        <td>其他(選別，加工，切角)</td><td><object data="/pentagon.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="PENTAGON_TOTAL">41</td><td id="PENTAGON_ON">42</td><td id="PENTAGON_OFF">43</td><td id="PENTAGON_AVAILABILITY">44</td>
+                        <td>其他(選別，加工，切角)</td><td><object data="/pentagon.svg" type="image/svg+xml" width="30%" height="30%"></object></td><td id="PENTAGON_TOTAL">41</td><td id="PENTAGON_ON">42</td><td id="PENTAGON_FAIL">43</td><td id="PENTAGON_AVAILABILITY">44</td>
                     </tr>
                 </tbody>
             </table>
