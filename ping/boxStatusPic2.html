@@ -10,10 +10,10 @@
             var tatalData;
             var mapDoc;
 
-            var totalE,    totalG,    totalA,    totalTC = 0;
-            var notReadyE, notReadyG, notReadyA, notReadyTC = 0;
-            var workE,     workG,     workA,     workTC = 0;
-            var failE,     failG,     failA,     failTC = 0;
+            var totalE = 0,    totalG = 0,    totalA = 0,    totalTC = 0;
+            var notReadyE = 0, notReadyG = 0, notReadyA = 0, notReadyTC = 0;
+            var workE = 0,     workG = 0,     workA = 0,     workTC = 0;
+            var failE = 0,     failG = 0,     failA = 0,     failTC = 0;
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
