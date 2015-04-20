@@ -82,16 +82,21 @@
                 }
               });
 
+              // FIXME, 阻力老化其他並不是rect
               var elementsE = mapDoc.getElementsByTagName('rect');
               for (var x = 0; x < elementsE.length; x++) {
                 var objId = elementsE[x].getAttribute('id');
                 if (objId.indexOf('E') > -1 || objId.indexOf('S') > -1) {                  // 加締
                   totalE++;
                   console.log('ESESES: ' + objId + ', count: ' + totalE);
-                } else if (objId.indexOf('G') > -1) {                                        // 組立
+                }
+              }
+              var elementsPath = mapDoc.getElementsByTagName('path');
+              for (var x = 0; x < elementsPath.length; x++) {
+                if (objId.indexOf('G') > -1) {                                             // 組立
                   totalG++;
                   console.log('GGGGGG: ' + objId + ', count: ' + totalG);
-                } else if (objId.indexOf('A') > -1) {                                        // 老化
+                } else if (objId.indexOf('A') > -1) {                                      // 老化
                   totalA++;
                   console.log('AAAAAA: ' + objId + ', count: ' + totalA);
                 } else if (objId.indexOf('T') > -1 || objId.indexOf('C') > -1) {           // 其他
