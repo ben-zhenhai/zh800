@@ -1,13 +1,15 @@
 var MongoClient = require('mongodb').MongoClient;
 
-var date = new Date();
+var offsetOf7Hours = 7 * 60 * 60 * 1000
+var originalDate = new Date();
+var date = new Date(originalDate.getTime() - offsetOf7Hours);
 var year = date.getFullYear();
 var month = date.getMonth() + 1;
 month = (month < 10 ? "0" : "") + month;
 var day = date.getDate();
 day = (day < 10 ? "0" : "") + day;
 var today = year + "-" + month + "-" + day;
-console.log(today);
+console.log("today:" + today);
 
 const BIG = "16 - 18";
 const MEDIUM = "10 - 12.5";
@@ -169,3 +171,4 @@ process.on("message", function(msg) {
 });
 
 setInterval(queryDatabase, 420000);
+//setInterval(queryDatabase, 3600000);

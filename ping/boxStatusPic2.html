@@ -93,6 +93,7 @@
               }
               var elementsPath = mapDoc.getElementsByTagName('path');
               for (var x = 0; x < elementsPath.length; x++) {
+                var objId = elementsPath[x].getAttribute('id');
                 if (objId.indexOf('G') > -1) {                                             // 組立
                   totalG++;
                   console.log('GGGGGG: ' + objId + ', count: ' + totalG);
@@ -109,25 +110,25 @@
               workE = totalE - notReadyE - failE;
               $('#SQUARE_ON').html(workE);
               $('#SQUARE_FAIL').html(failE);
-              $('#SQUARE_AVAILABILITY').html(workE/(totalE - notReadyE));
+              $('#SQUARE_AVAILABILITY').html(workE/(totalE - notReadyE) * 100 + '%');
                
               $('#TRIANGLE_TOTAL').html(totalG - notReadyG);
               workG = totalG - notReadyG - failG;
               $('#TRIANGLE_ON').html(workG);
               $('#TRIANGLE_FAIL').html(failG);
-              $('#TRIANGLE_AVAILABILITY').html(workG/(totalG - notReadyG));
+              $('#TRIANGLE_AVAILABILITY').html(workG/(totalG - notReadyG) * 100 + '%');
 
               $('#CIRCLE_TOTAL').html(totalA - notReadyA);
               workA = totalA - notReadyA - failA;
               $('#CIRCLE_ON').html(workA);
               $('#CIRCLE_FAIL').html(failA);
-              $('#CIRCLE_AVAILABILITY').html(workA/(totalA - notReadyA));
+              $('#CIRCLE_AVAILABILITY').html(workA/(totalA - notReadyA) * 100 + '%');
                
               $('#PENTAGON_TOTAL').html(totalTC - notReadyTC);
               workTC = totalTC - notReadyTC - failTC;
               $('#PENTAGON_ON').html(workTC);
               $('#PENTAGON_FAIL').html(failTC);
-              $('#PENTAGON_AVAILABILITY').html(workTC/(totalTC - notReadyTC));
+              $('#PENTAGON_AVAILABILITY').html(workTC/(totalTC - notReadyTC) * 100 + '%');
             });
 
             socket.on('dailyCount', function(msg) {

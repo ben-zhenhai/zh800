@@ -32,11 +32,11 @@ app.get('/', function(req, res) {
   res.sendfile('boxStatus.html');
 });
 
-app.get('/pic', function(req, res) {
+app.get('/pic2', function(req, res) {
   res.sendfile('boxStatusPic.html');
 });
 
-app.get('/pic2', function(req, res) {
+app.get('/pic', function(req, res) {
   res.sendfile('boxStatusPic2.html');
 });
 
