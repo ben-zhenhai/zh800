@@ -49,7 +49,7 @@
 #define CONFIG_P0 0x06
 #define CONFIG_P1 0x07
 
-#define WatchDogCountValue 126000 //msec
+#define WatchDogCountValue 600000 //msec
 #define InputLength 256
 #define UPLoadFileLength 256
 #define CountPeriod 300 //msec
@@ -964,7 +964,9 @@ int main(int argc ,char *argv[])
         sleep(1);
         memset(MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(MachineCode, FakeInput[2]);
-        /*
+        /*digitalWrite (WiringPiPIN_15, LOW);
+        digitalWrite (WiringPiPIN_16, LOW);
+        digitalWrite (WiringPiPIN_18, HIGH);
         sleep(1);
         memset(CountNo, 0, sizeof(char)*InputLength);
         //strcpy(CountNo, "100000");
@@ -1230,6 +1232,7 @@ int main(int argc ,char *argv[])
                     else if(strncmp(tempString,"XXXM", 4) == 0)
                     {
                         char FixerNo[InputLength];
+                        struct timeval changeIntoRepairmodeTimeStemp;
                         pthread_t buttonThread;
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
@@ -1259,6 +1262,7 @@ int main(int argc ,char *argv[])
                         ioctl(fd, SIOCGIFADDR, &ifr);
                         close(fd);
                         gettimeofday(&now, NULL);
+                        gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
 
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
@@ -1312,16 +1316,15 @@ int main(int argc ,char *argv[])
                                     
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                        ISNo, ManagerCard, CountNo, 
-                                                                        (long)now.tv_sec,
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s %ld 0 0 %02d\n", 
+                                                                        ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                         inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                        MachineCode, FixerNo, MachREPAIRDone);
+                                                                        MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #else
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                      ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                      inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                      MachineCode, FixerNo, MachREPAIRDone);
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s %ld 0 0 %02d\n", 
+                                                                        ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                        MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #endif
                                     fclose(pfile);
             
@@ -1336,8 +1339,39 @@ int main(int argc ,char *argv[])
                                     pthread_join(FTPThread, NULL);
                                     break;
                                 }
+                                printf("FixerNo scan error code\n");
+                            }else if(strncmp(tempString, "UUU", 3) == 0)
+                            {
+                                char fixItem[InputLength];
+                                memset(fixItem, 0, sizeof(char)*InputLength);
+                                tempPtr = tempString + 3;
+                                memcpy(fixItem, tempPtr, sizeof(tempString)-2);
+
+                                //get ip address & time
+                                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                ifr.ifr_addr.sa_family = AF_INET;
+                                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                ioctl(fd, SIOCGIFADDR, &ifr);
+                                close(fd);
+                                gettimeofday(&now, NULL);
+
+                                pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec , MachREPAIRING);
+#else
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n", 
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec , MachREPAIRING);
+#endif
+                                fclose(pfile);
+                            }else
+                            {
+                                printf("FixerNo scan error code\n");
                             }
-                            printf("FixerNo scan error code\n");
                         }
 
                         ButtonFlag = 0;
@@ -1442,7 +1476,8 @@ void * FTPFunction(void *argument)
             pthread_mutex_unlock(&mutexFile);
 
             printf("%s\n", UPLoadFile_3);
-            if(stat(UPLoadFile_3, &file_info)< 0) {
+            if(stat(UPLoadFile_3, &file_info)< 0) 
+            {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
                 Log(s, __func__, __LINE__, " FTP fail_1\n");

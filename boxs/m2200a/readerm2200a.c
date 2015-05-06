@@ -57,6 +57,7 @@
 #define FTPWakeUpValue 60
 #define BLANKTIMER 500000
 #define zhMAXOUTPUT 10
+#define goodrate 1
 
 //#define LogMode
 #define PrintInfo

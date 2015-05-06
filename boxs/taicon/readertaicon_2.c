@@ -341,7 +341,6 @@ void * WatchDogForGood(void *argument)
     struct ifreq ifr;
  
     int WatchDogCoolDown = WatchDogCountValue;
-
     int fd;
     long size; 
     int ForCount, ForCount2;
@@ -393,8 +392,7 @@ void * WatchDogForGood(void *argument)
                 if((PINCount[ForCount][ForCount2] - PINEXCount[ForCount][ForCount2]) > zhMAXOUTPUT)
                 {
                      fprintf(pfile, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d \n",  
-                                                                            ISNo, ManagerCard, CountNo, 
-                                                                            (long)now.tv_sec,
+                                                                            ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                             ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
                 }
@@ -402,17 +400,15 @@ void * WatchDogForGood(void *argument)
                 {
 #ifdef PrintMode
                     fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d \n",  
-                                                                            ISNo, ManagerCard, CountNo, 
-                                                                            PINCount[0][7] - PINEXCount[0][7],
+                                                                            ISNo, ManagerCard, CountNo, PINCount[0][7] - PINEXCount[0][7],
                                                                             (long)now.tv_sec,
                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                             ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
 #else
-                    fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d \n", ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
-                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                   ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, 
-                                                                                   MachRUNNING);
-
+                    fprintf(pfile, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d \n", 
+                                                                            ISNo, ManagerCard, CountNo, PINCount[0][7], (long)now.tv_sec,
+                                                                            inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                            ForCount * 8 + ForCount2 + 2, MachineCode, UserNo, MachRUNNING);
 #endif
                 }
                 else if(PINEXCount[ForCount][ForCount2] != PINCount[ForCount][ForCount2])
@@ -434,9 +430,10 @@ void * WatchDogForGood(void *argument)
         }
         size = ftell(pfile);        
         fclose(pfile);
-        pthread_mutex_unlock(&mutexFile);        
+        pthread_mutex_unlock(&mutexFile);
 
-        printf("%s %s %s %s %s %ld|| %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld|| %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld\n",
+        printf("%s %s %s %s %s %ld|| %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld|| %ld %ld %ld %ld %ld %ld %ld %ld ||\
+ %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld\n",
                 ISNo, ManagerCard, MachineCode, UserNo, CountNo, size, 
                 PINCount[0][0], PINCount[0][1], PINCount[0][2], PINCount[0][3], PINCount[0][4], PINCount[0][5], PINCount[0][6], PINCount[0][7],
                 PINCount[1][0], PINCount[1][1], PINCount[1][2], PINCount[1][3], PINCount[1][4], PINCount[1][5], PINCount[1][6], PINCount[1][7],
@@ -515,32 +512,32 @@ void * zhINTERRUPT1(void * argument)
         //pthread_mutex_unlock(&mutex_3);
         if(I2CEXValue[0] != x || I2CEXValue[1] != y)
         {
-        first = I2CEXValue[0] ^ 0xff;
-        first = first & x;
-        second = I2CEXValue[1] ^ 0xff;
-        second = second & y;
+            first = I2CEXValue[0] ^ 0xff;
+            first = first & x;
+            second = I2CEXValue[1] ^ 0xff;
+            second = second & y;
 
-        I2CEXValue[0] = x;
-        I2CEXValue[1] = y;
+            I2CEXValue[0] = x;
+            I2CEXValue[1] = y;
 
-        for(ForCount = 0; ForCount < 8; ++ForCount)
-        {
-            if(ForCount == 7)
+            for(ForCount = 0; ForCount < 8; ++ForCount)
             {
-                PINCount[0][ForCount] = PINCount[0][ForCount] + (first & 1);
+                if(ForCount == 7)
+                {
+                    PINCount[0][ForCount] = PINCount[0][ForCount] + (first & 1);
+                }
+                first = first >> 1;
+                second = second >> 1;
             }
-            first = first >> 1;
-            second = second >> 1;
-        }
 #ifdef PrintInfo 
-        printf("reader 1: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
+            printf("reader 1: %3d, %3d | %ld %ld %ld %ld %ld %ld %ld %ld || %ld %ld %ld %ld %ld %ld %ld %ld \n",
                  x , y, PINCount[0][0], PINCount[0][1], PINCount[0][2], 
                  PINCount[0][3], PINCount[0][4], PINCount[0][5], PINCount[0][6], PINCount[0][7],
                  PINCount[1][0], PINCount[1][1], PINCount[1][2], PINCount[1][3], PINCount[1][4], PINCount[1][5], PINCount[1][6], PINCount[1][7]);
 #endif
-        WatchDogFlag = 1;
+            WatchDogFlag = 1;
         
-        //Log(s, __func__, __LINE__, " exit\n");
+            //Log(s, __func__, __LINE__, " exit\n");
         }
     }
 }
@@ -1258,6 +1255,7 @@ int main(int argc ,char *argv[])
                     else if(strncmp(tempString, "XXXM", 4) == 0)
                     {
                         char FixerNo[InputLength];
+                        struct timeval changeIntoRepairmodeTimeStemp;
                         pthread_t buttonThread;
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
@@ -1288,16 +1286,17 @@ int main(int argc ,char *argv[])
                         ioctl(fd, SIOCGIFADDR, &ifr);
                         close(fd);
                         gettimeofday(&now, NULL);
+                        gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
 
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, FixerNo, MachREPAIRING);
+                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                   MachineCode, FixerNo, MachREPAIRING);
 #else
                         fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                     MachineCode, FixerNo, MachREPAIRING);
+                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                   MachineCode, FixerNo, MachREPAIRING);
 #endif
                         fclose(pfile);
             
@@ -1338,15 +1337,15 @@ int main(int argc ,char *argv[])
 
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
-                                                                                  ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  MachineCode, FixerNo, MachREPAIRDone);
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s %ld 0 0 %02d\n", 
+                                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                 MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #else
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", 
-                                                                                  ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                  MachineCode, FixerNo, MachREPAIRDone);
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s %ld 0 0 %02d\n", 
+                                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                 MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #endif
                                     fclose(pfile);
                                     FTPFlag = 1;
@@ -1360,10 +1359,40 @@ int main(int argc ,char *argv[])
                                     pthread_join(FTPThread, NULL);
                                     break;
                                 }
+                                printf("FixerNo scan error code\n");
+                            }else if(strncmp(tempString, "UUU", 3) == 0)
+                            {
+                                char fixItem[InputLength];
+                                memset(fixItem, 0, sizeof(char)*InputLength);
+                                tempPtr = tempString + 3;
+                                memcpy(fixItem, tempPtr, sizeof(tempString)-2);
+
+                                //get ip address & time
+                                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                ifr.ifr_addr.sa_family = AF_INET;
+                                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                ioctl(fd, SIOCGIFADDR, &ifr);
+                                close(fd);
+                                gettimeofday(&now, NULL);
+
+                                pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+#else
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n", 
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+#endif
+                                fclose(pfile);
+                            }else
+                            {
+                                printf("FixerNo scan eror code\n");
                             }
-                            printf("FixerNo scan error code\n");
                         }
-                         
                         ButtonFlag = 0;
                         pthread_join(buttonThread, NULL);
                         break; 

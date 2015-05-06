@@ -85,6 +85,7 @@ short WatchDogFlag = 0;
 short updateFlag = 0;
 short FlagStopUpdateNetworkStatus = 0;
 short IsBarcodeInputDone = 1;
+short OrderInBox = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
@@ -97,7 +98,7 @@ int I2CEXValue[6];
 short CutRoll[2];
 
 pthread_cond_t cond, condFTP;
-pthread_mutex_t mutex, mutex_2, mutex_log, Mutexlinklist, mutexFTP;
+pthread_mutex_t mutex, mutex_2, mutex_log, Mutexlinklist, mutexFTP, MutexNetworkStatus;
 
 typedef struct INPUTNODE
 {
@@ -451,6 +452,7 @@ void * FileFunction(void *argument)
         memcpy(PINEXCount, PINCount, sizeof(long)*40);
 
         //check network status
+        pthread_mutex_lock(&MutexNetworkStatus);
         if(FlagStopUpdateNetworkStatus == 0)
         {
             int fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -460,9 +462,17 @@ void * FileFunction(void *argument)
             ioctl(fd2, SIOCGIFFLAGS, &ethreq);
             if(ethreq.ifr_flags & IFF_RUNNING)
             {
-                digitalWrite (WiringPiPIN_15, HIGH);
-                digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, HIGH);
+                if(OrderInBox > 1)
+                {
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
+                }else
+                {
+                    digitalWrite (WiringPiPIN_15, HIGH);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
+                }
             }else
             {
                 digitalWrite (WiringPiPIN_15, HIGH);
@@ -471,6 +481,7 @@ void * FileFunction(void *argument)
             }
             close(fd2);
         }
+        pthread_mutex_unlock(&MutexNetworkStatus);
     }
 }
 int main(int argc, char *argv[])
@@ -483,6 +494,7 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&mutex_2, NULL);
     pthread_mutex_init(&mutex_log, NULL);
     pthread_mutex_init(&Mutexlinklist, NULL);
+    pthread_mutex_init(&MutexNetworkStatus, NULL);
     pthread_mutex_init(&mutexFTP, NULL);
     pthread_cond_init(&cond, NULL);
     pthread_cond_init(&condFTP, NULL);
@@ -574,7 +586,6 @@ int main(int argc, char *argv[])
     memset(I2CEXValue, 0, sizeof(int)*6);
     memset(CutRoll, 0, sizeof(short)*2);
 
-
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
     assert(rc == 0);
@@ -593,12 +604,16 @@ int main(int argc, char *argv[])
         {
             usleep(100000);
         }
+
+        pthread_mutex_lock(&MutexNetworkStatus);
         FlagStopUpdateNetworkStatus = 1; 
+        pthread_mutex_unlock(&MutexNetworkStatus);
         printf("ready to cancel barcode\n");
         pthread_mutex_lock(&Mutexlinklist);
         pthread_cancel(barcodeInputThread);
         pthread_join(barcodeInputThread, NULL);
         pthread_mutex_unlock(&Mutexlinklist);
+
         if(IsBarcodeInputDone == 0)
         {
             printf("free node %p\n", node);
@@ -624,18 +639,26 @@ int main(int argc, char *argv[])
                     memcpy(p->UserNo, tempPtr, sizeof(inputString)-3);
                     printf("%s %s %s %s %s %s\n", p->ISNo, p->ManagerCard, p->MachineCode, p->UserNo, p->CountNo, p->UPLoadFile);
                     p = p->link;
-            
+                }
+                if(OrderInBox == 1)
+                {
                     digitalWrite (WiringPiPIN_15, HIGH);
                     digitalWrite (WiringPiPIN_16, HIGH);
                     digitalWrite (WiringPiPIN_18, LOW);
-
+                }else
+                {
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
                 }
                 pthread_mutex_unlock(&Mutexlinklist);
                 break;
             }
             printf("UserNo scan error code\n");
         }
+        pthread_mutex_lock(&MutexNetworkStatus);
         FlagStopUpdateNetworkStatus = 0;
+        pthread_mutex_unlock(&MutexNetworkStatus);
     } 
     return 0;
 }
@@ -665,10 +688,12 @@ void * BarcodeInputFunction(void *argument)
         IsBarcodeInputDone = 0;
         node->link = NULL;
 
-        digitalWrite (WiringPiPIN_15, HIGH);
-        digitalWrite (WiringPiPIN_16, HIGH);
-        digitalWrite (WiringPiPIN_18, HIGH);
-
+        if(OrderInBox == 0)
+        {
+            digitalWrite (WiringPiPIN_15, HIGH);
+            digitalWrite (WiringPiPIN_16, HIGH);
+            digitalWrite (WiringPiPIN_18, HIGH);
+        }
         printf("Ready to work!!\n");
         while(1)
         {
@@ -682,6 +707,9 @@ void * BarcodeInputFunction(void *argument)
                 //memcpy(node->ISNo, tempPtr, sizeof(tempString)-2);
                 tempPtr = tempString;
                 memcpy(node->ISNo, tempPtr, sizeof(tempString));
+                pthread_mutex_lock(&MutexNetworkStatus);
+                FlagStopUpdateNetworkStatus = 1;
+                pthread_mutex_unlock(&MutexNetworkStatus);
                 digitalWrite (WiringPiPIN_15, LOW);
                 digitalWrite (WiringPiPIN_16, HIGH);
                 digitalWrite (WiringPiPIN_18, HIGH);
@@ -689,7 +717,6 @@ void * BarcodeInputFunction(void *argument)
             }
             printf("ISNo scan error code\n");
         }
-        FlagStopUpdateNetworkStatus = 1;
         while(1)
         {
             memset(tempString, 0, sizeof(char)*InputLength);
@@ -756,7 +783,7 @@ void * BarcodeInputFunction(void *argument)
             {
                 memset(node->CountNo, 0, sizeof(char)*InputLength);
                 memcpy(node->CountNo, tempPtr, sizeof(tempString));
-                if(atoi(node->CountNo) > 0)
+                if(atol(node->CountNo) > 0)
                 {
                     printf("need finish: %s\n", node->CountNo);
                     digitalWrite (WiringPiPIN_15, LOW);
@@ -793,9 +820,18 @@ void * BarcodeInputFunction(void *argument)
                 memset(node->UserNo, 0, sizeof(char)*InputLength);
                 tempPtr = tempString + 4;
                 memcpy(node->UserNo, tempPtr, sizeof(tempString)-3);
-                digitalWrite (WiringPiPIN_15, HIGH);
-                digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, LOW);
+                printf("%d\n", OrderInBox);
+                if(OrderInBox == 0)
+                {
+                    digitalWrite (WiringPiPIN_15, HIGH);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
+                }else
+                {
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
+                }
                 break;
             }
             printf("UserNo scan error code\n");
@@ -856,8 +892,9 @@ void * BarcodeInputFunction(void *argument)
         if(list == NULL) 
         {
             list = node;
+            OrderInBox = OrderInBox + 1;
         }
-        else
+        else if(OrderInBox < 2)
         {
             InputNode *p = list;
             while(p->link!=NULL)
@@ -865,6 +902,10 @@ void * BarcodeInputFunction(void *argument)
                 p = p->link;
             }
             p->link = node;
+            OrderInBox = OrderInBox + 1;
+        }else
+        {
+            free(node);
         }
         IsBarcodeInputDone = 1;
         pthread_mutex_unlock(&Mutexlinklist);
@@ -875,7 +916,9 @@ void * BarcodeInputFunction(void *argument)
             //rc = pthread_create(&TelnetControlThread, NULL, RemoteControl, NULL);
             //assert(rc == 0);
         }
-	FlagStopUpdateNetworkStatus = 0;
+        pthread_mutex_lock(&MutexNetworkStatus);
+	    FlagStopUpdateNetworkStatus = 0;
+        pthread_mutex_unlock(&MutexNetworkStatus);
     }
 }
 
@@ -890,6 +933,7 @@ void * WatchDogFunction(void *argument)
 
     while(WatchDogFlag)
     {
+        int jobDoneFlag = 0;
         while(list== NULL)
         {
             //printf("we wait\n");
@@ -910,6 +954,38 @@ void * WatchDogFunction(void *argument)
 
         while(digitalRead(WiringPiPIN_22)== 1)
         {
+            pthread_mutex_lock(&Mutexlinklist);
+            unsigned long goodCount = (unsigned long)atoi(list->CountNo);
+            if(PINCount[1][6] >= goodCount)
+            //if(PINCount[1][6] >= 0)
+            {
+                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                ifr.ifr_addr.sa_family = AF_INET;
+                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                ioctl(fd, SIOCGIFADDR, &ifr);
+                close(fd);
+                gettimeofday(&now, NULL);
+            
+                fptr = fopen(list->UPLoadFile, "a");
+                if(fptr != NULL)
+                {
+#ifdef PrintMode
+                    fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                               list->MachineCode, list->UserNo, MachJobDone);
+#else
+                    fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, 
+                                                                                 PINCount[1][6], (long)now.tv_sec,
+                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                 list->MachineCode, list->UserNo, MachJobDone);
+#endif
+                    fclose(fptr);
+                    jobDoneFlag = 1;
+                    pthread_mutex_unlock(&Mutexlinklist);
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&Mutexlinklist);
             usleep(100000);
         }
         printf("get finish event\n");
@@ -925,47 +1001,50 @@ void * WatchDogFunction(void *argument)
         pthread_join(FileThread, NULL);
         sleep(1);
 
-        //get network and time
-        fd = socket(AF_INET, SOCK_DGRAM, 0);
-        ifr.ifr_addr.sa_family = AF_INET;
-        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
-        ioctl(fd, SIOCGIFADDR, &ifr);
-        close(fd);
-        gettimeofday(&now, NULL);
+        if(jobDoneFlag == 0)
+        {
+            //get network and time
+            fd = socket(AF_INET, SOCK_DGRAM, 0);
+            ifr.ifr_addr.sa_family = AF_INET;
+            strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+            ioctl(fd, SIOCGIFADDR, &ifr);
+            close(fd);
+            gettimeofday(&now, NULL);
 
-        pthread_mutex_lock(&Mutexlinklist);
-        fptr = fopen(list->UPLoadFile, "a");
-        if(fptr != NULL)
-        {   
-            unsigned long goodCount = (unsigned long)atoi(list->CountNo);
-            if(PINCount[1][6] >= (goodCount / 1.04))
-            {
+            pthread_mutex_lock(&Mutexlinklist);
+            fptr = fopen(list->UPLoadFile, "a");
+            if(fptr != NULL)
+            {   
+                unsigned long goodCount = (unsigned long)atol(list->CountNo);
+                if(PINCount[1][6] >= (goodCount / 1.04))
+                {
 #ifdef PrintMode
-                fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
-                                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           list->MachineCode, list->UserNo, MachSTOPForce1);
+                    fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                               list->MachineCode, list->UserNo, MachSTOPForce1);
 #else
-                fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", 
-                                                           list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
-                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                           list->MachineCode, list->UserNo, MachSTOPForce1);
+                    fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", 
+                                                               list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
+                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                               list->MachineCode, list->UserNo, MachSTOPForce1);
 #endif
-            }else
-            {
+                }else
+                {
 #ifdef PrintMode
-                fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
-                                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           list->MachineCode, list->UserNo, MachSTOPForce2);
+                    fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                               list->MachineCode, list->UserNo, MachSTOPForce2);
 #else
-                fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", 
-                                                           list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
-                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                             list->MachineCode, list->UserNo, MachSTOPForce2);
+                    fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", 
+                                                               list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
+                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                 list->MachineCode, list->UserNo, MachSTOPForce2);
 #endif
+                }
+                fclose(fptr);
             }
-            fclose(fptr);
+            pthread_mutex_unlock(&Mutexlinklist);
         }
-        pthread_mutex_unlock(&Mutexlinklist);
 
         FTPFlag = 0;
         pthread_mutex_lock(&mutexFTP);
@@ -994,6 +1073,26 @@ void * WatchDogFunction(void *argument)
             list = NULL;
         
         }else;
+        if(OrderInBox <= 1)
+        {
+            OrderInBox = 0;
+            if(FlagStopUpdateNetworkStatus == 0)
+            {
+                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_16, HIGH);
+                digitalWrite (WiringPiPIN_18, HIGH);
+            }
+        }
+        else
+        {
+            OrderInBox = OrderInBox - 1;
+            if(OrderInBox == 1 && FlagStopUpdateNetworkStatus == 0)
+            {
+                digitalWrite (WiringPiPIN_15, HIGH);
+                digitalWrite (WiringPiPIN_16, HIGH);
+                digitalWrite (WiringPiPIN_18, LOW);
+            } 
+        }
         pthread_mutex_unlock(&Mutexlinklist);
     }
 }

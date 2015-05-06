@@ -994,7 +994,7 @@ int main(int argc ,char *argv[])
         }
 
         free(buffer);
-        sleep(1);
+        /*sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
         strcpy(ISNo, FakeInput[0]);
         digitalWrite (WiringPiPIN_15, LOW);
@@ -1007,7 +1007,7 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
-
+        */
         sleep(1);
         memset(MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(MachineCode, FakeInput[2]);
@@ -1375,6 +1375,7 @@ int main(int argc ,char *argv[])
                     else if(strncmp(tempString, "XXXM", 4) == 0)
                     {
                         char FixerNo[InputLength];
+                        struct timeval changeIntoRepairmodeTimeStemp;
                         pthread_t buttonThread;
                         memset(FixerNo, 0, sizeof(char)*InputLength);
                         tempPtr = tempString + 4;
@@ -1405,11 +1406,11 @@ int main(int argc ,char *argv[])
                         ioctl(fd, SIOCGIFADDR, &ifr);
                         close(fd);
                         gettimeofday(&now, NULL);
+                        gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
 
                         pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,tw
-                                                                                      (long)now.tv_sec,
+                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                       MachineCode, FixerNo, MachREPAIRING);
 #else
@@ -1441,7 +1442,7 @@ int main(int argc ,char *argv[])
                             gets(tempString);
                             if(strncmp(tempString, "XXXM", 4) == 0)
                             {
-                                char doubleCheckFixerNo[InputLenght];
+                                char doubleCheckFixerNo[InputLength];
                                 memset(doubleCheckFixerNo, 0, sizeof(char)*InputLength);
                                 tempPtr = tempString + 4;
                                 memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
@@ -1457,15 +1458,15 @@ int main(int argc ,char *argv[])
 
                                     pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s 0 0 0 %02d\n", 
+                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 30 %s %s %ld 0 0 %02d\n", 
                                                                       ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                      MachineCode, FixerNo, MachREPAIRDone);
+                                                                      MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #else
                                     fprintf(pfile, "%s %s %s %ld %ld 0 %s 30 %s %s 0 0 0 %02d\n", 
                                                                       ISNo, ManagerCard, CountNo, PINCount[3][4]-PINCount[3][3], (long)now.tv_sec,
                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                      MachineCode, FixerNo, MachREPAIRDone);
+                                                                      MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #endif
                                     fclose(pfile);
             
@@ -1480,8 +1481,39 @@ int main(int argc ,char *argv[])
                                     pthread_join(FTPThread, NULL);
                                     break;
                                 }
+                                printf("FixerNo scan error code\n");
+                            }else if(strncmp(tempString, "UUU", 3) == 0)
+                            {
+                                char fixItem[InputLength];
+                                memset(fixItem, 0, sizeof(char)*InputLength);
+                                tempPtr = tempString + 3;
+                                memcpy(fixItem, tempPtr, sizeof(tempString)-2);
+
+                                //get ip address & time
+                                fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                ifr.ifr_addr.sa_family = AF_INET;
+                                strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                ioctl(fd, SIOCGIFADDR, &ifr);
+                                close(fd);
+                                gettimeofday(&now, NULL);
+
+                                pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+#else
+                                fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n", 
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+#endif
+                                fclose(pfile);
+                            }else
+                            {
+                                printf("FixerNo scan error code\n");
                             }
-                            printf("FixerNo scan error code\n");
                         }
                          
                         ButtonFlag = 0;

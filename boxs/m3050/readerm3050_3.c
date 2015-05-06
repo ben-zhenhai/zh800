@@ -50,11 +50,11 @@
 #define CONFIG_P0 0x06
 #define CONFIG_P1 0x07
 
-#define WatchDogCountValue 126000 //msec
+#define WatchDogCountValue 600 //sec
 #define InputLength 256
 #define UPLoadFileLength 256
 #define CountPeriod 4 
-#define WriteFileCountValue 4200 // msec
+#define WriteFileCountValue 4 // sec
 #define FTPCountValue 300 //sec
 #define FTPWakeUpValue 60 //sec
 #define zhMAXOUTPUT 10
@@ -102,24 +102,28 @@ short zhTelnetFlag = 0;
 short FTPFlag = 0;
 short ButtonFlag = 0;
 short MasterFlag = 0;
+short WaitBarcodeInput = 0;
+short ReadytoRead = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
 
 pthread_cond_t cond,condFTP;
-pthread_mutex_t mutex, mutex_3, mutex_log, mutex_2, mutexFTP, mutexFile;
+pthread_mutex_t mutex, mutex_3, mutex_log, mutex_2, mutexFTP, mutexFile, mutexInput;
 
 long ProductCountArray[CountSize];
 long ExProductCountArray[CountSize];
 
 char ISNo[InputLength], ManagerCard[InputLength], MachineCode[InputLength], UserNo[InputLength], CountNo[InputLength];
 char UPLoadFile[UPLoadFileLength];
+char tempString[InputLength];
 
 void * zhLogFunction(void *argument);
 void * FTPFunction(void *arguemnt);
 void * ButtonListenFunction(void *argument);
 void * SerialFunction(void *argument);
 void * RemoteControl(void *argument);
+void * InputFunction(void *argument);
 void StringCat(const char *str);
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
@@ -304,6 +308,7 @@ void * SerialFunction(void *argument)
     FILE *fileDst;
     struct ifreq ifr;
     short errorCheckCount[CountSize];
+    int watchdogCooldown = WatchDogCountValue;
     memset(errorCheckCount, 0, sizeof(short)*CountSize);
 
     if ((fd = serialOpen ("/dev/ttyAMA0", 9600)) < 0)
@@ -654,7 +659,7 @@ void * SerialFunction(void *argument)
             {
                 flagPack = 1;
                 arrayReceiver[charCount] = tempChar1;
-                ++charCount; 
+                ++charCount;
             }else if(count1 != 0 && count1 < 7)
             {
                 prefixCheck[count1] = tempChar1;
@@ -806,19 +811,18 @@ void * SerialFunction(void *argument)
                                                                               forCount+1, MachineCode, UserNo, MachRUNNING);
 #else
                         fprintf(fileDst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,
-                                                                                   ProductCountArray[GoodNumber],
-                                                                                   (long)now.tv_sec,
-                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                   forCount+1, MachineCode, UserNo, MachRUNNING);
+                                                                              ProductCountArray[GoodNumber], (long)now.tv_sec,
+                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                              forCount+1, MachineCode, UserNo, MachRUNNING);
 #endif
                     }
                     else
                     {
 #ifdef PrintMode
                         fprintf(fileDst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
-                                                                                   ProductCountArray[forCount] - ExProductCountArray[forCount],
-                                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                   forCount+1, MachineCode, UserNo, MachRUNNING);
+                                                                               ProductCountArray[forCount] - ExProductCountArray[forCount],
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                               forCount+1, MachineCode, UserNo, MachRUNNING);
 #else
                         fprintf(fileDst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, 
                                                                                    (long)now.tv_sec, ProductCountArray[forCount],
@@ -884,11 +888,30 @@ void * SerialFunction(void *argument)
 #endif
 }
 
+void * InputFunction(void * argument)
+{
+    char getStringinBuffer[InputLength];
+    while(1)
+    {
+        memset(getStringinBuffer, 0, sizeof(char));
+        gets(getStringinBuffer);
+        if(WaitBarcodeInput && ReadytoRead == 0)
+        {
+            pthread_mutex_lock(&mutexInput);
+            memset(tempString, 0, sizeof(char));
+            strcpy(tempString, getStringinBuffer);
+            ReadytoRead = 1;
+            pthread_mutex_unlock(&mutexInput); 
+        }
+        usleep(100000);
+    }
+}
+
 int main(int argc ,char *argv[])
 {
     char *dev = "/dev/i2c-1";
     int rc;    
-    pthread_t LogThread, SerialThread, FileThread, TelnetControlThread, FTPThread;
+    pthread_t LogThread, SerialThread, FileThread, TelnetControlThread, FTPThread, InputThread;
     int shmid;
     key_t key;
     struct ifreq ifr;
@@ -900,6 +923,7 @@ int main(int argc ,char *argv[])
     pthread_mutex_init(&mutex_log, NULL);
     pthread_mutex_init(&mutexFTP, NULL);
     pthread_mutex_init(&mutexFile, NULL);
+    pthread_mutex_init(&mutexInput, NULL);
     pthread_cond_init(&cond, NULL);
     pthread_cond_init(&condFTP, NULL);
 
@@ -913,7 +937,7 @@ int main(int argc ,char *argv[])
 
     int fd, r;
     long goodCount;
-    char tempString[InputLength], *tempPtr;
+    char *tempPtr;
     struct timeval now;
     FILE *pfile;
   
@@ -944,7 +968,9 @@ int main(int argc ,char *argv[])
     s = shm + 1;
     Log(s, __func__, __LINE__, " ready to init\n");
 #endif
-    
+    rc = pthread_create(&LogThread, NULL, InputFunction, NULL); 
+    assert(rc == 0);  
+ 
     //the mechine always standby
     while(1)
     {
@@ -974,122 +1000,142 @@ int main(int argc ,char *argv[])
 #ifdef PrintInfo
         printf("Ready to work..\n");
 #endif
+
+        WaitBarcodeInput = 1;
         while(1)
         {
             sleep(1);
-            memset(tempString, 0, sizeof(char)* InputLength);
-            gets(tempString);
-            //if(strncmp(tempString, "YYY", 3) == 0)
-            if(strlen(tempString) == 14)
+            if(ReadytoRead)
             {
-                memset(ISNo, 0, sizeof(char)*InputLength);
-                //tempPtr = tempString + 3;
-                //memcpy(ISNo, tempPtr, sizeof(tempString)-2);
-                tempPtr = tempString;
-                memcpy(ISNo, tempPtr, sizeof(tempString));
-                digitalWrite (WiringPiPIN_15, LOW);
-                digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, HIGH);
-                break;
-            }
-            printf("scan ISNo error code\n");
-        }
-        while(1)
-        {
-            sleep(1);
-            memset(tempString, 0, sizeof(char)*InputLength);
-            gets(tempString);
-            //if(strncmp(tempString, "QQQ", 3) == 0)
-            if(strlen(tempString) == 24)
-            {
-                memset(ManagerCard, 0, sizeof(char)*InputLength);
-                //tempPtr = tempString + 3;
-                //memcpy(ManagerCard, tempPtr, sizeof(tempString)-2);
-                tempPtr = tempString;
-                memcpy(ManagerCard, tempPtr, sizeof(tempString));
-                digitalWrite (WiringPiPIN_15, HIGH);
-                digitalWrite (WiringPiPIN_16, LOW);
-                digitalWrite (WiringPiPIN_18, HIGH);
-                break;
-            }
-            printf("ManagerCard scan error code\n");
-        }
-        while(1)
-        {
-            sleep(1);
-            memset(tempString, 0, sizeof(char)*InputLength);
-            gets(tempString);
-            int stringLength = strlen(tempString);
-            int arrayCount = 0;
-            short flagFailPass = 0;
-            while(arrayCount < stringLength)
-            {
-                if(tempString[arrayCount] == '0') ;
-                else if(tempString[arrayCount] == '1');
-                else if(tempString[arrayCount] == '2');
-                else if(tempString[arrayCount] == '3');
-                else if(tempString[arrayCount] == '4');
-                else if(tempString[arrayCount] == '5');
-                else if(tempString[arrayCount] == '6');
-                else if(tempString[arrayCount] == '7');
-                else if(tempString[arrayCount] == '8');
-                else if(tempString[arrayCount] == '9');
-                else 
+                pthread_mutex_lock(&mutexInput);
+                ReadytoRead = 0;
+                if(strlen(tempString) == 14)
                 {
-                    flagFailPass = 1;
+                    memset(ISNo, 0, sizeof(char)*InputLength);
+                    //tempPtr = tempString + 3;
+                    //memcpy(ISNo, tempPtr, sizeof(tempString)-2);
+                    tempPtr = tempString;
+                    memcpy(ISNo, tempPtr, sizeof(tempString));
+                    digitalWrite (WiringPiPIN_15, LOW);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, HIGH);
+                    pthread_mutex_unlock(&mutexInput);
                     break;
                 }
-                ++arrayCount;
+                pthread_mutex_unlock(&mutexInput);
+                printf("scan ISNo error code\n");
             }
-            if(flagFailPass == 0 && stringLength > 0)
+        }
+        while(1)
+        {
+            sleep(1);
+            if(ReadytoRead)
             {
-                memset(CountNo, 0, sizeof(char)*InputLength);
-                memcpy(CountNo, tempPtr, sizeof(tempString));
-                goodCount = (atoi(CountNo)*goodrate);
-                if(goodCount > 0)
+                pthread_mutex_lock(&mutexInput);
+                ReadytoRead = 0;
+                if(strlen(tempString) == 24)
                 {
+                    memset(ManagerCard, 0, sizeof(char)*InputLength);
+                    //tempPtr = tempString + 3;
+                    //memcpy(ManagerCard, tempPtr, sizeof(tempString)-2);
+                    tempPtr = tempString;
+                    memcpy(ManagerCard, tempPtr, sizeof(tempString));
+                    digitalWrite (WiringPiPIN_15, HIGH);
+                    digitalWrite (WiringPiPIN_16, LOW);
+                    digitalWrite (WiringPiPIN_18, HIGH);
+                    pthread_mutex_unlock(&mutexInput);
+                    break;
+                }
+                pthread_mutex_unlock(&mutexInput);
+                printf("ManagerCard scan error code\n");
+            }
+        }
+        while(1)
+        {
+            sleep(1);
+            if(ReadytoRead)
+            {
+                int stringLength = strlen(tempString);
+                int arrayCount = 0;
+                short flagFailPass = 0;
+                pthread_mutex_lock(&mutexInput);
+                ReadytoRead = 0;
+                while(arrayCount < stringLength)
+                {
+                    if(tempString[arrayCount] == '0') ;
+                    else if(tempString[arrayCount] == '1');
+                    else if(tempString[arrayCount] == '2');
+                    else if(tempString[arrayCount] == '3');
+                    else if(tempString[arrayCount] == '4');
+                    else if(tempString[arrayCount] == '5');
+                    else if(tempString[arrayCount] == '6');
+                    else if(tempString[arrayCount] == '7');
+                    else if(tempString[arrayCount] == '8');
+                    else if(tempString[arrayCount] == '9');
+                    else 
+                    {
+                        flagFailPass = 1;
+                        break;
+                    }
+                    ++arrayCount;
+                }
+                if(flagFailPass == 0 && stringLength > 0)
+                {
+                    memset(CountNo, 0, sizeof(char)*InputLength);
+                    memcpy(CountNo, tempPtr, sizeof(tempString));
+                    goodCount = (atoi(CountNo)*goodrate);
+                    if(goodCount > 0)
+                    {
+                        printf("need finish: %ld\n", goodCount);
+                        digitalWrite (WiringPiPIN_15, LOW);
+                        digitalWrite (WiringPiPIN_16, LOW);
+                        digitalWrite (WiringPiPIN_18, HIGH);
+                        pthread_mutex_unlock(&mutexInput);
+                        break;
+                    }
+                }
+                /*if(strncmp(tempString, "WWW", 3) == 0)
+                {
+                    memset(CountNo, 0, sizeof(char)*InputLength);
+                    tempPtr = tempString + 3;
+                    memcpy(CountNo, tempPtr, sizeof(tempString)-2);
+                    goodCount = (atoi(CountNo)*goodrate);
                     printf("need finish: %ld\n", goodCount);
                     digitalWrite (WiringPiPIN_15, LOW);
                     digitalWrite (WiringPiPIN_16, LOW);
                     digitalWrite (WiringPiPIN_18, HIGH);
-                    break;
-                }
-            }
-            /*if(strncmp(tempString, "WWW", 3) == 0)
-            {
-                memset(CountNo, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 3;
-                memcpy(CountNo, tempPtr, sizeof(tempString)-2);
-                goodCount = (atoi(CountNo)*goodrate);
-                printf("need finish: %ld\n", goodCount);
-                digitalWrite (WiringPiPIN_15, LOW);
-                digitalWrite (WiringPiPIN_16, LOW);
-                digitalWrite (WiringPiPIN_18, HIGH);
                 
-                break;
-            }*/
-            printf("CountNo scan error code\n");
+                    break;
+                }*/
+                pthread_mutex_unlock(&mutexInput);
+                printf("CountNo scan error code\n");
+            }
         } 
      
         while(1)
         {
             sleep(1);
-            memset(tempString, 0, sizeof(char)*InputLength);
-            gets(tempString);
-            if(strncmp(tempString, "XXXP", 4) == 0)
+            if(ReadytoRead)
             {
-                memset(UserNo, 0, sizeof(char)*InputLength);
-                tempPtr = tempString + 4;
-                memcpy(UserNo, tempPtr, sizeof(tempString)-3);
+                pthread_mutex_lock(&mutexInput);
+                ReadytoRead = 0;
+                if(strncmp(tempString, "XXXP", 4) == 0)
+                {
+                    memset(UserNo, 0, sizeof(char)*InputLength);
+                    tempPtr = tempString + 4;
+                    memcpy(UserNo, tempPtr, sizeof(tempString)-3);
                 
-                digitalWrite (WiringPiPIN_15, HIGH);
-                digitalWrite (WiringPiPIN_16, HIGH);
-                digitalWrite (WiringPiPIN_18, LOW);
-                
-                break;
+                    digitalWrite (WiringPiPIN_15, HIGH);
+                    digitalWrite (WiringPiPIN_16, HIGH);
+                    digitalWrite (WiringPiPIN_18, LOW);
+                    pthread_mutex_unlock(&mutexInput); 
+                    break;
+                }
+                pthread_mutex_unlock(&mutexInput); 
+                printf("UserNo scan error code\n");
             }
-            printf("UserNo scan error code\n");
         }
+        WaitBarcodeInput = 0;
 
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
@@ -1131,6 +1177,7 @@ int main(int argc ,char *argv[])
         }
 
         free(buffer);
+        /*
         sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
         strcpy(ISNo, FakeInput[0]);
@@ -1144,7 +1191,7 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
-
+        */
         sleep(1);
         memset(MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(MachineCode, FakeInput[2]);
@@ -1164,6 +1211,7 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, LOW);
         */
+        gettimeofday(&now, NULL);
         memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
         sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
         pfile = fopen(UPLoadFile, "a");
@@ -1222,11 +1270,11 @@ int main(int argc ,char *argv[])
                 //if(ProductCountArray[GoodNumber] >= 0)
                 {
                     //finish job
-                    sleep(10);
                     printf("Houston we are ready to back!\n");
                     zhResetFlag = 1;
                     MasterFlag = 0;
                     isNormalStop = 1;
+                    sleep(1);
                 }
                 /*else if(zhTelnetFlag == 0)
                 {
@@ -1254,6 +1302,7 @@ int main(int argc ,char *argv[])
                     printf("Houston we are ready to back!\n");
                     zhResetFlag = 1;
                     MasterFlag = 0;
+                    sleep(1);
                 }
                 else;
             }
@@ -1357,11 +1406,6 @@ int main(int argc ,char *argv[])
             
             if(MasterFlag)
             {
-                //hint for scan user
-                digitalWrite (WiringPiPIN_15, LOW);
-                digitalWrite (WiringPiPIN_16, LOW);
-                digitalWrite (WiringPiPIN_18, HIGH);
- 
                 //lock
                 fd = open(dev, O_RDWR);
                 if(fd < 0)
@@ -1379,154 +1423,213 @@ int main(int argc ,char *argv[])
                 i2c_smbus_write_byte_data(fd, OUT_P1, 0x07);
                 i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
                 close(fd);
+                
+                //hint for scan user
+                digitalWrite (WiringPiPIN_15, LOW);
+                digitalWrite (WiringPiPIN_16, LOW);
+                digitalWrite (WiringPiPIN_18, HIGH);
 
+                WaitBarcodeInput = 1;
                 while(1)
                 {
                     sleep(1);
-                    memset(tempString, 0, sizeof(char)*InputLength);
-                    gets(tempString);
-                    if(strncmp(tempString, "XXXP", 4) == 0)
+                    if(ReadytoRead)
                     {
-                        memset(UserNo, 0, sizeof(char)*InputLength);
-                        tempPtr = tempString + 4;
-                        memcpy(UserNo, tempPtr, sizeof(tempString)-3);
-
-                        //unlock
-                        fd = open(dev, O_RDWR);
-                        if(fd < 0)
+                        pthread_mutex_lock(&mutexInput);
+                        ReadytoRead = 0;
+                        pthread_mutex_unlock(&mutexInput);
+                        if(strncmp(tempString, "XXXP", 4) == 0)
                         {
-                            perror("Open Fail");
-                            return 1;
-                        }
-                        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
-                        if(r < 0)
-                        {
-                            perror("Selection i2c device fail");
-                            return 1;
-                        }
-        
-                        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
-                        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
-                        close(fd);
-                        break;
-                    }
-                    else if(strncmp(tempString,"XXXM", 4) == 0)
-                    {
-                        char FixerNo[InputLength];
-                        pthread_t buttonThread;
-                        memset(FixerNo, 0, sizeof(char)*InputLength);
-                        tempPtr = tempString + 4;
-                        memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
-                        
-                        //unlock
-                        fd = open(dev, O_RDWR);
-                        if(fd < 0)
-                        {
-                            perror("Open Fail");
-                            return 1;
-                        }
-                        r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
-                        if(r < 0)
-                        {
-                            perror("Selection i2c device fail");
-                            return 1;
-                        }
-        
-                        i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
-                        i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
-                        close(fd);
+                            pthread_mutex_lock(&mutexInput);
+                            memset(UserNo, 0, sizeof(char)*InputLength);
+                            tempPtr = tempString + 4;
+                            memcpy(UserNo, tempPtr, sizeof(tempString)-3);
+                            pthread_mutex_unlock(&mutexInput);
 
-                        //get ip address & time
-                        fd = socket(AF_INET, SOCK_DGRAM, 0);
-                        ifr.ifr_addr.sa_family = AF_INET;
-                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
-                        ioctl(fd, SIOCGIFADDR, &ifr);
-                        close(fd);
-                        gettimeofday(&now, NULL);
-
-                        pfile = fopen(UPLoadFile, "a");
-#ifdef PrintMode
-                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, FixerNo, MachREPAIRING);
-#else
-                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                                       MachineCode, FixerNo, MachREPAIRING);
-#endif
-                        fclose(pfile);
-
-                        FTPFlag = 1;
-                        rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
-                        assert(rc == 0);
-                        sleep(1);
-                        FTPFlag = 0;
-                        pthread_mutex_lock(&mutexFTP);
-                        pthread_cond_signal(&condFTP);
-                        pthread_mutex_unlock(&mutexFTP);
-                        pthread_join(FTPThread, NULL);
-
-                        ButtonFlag = 1;
-                        rc = pthread_create(&buttonThread, NULL, ButtonListenFunction, NULL);
-                        assert(rc == 0);
-
-                        while(1)
-                        {
-                            memset(tempString, 0, sizeof(char)*InputLength);
-                            gets(tempString);
-                            sleep(1);
-                            if(strncmp(tempString, "XXXM", 4) == 0)
+                            //unlock
+                            fd = open(dev, O_RDWR);
+                            if(fd < 0)
                             {
-                                char doubleCheckFixerNo[InputLength];
-                                memset(doubleCheckFixerNo, 0, sizeof(char)*InputLength);
-                                tempPtr = tempString + 4;
-                                memcpy(doubleCheckFixerNo, tempPtr, sizeof(tempString)-3);
-                                if(strcmp(FixerNo, doubleCheckFixerNo) == 0)
-                                {
-                                    //get ip address & time
-                                    fd = socket(AF_INET, SOCK_DGRAM, 0);
-                                    ifr.ifr_addr.sa_family = AF_INET;
-                                    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
-                                    ioctl(fd, SIOCGIFADDR, &ifr);
-                                    close(fd);
-                                    gettimeofday(&now, NULL);
+                                perror("Open Fail");
+                                return 1;
+                            }
+                            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                            if(r < 0)
+                            {
+                                perror("Selection i2c device fail");
+                                return 1;
+                            }
+        
+                            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                            close(fd);
+                            break;
+                        }
+                        else if(strncmp(tempString,"XXXM", 4) == 0)
+                        {
+                            pthread_mutex_lock(&mutexInput);
+                            char FixerNo[InputLength];
+                            struct timeval changeIntoRepairmodeTimeStemp;
+                            unsigned char flagScanEventDone = 0;
+                            pthread_t buttonThread;
+                            memset(FixerNo, 0, sizeof(char)*InputLength);
+                            tempPtr = tempString + 4;
+                            memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
+                            pthread_mutex_unlock(&mutexInput);
+                        
+                            //unlock
+                            fd = open(dev, O_RDWR);
+                            if(fd < 0)
+                            {
+                                perror("Open Fail");
+                                return 1;
+                            }
+                            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                            if(r < 0)
+                            {
+                                perror("Selection i2c device fail");
+                                return 1;
+                            }
+        
+                            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                            close(fd);
 
-                                    pfile = fopen(UPLoadFile, "a");
+                            digitalWrite (WiringPiPIN_15, LOW);
+                            digitalWrite (WiringPiPIN_16, LOW);
+                            digitalWrite (WiringPiPIN_18, LOW);
+
+                            //get ip address & time
+                            fd = socket(AF_INET, SOCK_DGRAM, 0);
+                            ifr.ifr_addr.sa_family = AF_INET;
+                            strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                            ioctl(fd, SIOCGIFADDR, &ifr);
+                            close(fd);
+                            gettimeofday(&now, NULL);
+                            gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
+
+                            pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                          ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                          MachineCode, FixerNo, MachREPAIRDone);
+                            fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                       MachineCode, FixerNo, MachREPAIRING);
 #else
-                                    fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                            fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                       MachineCode, FixerNo, MachREPAIRING);
+#endif
+                            fclose(pfile);
+
+                            FTPFlag = 1;
+                            rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+                            assert(rc == 0);
+                            sleep(1);
+                            FTPFlag = 0;
+                            pthread_mutex_lock(&mutexFTP);
+                            pthread_cond_signal(&condFTP);
+                            pthread_mutex_unlock(&mutexFTP);
+                            pthread_join(FTPThread, NULL);
+
+                            ButtonFlag = 1;
+                            rc = pthread_create(&buttonThread, NULL, ButtonListenFunction, NULL);
+                            assert(rc == 0);
+
+                            while(1)
+                            {
+                                sleep(1);
+                                if(ReadytoRead)
+                                {
+                                    pthread_mutex_lock(&mutexInput);
+                                    ReadytoRead = 0;
+                                    pthread_mutex_unlock(&mutexInput);
+                                    if(strncmp(tempString, "XXXM", 4) == 0 && flagScanEventDone)
+                                    {
+                                        pthread_mutex_lock(&mutexInput);
+                                        memset(FixerNo, 0, sizeof(char)*InputLength);
+                                        tempPtr = tempString + 4;
+                                        memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
+                                        pthread_mutex_unlock(&mutexInput);
+
+                                        //get ip address & time
+                                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                        ifr.ifr_addr.sa_family = AF_INET;
+                                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                        ioctl(fd, SIOCGIFADDR, &ifr);
+                                        close(fd);
+                                        gettimeofday(&now, NULL);
+
+                                        pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s %ld 0 0 %02d\n", 
                                                                           ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                          MachineCode, FixerNo, MachREPAIRDone);
+                                                                          MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec,MachREPAIRDone);
+#else
+                                        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s %ld 0 0 %02d\n", 
+                                                                          ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                          MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #endif
-                                    fclose(pfile);
+                                        fclose(pfile);
             
-                                    FTPFlag = 1;
-                                    rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
-                                    assert(rc == 0);
-                                    sleep(1);
-                                    FTPFlag = 0;
-                                    pthread_mutex_lock(&mutexFTP);
-                                    pthread_cond_signal(&condFTP);
-                                    pthread_mutex_unlock(&mutexFTP);
-                                    pthread_join(FTPThread, NULL);
-                                    break;
+                                        FTPFlag = 1;
+                                        rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+                                        assert(rc == 0);
+                                        sleep(1);
+                                        FTPFlag = 0;
+                                        pthread_mutex_lock(&mutexFTP);
+                                        pthread_cond_signal(&condFTP);
+                                        pthread_mutex_unlock(&mutexFTP);
+                                        pthread_join(FTPThread, NULL);
+                                        break;
+                                    }else if(strncmp(tempString, "UUU", 3) == 0 && (!flagScanEventDone))
+                                    {
+                                        pthread_mutex_lock(&mutexInput);
+                                        char fixItem[InputLength];
+                                        memset(fixItem, 0, sizeof(char)*InputLength);
+                                        tempPtr = tempString + 3;
+                                        memcpy(fixItem, tempPtr, sizeof(tempString)-2);
+                                        pthread_mutex_unlock(&mutexInput);
+
+                                        //get ip address & time
+                                        fd = socket(AF_INET, SOCK_DGRAM, 0);
+                                        ifr.ifr_addr.sa_family = AF_INET;
+                                        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+                                        ioctl(fd, SIOCGIFADDR, &ifr);
+                                        close(fd);
+                                        gettimeofday(&now, NULL);
+
+                                        pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+                                        fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec , MachREPAIRING);
+#else
+                                        fprintf(pfile, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n", 
+                                                                             ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), atoi(fixItem),
+                                                                             MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec , MachREPAIRING);
+#endif
+                                        fclose(pfile);
+                                        flagScanEventDone = 1;
+                                    }else
+                                    {
+                                        printf("FixerNo scan error code\n");
+                                    }
                                 }
                             }
-                            printf("FixerNo scan error code\n");
+                            ButtonFlag = 0;
+                            pthread_join(buttonThread, NULL);
+                            break;
                         }
-                        ButtonFlag = 0;
-                        pthread_join(buttonThread, NULL);
-                        break;
+                        printf("UserNo scan error code\n");
                     }
-                    printf("UserNo scan error code\n");
                 }
+                WaitBarcodeInput = 0;
+
                 //get ip address & time
                 fd = socket(AF_INET, SOCK_DGRAM, 0);
                 ifr.ifr_addr.sa_family = AF_INET;
