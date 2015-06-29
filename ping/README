@@ -3,3 +3,4 @@ main files:
     - ping_2.js
     - boxStatus.html
     - config.ini
+    - dailySum.js

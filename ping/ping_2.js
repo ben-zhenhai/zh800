@@ -55,7 +55,7 @@ function checkAlive() {
 function checkAliveResult(errorTimes) {
   var failedIp = [];
   for(var ip in pingSet) {
-    console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
+    // console.log(ip + '  ' + pingSet[ip] + ' ' + errorTimes);
     if(pingSet[ip] >= errorTimes) { 
       var tmp = ipMappingData.filter(function(obj) {
         return obj.IP === ip;
@@ -76,6 +76,7 @@ function checkAliveResult(errorTimes) {
       //console.log('~~~~~~~~>>>' + pingSet[ip]);
     }
   }
+  console.log("ping_2.js send failedIp result");
   process.send(failedIp);
 }
 

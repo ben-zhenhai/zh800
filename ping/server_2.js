@@ -7,6 +7,7 @@ var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
 var dailyCount = child_process.fork('./dailySum.js');
+var dbConn = child_process.fork('./dbConnect.js');
 
 console.log("Alive server start.");
 
@@ -22,6 +23,12 @@ n.on('message',function(m){
 dailyCount.on('message', function(m) {
   console.log("-------->> get daily count data!");
   io.emit('dailyCount', JSON.stringify(m));
+  console.log(m);
+});
+
+dbConn.on('message', function(m) {
+  console.log("-------->> get machine status data!");
+  io.emit('dbConnect', JSON.stringify(m)); 
   console.log(m);
 });
 
@@ -49,6 +56,7 @@ io.on('connection', function(socket) {
   socket.on('boxStatusPic', function(msg) {
     n.send('init');
     dailyCount.send('init');
+    dbConn.send('init');
     console.log('get boxStatusPic.html msg:' + msg);
   });
   socket.on('disconnect', function() {
