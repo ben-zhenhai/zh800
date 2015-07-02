@@ -110,25 +110,29 @@
               workE = totalE - notReadyE - failE;
               $('#SQUARE_ON').html(workE);
               $('#SQUARE_FAIL').html(failE);
-              $('#SQUARE_AVAILABILITY').html(workE/(totalE - notReadyE) * 100 + '%');
+              var resultE = new Number(workE/(totalE - notReadyE) * 100);
+              $('#SQUARE_AVAILABILITY').html(resultE.toFixed(2) + '%');
                
               $('#TRIANGLE_TOTAL').html(totalG - notReadyG);
               workG = totalG - notReadyG - failG;
               $('#TRIANGLE_ON').html(workG);
               $('#TRIANGLE_FAIL').html(failG);
-              $('#TRIANGLE_AVAILABILITY').html(workG/(totalG - notReadyG) * 100 + '%');
+              var resultG = new Number(workG/(totalG - notReadyG) * 100);
+              $('#TRIANGLE_AVAILABILITY').html(resultG.toFixed(2) + '%');
 
               $('#CIRCLE_TOTAL').html(totalA - notReadyA);
               workA = totalA - notReadyA - failA;
               $('#CIRCLE_ON').html(workA);
               $('#CIRCLE_FAIL').html(failA);
-              $('#CIRCLE_AVAILABILITY').html(workA/(totalA - notReadyA) * 100 + '%');
+              var resultA = new Number(workA/(totalA - notReadyA) * 100);
+              $('#CIRCLE_AVAILABILITY').html(resultA.toFixed(2) + '%');
                
               $('#PENTAGON_TOTAL').html(totalTC - notReadyTC);
               workTC = totalTC - notReadyTC - failTC;
               $('#PENTAGON_ON').html(workTC);
               $('#PENTAGON_FAIL').html(failTC);
-              $('#PENTAGON_AVAILABILITY').html(workTC/(totalTC - notReadyTC) * 100 + '%');
+              var resultTC = new Number(workTC/(totalTC - notReadyTC) * 100);
+              $('#PENTAGON_AVAILABILITY').html(resultTC.toFixed(2) + '%');
             });
 
             socket.on('dailyCount', function(msg) {
