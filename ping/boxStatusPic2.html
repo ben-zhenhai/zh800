@@ -17,7 +17,7 @@
 
             socket.on('alive', function(msg) {
               $('#data table').empty();
-	      totalE = 0,    totalG = 0,    totalA = 0,    totalTC = 0;
+              totalE = 0,    totalG = 0,    totalA = 0,    totalTC = 0;
               notReadyE = 0, notReadyG = 0, notReadyA = 0, notReadyTC = 0;
               failE = 0,     failG = 0,     failA = 0,     failTC = 0;
 
@@ -44,34 +44,34 @@
                   if (json.ID.indexOf('E') > -1 || json.ID.indexOf('S') > -1) {            // 加締
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyE++;
-                      console.log('ESESES: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
+                      //console.log('ESESES: ' + json.ID + ', notReady count: ' + notReadyE + ', note: '+ json.NOTE);
                     } else {               // 錯誤(非未裝機)
                       failE++;
-                      console.log('ESESES: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
+                      //console.log('ESESES: ' + json.ID + ', fail count: ' + failE + ', note: ' + json.NOTE);
                     }
                   } else if (json.ID.indexOf('G') > -1) {                                  // 組立
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyG++;
-                      console.log('GGGGGG: ' + json.ID + ', notReady count: ' + notReadyG + ', note: '+ json.NOTE);
+                      //console.log('GGGGGG: ' + json.ID + ', notReady count: ' + notReadyG + ', note: '+ json.NOTE);
                     } else {               // 錯誤(非未裝機)
                       failG++;
-                      console.log('GGGGGG: ' + json.ID + ', fail count: ' + failG + ', note: ' + json.NOTE);
+                      //console.log('GGGGGG: ' + json.ID + ', fail count: ' + failG + ', note: ' + json.NOTE);
                     }
                   } else if (json.ID.indexOf('A') > '-1') {                                  // 老化
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyA++;
-                      console.log('AAAAAA: ' + json.ID + ', notReady count: ' + notReadyA + ', note: '+ json.NOTE);
+                      //console.log('AAAAAA: ' + json.ID + ', notReady count: ' + notReadyA + ', note: '+ json.NOTE);
                     } else {               // 錯誤(非未裝機)
                       failA++;
-                      console.log('AAAAAA: ' + json.ID + ', fail count: ' + failA + ', note: ' + json.NOTE);
+                      //console.log('AAAAAA: ' + json.ID + ', fail count: ' + failA + ', note: ' + json.NOTE);
                     }
                   } else if (json.ID.indexOf('T') > '-1' || json.ID.indexOf('C') > '-1') { // 其他
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyTC++;
-                      console.log('TCTCTC: ' + json.ID + ', notReady count: ' + notReadyTC + ', note: '+ json.NOTE);
+                      //console.log('TCTCTC: ' + json.ID + ', notReady count: ' + notReadyTC + ', note: '+ json.NOTE);
                     } else {               // 錯誤(非未裝機)
                       failTC++;
-                      console.log('TCTCTC: ' + json.ID + ', fail count: ' + failTC + ', note: ' + json.NOTE);
+                      //console.log('TCTCTC: ' + json.ID + ', fail count: ' + failTC + ', note: ' + json.NOTE);
                     }
                   }
                 }
@@ -88,7 +88,7 @@
                 var objId = elementsE[x].getAttribute('id');
                 if (objId.indexOf('E') > -1 || objId.indexOf('S') > -1) {                  // 加締
                   totalE++;
-                  console.log('ESESES: ' + objId + ', count: ' + totalE);
+                  //console.log('ESESES: ' + objId + ', count: ' + totalE);
                 }
               }
               var elementsPath = mapDoc.getElementsByTagName('path');
@@ -96,13 +96,13 @@
                 var objId = elementsPath[x].getAttribute('id');
                 if (objId.indexOf('G') > -1) {                                             // 組立
                   totalG++;
-                  console.log('GGGGGG: ' + objId + ', count: ' + totalG);
+                  //console.log('GGGGGG: ' + objId + ', count: ' + totalG);
                 } else if (objId.indexOf('A') > -1) {                                      // 老化
                   totalA++;
-                  console.log('AAAAAA: ' + objId + ', count: ' + totalA);
+                  //console.log('AAAAAA: ' + objId + ', count: ' + totalA);
                 } else if (objId.indexOf('T') > -1 || objId.indexOf('C') > -1) {           // 其他
                   totalTC++;
-                  console.log('TCTCTC: ' + objId + ', count: ' + totalTC);
+                  //console.log('TCTCTC: ' + objId + ', count: ' + totalTC);
                 }
               }
 
@@ -153,7 +153,21 @@
 
               updateDate();
             });
-            
+
+            socket.on('dbConnect', function(msg) {
+              var data = jQuery.parseJSON(msg);
+              $.each(data, function(index, json) {
+                //console.log(json.ID + "----------------------------" + json.STATUS);
+                //console.log(mapDoc.getElementById(json.ID).style.fill);
+                if (mapDoc.getElementById(json.ID).style.fill === "rgb(0, 255, 0)" && json.STATUS !=="01") {
+                    mapDoc.getElementById(json.ID).style.fill = "#ffff00";
+                    //console.log("It's online but not working");
+                } else if (mapDoc.getElementById(json.ID).style.fill === "rgb(255, 0, 0)") {
+                  //console.log("RED");
+                }
+              })
+            });
+
             function getCSVfile() {
                 var fileName = "report";
                 
@@ -269,7 +283,7 @@
             </table>
         </div>
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
-        <object onload="loadMapOK();" data="/optimized.svg" type="image/svg+xml" id="factory_map" width="100%" height="100%"></object>
+        <object onload="loadMapOK();" data="/optimized_2.svg" type="image/svg+xml" id="factory_map" width="100%" height="100%"></object>
 <!--        <object onload="loadMapOK();" data="/factory_map.svg" type="image/svg+xml" id="factory_map" width="100%" height="100%"></object> -->
         <!-- 分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線分隔線 -->
         <div id="data">
