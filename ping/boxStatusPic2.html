@@ -15,6 +15,8 @@
             var workE = 0,     workG = 0,     workA = 0,     workTC = 0;
             var failE = 0,     failG = 0,     failA = 0,     failTC = 0;
 
+            var totalMachine = 0, totalRed = 0, totalGray = 0;
+
             socket.on('alive', function(msg) {
               $('#data table').empty();
               totalE = 0,    totalG = 0,    totalA = 0,    totalTC = 0;
@@ -30,6 +32,9 @@
               for (var m = 0; m < allMachine.length; m++) {
                 allMachine[m].style.fill = "#00ff00";
               }
+              totalMachine = allMachine.length;
+              totalRed = 0;
+              totalGray = 0;
 
               tatalData = jQuery.parseJSON(msg);
               $.each(tatalData, function(index, json) {
@@ -41,6 +46,8 @@
                 // failed machine will fill with RED color
                 if (mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#ff0000";
+                  totalRed++;
+
                   if (json.ID.indexOf('E') > -1 || json.ID.indexOf('S') > -1) {            // 加締
                     if (json.NOTE != '') { // 仍未裝機
                       notReadyE++;
@@ -79,8 +86,12 @@
                 // not ready machine will fill with GRAY color
                 if ((json.NOTE !== "") && mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#cccccc";
+                  totalGray++;
                 }
               });
+
+              var rate = totalRed / (totalMachine - totalGray);
+              socket.emit('errorRate', rate);
 
               // FIXME, 阻力老化其他並不是rect
               var elementsE = mapDoc.getElementsByTagName('rect');
