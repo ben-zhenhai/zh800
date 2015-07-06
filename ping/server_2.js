@@ -6,10 +6,18 @@ var io = require('socket.io')(http);
 var child_process = require('child_process');
 var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
+var email = require('emailjs');
 var dailyCount = child_process.fork('./dailySum.js');
 var dbConn = child_process.fork('./dbConnect.js');
 // var checkError = child_process.fork('./sendMail.js');
-var errorRate = 0;
+var errorRate = 0.0;
+var errerAlert = 0.30;
+var mailServer = email.server.connect({
+  user: "freeman@zhenhai.com.tw",
+  password: "aaaa9881#",
+  host: "www.zhenhai.com.tw",
+  ssl: false
+});
 
 
 console.log("Alive server start.");
@@ -76,3 +84,25 @@ io.on('connection', function(socket) {
 http.listen(8080, function() {
   console.log('lostening on 8080');
 });
+
+function sendMail(msg) {
+  mailServer.send(
+    {
+      text:msg,
+      from: "ZhenHai 機台存活率檢查 <freeman@zhenhai.com.tw>",
+      to: "z_h_e_n_h_a_i@mailinator.com",
+      subject: "台容 謝崗廠 機台存活率過低"
+    },
+    function(err, msg) {
+      console.log("err: " + err || msg);
+    }
+  );
+}
+
+function checkErrorRate() {
+  if (errorRate > errerAlert) {
+    sendMail("出錯機台 " + (errorRate* 100) + " %");
+  }
+}
+
+setInterval(checkErrorRate, 3000000);
