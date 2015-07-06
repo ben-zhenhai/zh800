@@ -1,6 +1,6 @@
 var express = require('express');
 var app = express();
-//var app = require('express')();
+// var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var child_process = require('child_process');
@@ -8,6 +8,9 @@ var n = child_process.fork('./ping_2.js');
 var fs = require('fs');
 var dailyCount = child_process.fork('./dailySum.js');
 var dbConn = child_process.fork('./dbConnect.js');
+// var checkError = child_process.fork('./sendMail.js');
+var errorRate = 0;
+
 
 console.log("Alive server start.");
 
@@ -59,6 +62,12 @@ io.on('connection', function(socket) {
     dbConn.send('init');
     console.log('get boxStatusPic.html msg:' + msg);
   });
+
+  socket.on('errorRate', function(msg) {
+    errorRate = msg;
+    console.log("errorRate: " + errorRate);
+  });
+
   socket.on('disconnect', function() {
     console.log('user disconnected');
   });

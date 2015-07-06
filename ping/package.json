@@ -8,6 +8,7 @@
     "url": "https://github.com/ZH8000/zh800.git"
   },
   "dependencies": {
+    "emailjs": "^0.3.16",
     "express": "^4.10.1",
     "mongodb": "^1.4.34",
     "net-ping": "^1.1.11",
