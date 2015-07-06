@@ -105,4 +105,4 @@ function checkErrorRate() {
   }
 }
 
-setInterval(checkErrorRate, 3000000);
+setInterval(checkErrorRate, 300000);
