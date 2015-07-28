@@ -42,7 +42,8 @@
 #define WiringPiPIN_18 5
 #define WiringPiPIN_21 13
 #define WiringPiPIN_22 6
-#define WiringPiPIN_7 6
+#define WiringPiPIN_7 7
+#define WiringPiPIN_24 10
 
 #define IN_P0 0x00
 #define IN_P1 0x01
@@ -80,7 +81,8 @@ enum{
     MachLOCK,
     MachUNLOCK,
     MachSTOPForce1,
-    MachSTOPForce2
+    MachSTOPForce2,
+    MachSTART
 };
 
 int WatchDogThreadFlag;
@@ -448,7 +450,7 @@ void * WatchDogForGood(void *argument)
         
         memcpy(PINEXCount, PINCount, sizeof(long)*40);
        
-         //check network status
+        //check network status
         int fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         struct ifreq ethreq;
         memset(&ethreq, 0, sizeof(ethreq));
@@ -708,6 +710,7 @@ int main(int argc ,char *argv[])
     pinMode(WiringPiPIN_16, OUTPUT); 
     pinMode(WiringPiPIN_18, OUTPUT);
     pinMode(WiringPiPIN_21, OUTPUT);
+    pinMode(WiringPiPIN_24, OUTPUT);
    
     /*scanner check
      * 1. ISNO
@@ -747,18 +750,105 @@ int main(int argc ,char *argv[])
     rc = pthread_create(&InputThread, NULL, InputFunction, NULL);
     assert(rc == 0);
 
+
+    char FakeInput[5][InputLength];
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+
+    pfile = fopen("/home/pi/works/taicon/barcode","r");
+    fseek(pfile, 0, SEEK_END);
+    filesize = ftell(pfile);
+    rewind(pfile);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, pfile);
+    fclose(pfile);
+       
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+
+    sleep(1);
+    memset(MachineCode, 0 , sizeof(char)*InputLength);
+    strcpy(MachineCode, FakeInput[2]);
+
+    gettimeofday(&now, NULL);
+    memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    gettimeofday(&now, NULL);
+    sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+
+    pfile = fopen(UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 9 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#else
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 9 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#endif
+    fclose(pfile);
+
+    FTPFlag = 1;
+    rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(FTPThread, NULL);
+ 
     //the mechine always standby
     while(1)
     {
         unsigned char isNormalStop = 0;
         MasterFlag = 1;
-        short changeUser = 0;
 
 #ifdef LogMode
         Log(s, __func__, __LINE__, " scan barcode ready\n");
 #endif
 
+        digitalWrite (WiringPiPIN_15, HIGH);
+        digitalWrite (WiringPiPIN_16, HIGH);
+        digitalWrite (WiringPiPIN_18, HIGH);
+        //3rd i3c board will control 3*8 control
+
         //lock
+        digitalWrite (WiringPiPIN_24, HIGH);
         fd = open(dev, O_RDWR);
         if(fd < 0)
         {
@@ -775,11 +865,6 @@ int main(int argc ,char *argv[])
         i2c_smbus_write_byte_data(fd, OUT_P1, 0x07);
         i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
         close(fd);
-
-        digitalWrite (WiringPiPIN_15, HIGH);
-        digitalWrite (WiringPiPIN_16, HIGH);
-        digitalWrite (WiringPiPIN_18, HIGH);
-        //3rd i3c board will control 3*8 control
 
 #ifdef  PrintInfo 
         printf("Ready to work...\n");
@@ -920,6 +1005,7 @@ int main(int argc ,char *argv[])
         }
         WaitBarcodeInput = 0;
 
+        /*
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
@@ -968,8 +1054,29 @@ int main(int argc ,char *argv[])
         gettimeofday(&now, NULL);
         memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
         sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
+        */
         
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
+ 
+        //get ip address
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        gettimeofday(&now, NULL);
+
+        pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                  MachineCode, UserNo, MachSTART);
+#else
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 9 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                  MachineCode, UserNo, MachSTART);
+#endif
+        fclose(pfile);
  
         //reset count value and other;
         memset(PINCount, 0, sizeof(long)*48);
@@ -986,6 +1093,7 @@ int main(int argc ,char *argv[])
 
         while(MasterFlag)
         {
+            short changeUser = 0;
             sleep(1);
 
             //i2c init start
@@ -1085,6 +1193,9 @@ int main(int argc ,char *argv[])
             rc = pthread_create(&LightControlThread, NULL, LightControl, NULL);
             assert(rc == 0);
             */
+
+            //unlock
+            digitalWrite (WiringPiPIN_24, LOW);
             while(zhResetFlag == 0)
             {
                 usleep(100000);
@@ -1249,6 +1360,7 @@ int main(int argc ,char *argv[])
             if(changeUser)
             {
                 //lock
+                digitalWrite (WiringPiPIN_24, HIGH);
                 fd = open(dev, O_RDWR);
                 if(fd < 0)
                 {
@@ -1289,17 +1401,36 @@ int main(int argc ,char *argv[])
                             digitalWrite (WiringPiPIN_15, HIGH);
                             digitalWrite (WiringPiPIN_16, HIGH);
                             digitalWrite (WiringPiPIN_18, LOW);
+                            
+                            //unlock
+                            digitalWrite (WiringPiPIN_24, LOW);
+                            fd = open(dev, O_RDWR);
+                            if(fd < 0)
+                            {
+                                perror("Open Fail");
+                                return 1;
+                            }
+                            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                            if(r < 0)
+                            {
+                                perror("Selection i2c device fail");
+                                return 1;
+                            }
+        
+                            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                            close(fd);
                             break;
                         }                
                     }
                 }
                 WaitBarcodeInput = 0;
-
             }else
             {
                 if(MasterFlag)
                 {
                     //lock
+                    digitalWrite (WiringPiPIN_24, HIGH);
                     fd = open(dev, O_RDWR);
                     if(fd < 0)
                     {
@@ -1340,6 +1471,7 @@ int main(int argc ,char *argv[])
                                 pthread_mutex_unlock(&mutexInput);
 
                                 //unlock
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1372,6 +1504,7 @@ int main(int argc ,char *argv[])
                                 pthread_mutex_unlock(&mutexInput);
 
                                 //unlock
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1393,7 +1526,7 @@ int main(int argc ,char *argv[])
                                 digitalWrite (WiringPiPIN_16, LOW);
                                 digitalWrite (WiringPiPIN_18, LOW);
 
-                            //get ip address
+                                //get ip address
                                 fd = socket(AF_INET, SOCK_DGRAM, 0);
                                 ifr.ifr_addr.sa_family = AF_INET;
                                 strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);

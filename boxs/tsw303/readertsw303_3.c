@@ -41,6 +41,7 @@
 #define WiringPiPIN_18 5
 #define WiringPiPIN_22 6
 #define WiringPiPIN_7 7
+#define WiringPiPIN_24 10
 
 #define IN_P0 0x00
 #define IN_P1 0x01
@@ -56,7 +57,7 @@
 #define UPLoadFileLength 256
 #define CountPeriod 100 //msec
 #define WriteFileCountValue 4000 // msec
-#define FTPCountValue 300 //sec
+#define FTPCountValue 120 //sec
 #define FTPWakeUpValue 60 //sec
 #define zhMAXOUTPUT 10
 #define ERRORCHECKMAXRETRY 20
@@ -86,7 +87,8 @@ enum
     MachLOCK,
     MachUNLOCK,
     MachSTOPForce1,
-    MachSTOPForce2
+    MachSTOPForce2,
+    MachSTART
 };
 
 short SerialThreadFlag;
@@ -769,6 +771,8 @@ int main(int argc ,char *argv[])
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
     pinMode(WiringPiPIN_18, OUTPUT);
+    pinMode(WiringPiPIN_24, OUTPUT);
+    
     pinMode(WiringPiPIN_22, INPUT);
     pinMode(WiringPiPIN_7, INPUT);
     pullUpDnControl (WiringPiPIN_22, PUD_UP); 
@@ -811,15 +815,91 @@ int main(int argc ,char *argv[])
     rc = pthread_create(&InputThread, NULL, InputFunction, NULL);
     assert(rc == 0);
 
+    char FakeInput[5][InputLength];
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+
+    pfile = fopen("/home/pi/works/tsw303/barcode","r");
+    fseek(pfile, 0, SEEK_END);
+    filesize = ftell(pfile);
+    rewind(pfile);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, pfile);
+    fclose(pfile);
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+    memset(MachineCode, 0 , sizeof(char)*InputLength);
+    strcpy(MachineCode, FakeInput[2]);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    gettimeofday(&now, NULL);
+    sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+
+    pfile = fopen(UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#else
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#endif
+    fclose(pfile);
+
+    FTPFlag = 1;
+    rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(FTPThread, NULL);
+ 
     //the mechine always standby
     while(1)
     {
         unsigned char isNormalStop = 0;
-        short changeUser = 0;
    
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, HIGH);
+
+        //lock
+        digitalWrite (WiringPiPIN_24, HIGH);
         fd = open(dev, O_RDWR);
         if(fd < 0)
         {
@@ -973,7 +1053,7 @@ int main(int argc ,char *argv[])
             }
         }
         WaitBarcodeInput = 0;
-
+        /*
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
@@ -1013,7 +1093,7 @@ int main(int argc ,char *argv[])
             charPosition++;
         }
         free(buffer);
-
+        */
         /*sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
         strcpy(ISNo, FakeInput[0]);
@@ -1029,8 +1109,8 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_18, HIGH);
         */
         //sleep(1);
-        memset(MachineCode, 0 , sizeof(char)*InputLength);
-        strcpy(MachineCode, FakeInput[2]);
+        //memset(MachineCode, 0 , sizeof(char)*InputLength);
+        //strcpy(MachineCode, FakeInput[2]);
         /*digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
@@ -1051,9 +1131,9 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_18, LOW);
         */
 
-        gettimeofday(&now, NULL);
-        memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
-        sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+        //gettimeofday(&now, NULL);
+        //memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+        //sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
         pfile = fopen(UPLoadFile, "a");
         if(pfile != NULL)
         {
@@ -1062,11 +1142,30 @@ int main(int argc ,char *argv[])
 
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
         MasterFlag = 1;
-        
+
+        //get ip address & time
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        gettimeofday(&now, NULL);
+
+        pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                   MachineCode, UserNo, MachSTART);
+#else
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, , (long)now.tv_sec,
+                                                                   inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                   MachineCode, UserNo, MachSTART);
+#endif
+        fclose(pfile);
+       
         memset(ExproductCountArray, 0, sizeof(long)*3);
         memset(ExmessageArray, 0, sizeof(int)*ErrorType);
        
-
         if(zhTelnetFlag == 0){
             //zhTelnetFlag = 1;
             //rc = pthread_create(&TelnetControlThread, NULL, RemoteControl, NULL);
@@ -1074,6 +1173,7 @@ int main(int argc ,char *argv[])
         }
         while(MasterFlag)
         {
+            short changeUser = 0;
             //unlock 
             fd = open(dev, O_RDWR);
             if(fd < 0)
@@ -1090,6 +1190,7 @@ int main(int argc ,char *argv[])
             i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
             i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
             close(fd);
+            digitalWrite (WiringPiPIN_24, LOW);
 
             PrintLeftLog = 0;
             zhResetFlag = 0; //reset flag clean
@@ -1254,6 +1355,7 @@ int main(int argc ,char *argv[])
             if(changeUser == 1)            
             {
                 //lock 
+                digitalWrite (WiringPiPIN_24, HIGH);
                 fd = open(dev, O_RDWR);
                 if(fd < 0)
                 {
@@ -1293,6 +1395,24 @@ int main(int argc ,char *argv[])
                             digitalWrite (WiringPiPIN_15, HIGH);
                             digitalWrite (WiringPiPIN_16, HIGH);
                             digitalWrite (WiringPiPIN_18, LOW);
+                            //unlock
+                            digitalWrite (WiringPiPIN_24, LOW);
+                            fd = open(dev, O_RDWR);
+                            if(fd < 0)
+                            {
+                                perror("Open Fail");
+                                return 1;
+                            }
+                            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                            if(r < 0)
+                            {
+                                perror("Selection i2c device fail");
+                                return 1;
+                            }
+        
+                            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                            close(fd);
                             break;
                         }
                         printf("UserNo scan error\n");
@@ -1304,6 +1424,7 @@ int main(int argc ,char *argv[])
                 if(MasterFlag)
                 {
                     //lock 
+                    digitalWrite (WiringPiPIN_24, HIGH);
                     fd = open(dev, O_RDWR);
                     if(fd < 0)
                     {
@@ -1342,6 +1463,7 @@ int main(int argc ,char *argv[])
                                 memcpy(UserNo, tempPtr, sizeof(tempString)-3);
                                 pthread_mutex_unlock(&mutexInput);
                                 //unlock 
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1373,6 +1495,7 @@ int main(int argc ,char *argv[])
                                 pthread_mutex_unlock(&mutexInput);
                         
                                 //unlock 
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1583,7 +1706,7 @@ void * FTPFunction(void *argument)
     //CURL *curl;
     //CURLcode res;
     //curl_off_t fsize;
-    //FILE *hd_src;
+    FILE *hd_src;
     struct stat file_info, file_info_2;
     char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
@@ -1620,13 +1743,13 @@ void * FTPFunction(void *argument)
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
             pthread_mutex_unlock(&mutexFile);
 
-            //hd_src = fopen(UPLoadFile, "a");
-            //if(hd_src != NULL)
-            //{
-            //    fclose(hd_src);
-            //}
+            /*hd_src = fopen(UPLoadFile, "a");
+            if(hd_src != NULL)
+            {
+                fclose(hd_src);
+            }*/
 
-            printf("%s\n", UPLoadFile_3);
+            printf("old file: %s new file: %s\n", UPLoadFile_3, UPLoadFile);
             if(stat(UPLoadFile_3, &file_info) < 0) {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
@@ -1650,7 +1773,7 @@ void * FTPFunction(void *argument)
                     //strcpy(filePath, "/home/pi/works/tsw303/");
                     strcpy(filePath, UPLoadFile_3);
                     pfile2 = filePath;                       
-                    printf("%s\n", pfile2);
+                    printf("ready to upload %s\n", pfile2);
 
                     execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
                     //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
@@ -1659,6 +1782,7 @@ void * FTPFunction(void *argument)
                 {
                     int result = -1;
                     wait(&result);
+                    printf("upload done\n");
                 }
             }
             /*else if(file_info.st_size > 0)

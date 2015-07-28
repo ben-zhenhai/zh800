@@ -41,6 +41,7 @@
 #define WiringPiPIN_18 5
 #define WiringPiPIN_22 6
 #define WiringPiPIN_7 7
+#define WiringPiPIN_24 10
 
 #define IN_P0 0x00
 #define IN_P1 0x01
@@ -86,7 +87,8 @@ enum
     MachLOCK,
     MachUNLOCK,
     MachSTOPForce1,
-    MachSTOPForce2
+    MachSTOPForce2,
+    MachSTART
 };
 
 short SerialThreadFlag;
@@ -327,11 +329,11 @@ void * SerialFunction(void *argument)
         while(serialDataAvail(fd))
         {   
             char tempChar = serialGetchar(fd);
-            if(count1 == 1 && stringCount < RS232_Length - 10)
+            if(count1 == 1 && stringCount < RS232_Length - 8)
             {
                 tempOutput[stringCount] = tempChar;
                 stringCount++;
-            }else if(count1 == 1 && stringCount == (RS232_Length - 10) && tempChar == 0xbf)
+            }else if(count1 == 1 && stringCount == (RS232_Length - 8) && tempChar == 0xbf)
             {
                 //package
                 tempOutput[stringCount] = '\0';
@@ -383,6 +385,7 @@ void * FileFunction(void *argement)
     struct timespec outtime;
     FILE *fileDst;
     char tempFileOutput[RS232_Length];
+    char exEventChar;
     unsigned char countArray[ErrorType];
 
     int fd;
@@ -429,17 +432,20 @@ void * FileFunction(void *argement)
             updateFlag = 0;
             pthread_mutex_unlock(&mutex_2);
 
-            productCountArray[GoodNumber] = transferFormatLONG(tempFileOutput[0]) + transferFormatLONG(tempFileOutput[1])*256;
-            productCountArray[BadNumber] = transferFormatLONG(tempFileOutput[2]) + transferFormatLONG(tempFileOutput[3])* 256;
+            productCountArray[GoodNumber] = transferFormatLONG(tempFileOutput[2]) + transferFormatLONG(tempFileOutput[3])*256;
+            productCountArray[BadNumber] = transferFormatLONG(tempFileOutput[4]) + transferFormatLONG(tempFileOutput[5])* 256;
 
+            char eventChar = tempFileOutput[6];
             for(forCount = 0; forCount < 8; forCount++)
             {
-                if((tempFileOutput[4] & 1) == 1)
+                if((eventChar & 1) == 1 && ((eventChar & 1) != (exEventChar & 1)))
                 {
                     messageArray[forCount] = messageArray[forCount] + 1;
                 }
-                tempFileOutput[4] = tempFileOutput[4] >> 1;
+                eventChar = eventChar >> 1;
+                exEventChar = exEventChar >> 1;
             }
+            exEventChar = tempFileOutput[6];
 
             //[vers| avoid  wrong info send form machine]
             for(forCount = 0; forCount < CountNumber; ++forCount)
@@ -454,21 +460,6 @@ void * FileFunction(void *argement)
                     errorCheckCount[forCount] = 0;
                 }
             }
-#ifdef PrintInfo
-            printf("%s %s %s %s %s || ",ISNo, ManagerCard, CountNo, MachineCode, UserNo);
-            printf("%ld %ld\nerror count ||", productCountArray[GoodNumber], productCountArray[BadNumber]);
-            
-            for(forCount = 0; forCount < ErrorType; forCount++)
-            {
-                printf(" %d", messageArray[forCount]);
-            }
-            printf("\n");
-#endif
-        }
-        writeFileCount = (writeFileCount + CountPeriod) % WriteFileCountValue;
-        if(writeFileCount == 0 || FileFlag == 0)
-        {
-            short newDataIncome = 0;
 
             //[vers|2014.10.25 | initial count number]
             for(forCount = 0; forCount < CountNumber; ++forCount)
@@ -485,6 +476,22 @@ void * FileFunction(void *argement)
                 else;
             }
             //[vers|2014.10.25|end] 
+
+#ifdef PrintInfo
+            printf("%s %s %s %s %s || ",ISNo, ManagerCard, CountNo, MachineCode, UserNo);
+            printf("%ld %ld\nerror count ||", productCountArray[GoodNumber], productCountArray[BadNumber]);
+            
+            for(forCount = 0; forCount < ErrorType; forCount++)
+            {
+                printf(" %d", messageArray[forCount]);
+            }
+            printf("\n");
+#endif
+        }
+        writeFileCount = (writeFileCount + CountPeriod) % WriteFileCountValue;
+        if(writeFileCount == 0 || FileFlag == 0)
+        {
+            short newDataIncome = 0;
 
             pthread_mutex_lock(&mutexFile);
 
@@ -664,9 +671,10 @@ int main(int argc ,char *argv[])
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
     pinMode(WiringPiPIN_18, OUTPUT);
+    pinMode(WiringPiPIN_24, OUTPUT);
+
     pinMode(WiringPiPIN_22, INPUT);
-    pinMode(WiringPiPIN_7, INPUT);
-    
+    pinMode(WiringPiPIN_7, INPUT);    
     pullUpDnControl (WiringPiPIN_22, PUD_UP); 
     pullUpDnControl (WiringPiPIN_7, PUD_DOWN); 
 
@@ -707,15 +715,91 @@ int main(int argc ,char *argv[])
     rc = pthread_create(&InputThread, NULL, InputFunction, NULL);
     assert(rc == 0);
 
+    char FakeInput[5][InputLength];
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+
+    pfile = fopen("/home/pi/works/sph3000/barcode","r");
+    fseek(pfile, 0, SEEK_END);
+    filesize = ftell(pfile);
+    rewind(pfile);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, pfile);
+    fclose(pfile);
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+    memset(MachineCode, 0 , sizeof(char)*InputLength);
+    strcpy(MachineCode, FakeInput[2]);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    gettimeofday(&now, NULL);
+    sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
+
+    pfile = fopen(UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#else
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           MachineCode, MachLOCK);
+#endif
+    fclose(pfile);
+
+    FTPFlag = 1;
+    rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(FTPThread, NULL);
+ 
     //the mechine always standby
     while(1)
     {
         unsigned char isNormalStop = 0;
-        short changeUser = 0;        
 
         digitalWrite (WiringPiPIN_15, HIGH);
         digitalWrite (WiringPiPIN_16, HIGH);
         digitalWrite (WiringPiPIN_18, HIGH);
+
+        //lock
+        digitalWrite (WiringPiPIN_24, HIGH);
         fd = open(dev, O_RDWR);
         if(fd < 0)
         {
@@ -870,7 +954,7 @@ int main(int argc ,char *argv[])
         }
         WaitBarcodeInput = 0;
 
-        char FakeInput[5][InputLength];
+        /*char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
         int FakeInputNumber_2 = 0;
@@ -909,7 +993,7 @@ int main(int argc ,char *argv[])
             charPosition++;
         }
         free(buffer);
-
+        */
         /*sleep(1);
         memset(ISNo, 0, sizeof(char)*InputLength);
         strcpy(ISNo, FakeInput[0]);
@@ -924,9 +1008,9 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
         */
-        sleep(1);
-        memset(MachineCode, 0 , sizeof(char)*InputLength);
-        strcpy(MachineCode, FakeInput[2]);
+        //sleep(1);
+        //memset(MachineCode, 0 , sizeof(char)*InputLength);
+        //strcpy(MachineCode, FakeInput[2]);
         /*digitalWrite (WiringPiPIN_15, LOW);
         digitalWrite (WiringPiPIN_16, LOW);
         digitalWrite (WiringPiPIN_18, HIGH);
@@ -947,9 +1031,6 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_18, LOW);
         */
 
-        gettimeofday(&now, NULL);
-        memset(UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
-        sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode); 
         pfile = fopen(UPLoadFile, "a");
         if(pfile != NULL)
         {
@@ -958,6 +1039,27 @@ int main(int argc ,char *argv[])
 
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
         MasterFlag = 1;
+ 
+        //get ip address & time
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        gettimeofday(&now, NULL);
+
+        pfile = fopen(UPLoadFile, "a");
+#ifdef PrintMode
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n",  ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                       MachineCode, UserNo, MachSTART);
+#else
+        fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                                    ISNo, ManagerCard, CountNo, , (long)now.tv_sec,
+                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                                       MachineCode, UserNo, MachSTART);
+#endif
+        fclose(pfile);
         
         memset(ExproductCountArray, 0, sizeof(unsigned long)*CountNumber);
         memset(ExmessageArray, 0, sizeof(unsigned int)*ErrorType);
@@ -970,7 +1072,7 @@ int main(int argc ,char *argv[])
         }
         while(MasterFlag)
         {
-            //unlock 
+            short changeUser = 0;        
             fd = open(dev, O_RDWR);
             if(fd < 0)
             {
@@ -1001,6 +1103,9 @@ int main(int argc ,char *argv[])
             FTPFlag = 1;
             rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
             assert(rc == 0);
+
+            //unlock 
+            digitalWrite (WiringPiPIN_24, LOW);
 
             while(zhResetFlag == 0)
             {
@@ -1042,7 +1147,7 @@ int main(int argc ,char *argv[])
                     zhResetFlag = 1;
                     MasterFlag = 0;
                     usleep(100000);
-                }else if(digitalRead(WiringPiPIN_7) == 7)
+                }else if(digitalRead(WiringPiPIN_7) == 1)
                 {
                     printf("event trigger (PIN_7)\n");
                     zhResetFlag = 1;
@@ -1149,6 +1254,7 @@ int main(int argc ,char *argv[])
             if(changeUser)
             {
                 //lock
+                digitalWrite (WiringPiPIN_24, HIGH);
                 fd = open(dev, O_RDWR);
                 if(fd < 0)
                 {
@@ -1189,6 +1295,25 @@ int main(int argc ,char *argv[])
                             digitalWrite (WiringPiPIN_15, HIGH);
                             digitalWrite (WiringPiPIN_16, HIGH);
                             digitalWrite (WiringPiPIN_18, LOW);
+
+                            //unlock
+                            digitalWrite (WiringPiPIN_24, LOW);
+                            fd = open(dev, O_RDWR);
+                            if(fd < 0)
+                            {
+                                perror("Open Fail");
+                                return 1;
+                            }
+                            r = ioctl(fd, I2C_SLAVE, I2C_IO_Extend_3);
+                            if(r < 0)
+                            {
+                                perror("Selection i2c device fail");
+                                return 1;
+                            }
+        
+                            i2c_smbus_write_byte_data(fd, OUT_P1, 0x00);
+                            i2c_smbus_write_byte_data(fd, CONFIG_P1, 0x00);
+                            close(fd);
                             break;
                         }                
                     }
@@ -1199,6 +1324,7 @@ int main(int argc ,char *argv[])
                 if(MasterFlag)
                 {
                     //lock 
+                    digitalWrite (WiringPiPIN_24, HIGH);
                     fd = open(dev, O_RDWR);
                     if(fd < 0)
                     {
@@ -1237,6 +1363,7 @@ int main(int argc ,char *argv[])
                                 memcpy(UserNo, tempPtr, sizeof(tempString)-3);
                                 pthread_mutex_unlock(&mutexInput);
                                 //unlock 
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1268,6 +1395,7 @@ int main(int argc ,char *argv[])
                                 pthread_mutex_unlock(&mutexInput);
                         
                                 //unlock 
+                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {

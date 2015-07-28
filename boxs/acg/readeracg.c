@@ -38,6 +38,7 @@
 #define WiringPiPIN_18 5
 #define WiringPiPIN_22 6
 #define WiringPiPIN_7 7
+#define WiringPiPIN_24 10
 
 #define IN_P0 0x00
 #define IN_P1 0x01
@@ -60,6 +61,7 @@
 #define uart_length 48
 #define FTPCountValue 300
 #define FTPWakeUpValue 60
+#define ERRORCHECKMAXRETRY 5
 
 #define ZHNetworkType "eth0"
 
@@ -79,7 +81,8 @@ enum{
     MachLOCK,
     MachUNLOCK,
     MachSTOPForce1,
-    MachSTOPForce2
+    MachSTOPForce2,
+    MachSTART
 };
 
 enum
@@ -114,6 +117,7 @@ short OrderInBox = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
+char FakeInput[5][InputLength];
 long Count[AgeCountNumber];
 long ExCount[AgeCountNumber];
 int PrintLeftLog = 0;
@@ -330,6 +334,8 @@ void * SerialFunction(void *argument)
     FILE *pfile;
     char arraySender[RS232SenderLength];
     unsigned char arrayReceiver[RS232ReceiverLength];
+    short errorCheckCount[AgeCountNumber];
+    memset(errorCheckCount , 0, sizeof(short)*AgeCountNumber);   
 
     if((fd = serialOpen("/dev/ttyAMA0", 38400)) < 0)
     {
@@ -345,7 +351,7 @@ void * SerialFunction(void *argument)
         int forCount = 0;
         
         memset(arraySender, 0, sizeof(char)*RS232SenderLength);
-        /*
+        
         //hard code
         arraySender[0] = 0x5a;
         arraySender[1] = 0x17;
@@ -379,26 +385,28 @@ void * SerialFunction(void *argument)
             serialPutchar(fd, arraySender[forCount]);
         } 
         usleep(100000);
-        */
+        
         while(serialDataAvail(fd))
         {   
             char tempChar = serialGetchar(fd);
             if(tempChar == 0x5a && readytoStart == 0)
             {
                 readytoStart = 1;
-                stringCount = 0;
+                stringCount = 1;
                 memset(arrayReceiver, 0, sizeof(unsigned char)* RS232ReceiverLength);
-            }else if(readytoStart == 1 && stringCount < 24)
+            }else if(readytoStart == 1 && stringCount <= 24)
             {
                 stringCount++;
-            }else if(readytoStart == 1 && stringCount >=24 && stringCount <85)
+            }else if(readytoStart == 1 && stringCount >24 && stringCount <85)
             {
-                arrayReceiver[stringCount-24] = tempChar;
+                arrayReceiver[stringCount-25] = tempChar;
                 stringCount++;
             }else if(readytoStart == 1 && stringCount == 85)
             {
                 arrayReceiver[stringCount]= '\0';
+                readytoStart = 0;
                 getReady = 1;
+                fflush (stdout);
                 break;
             }else
             {
@@ -407,7 +415,6 @@ void * SerialFunction(void *argument)
             }
             fflush (stdout);
         }
-        printf("%d\n", stringCount);
         if(getReady == 1 && stringCount == 85)
         {
             Count[TotalInCome] = transFormatLONG(arrayReceiver[0]) + transFormatLONG(arrayReceiver[1])*256; 
@@ -426,28 +433,61 @@ void * SerialFunction(void *argument)
             Count[Good] = transFormatLONG(arrayReceiver[52]) + transFormatLONG(arrayReceiver[53])*256; 
             Count[TotalGood] = transFormatLONG(arrayReceiver[56]) + transFormatLONG(arrayReceiver[57])*256; 
         }
+        stringCount = 0;
+        getReady = 0;
+        memset(arrayReceiver, 0, sizeof(unsigned char)* RS232ReceiverLength);
 
-        printf("%ld\n", Count[TotalInCome]);
-        printf("%ld\n", Count[InCome]);
-        printf("%ld\n", Count[OpenBad]);
-        printf("%ld\n", Count[ShortBad]);
-        printf("%ld\n", Count[TitleBad]);
-        printf("%ld\n", Count[AGSHBad]);
-        printf("%ld\n", Count[OutputBad]);
-        printf("%ld\n", Count[CaptainBad]);
-        printf("%ld\n", Count[LCUpperBad]);
-        printf("%ld\n", Count[LCLowerBad]);
-        printf("%ld\n", Count[DxBad]);
-        printf("%ld\n", Count[Retest]);
-        printf("%ld\n", Count[TopBad]);
-        printf("%ld\n", Count[Good]);
-        printf("%ld\n", Count[TotalGood]);
+        //[vers| avoid  wrong info send form machine]
+        for(forCount = 0; forCount < AgeCountNumber; ++forCount)
+        {
+            if(abs(ExCount[forCount] - Count[forCount]) > 220 && errorCheckCount[forCount] < ERRORCHECKMAXRETRY)
+            {
+                Count[forCount] = ExCount[forCount];
+                errorCheckCount[forCount]++;
+            }
+            else
+            {
+                errorCheckCount[forCount] = 0;
+            }
+        }
 
+        //[vers|2014.10.25 | initial count number]
+        for(forCount = 0; forCount < AgeCountNumber; ++forCount)
+        {
+            //need set ExproductCountArray
+            if(Count[forCount] < ExCount[forCount])
+            {
+                // count reset
+                ExCount[forCount] = 0;
+            }else if((Count[forCount] != 0) && (ExCount[forCount] == 0))
+            {
+                ExCount[forCount] = Count[forCount];
+            }
+            else;
+        }
+        //[vers|2014.10.25|end] 
 
         pthread_mutex_lock(&Mutexlinklist);
         InputNode *p = list;
         if(p != NULL)
         {
+            printf("%s %s %s %s %s\n", p->ISNo, p->ManagerCard, p->CountNo, p->MachineCode, p->UserNo);
+            printf("Total Income: %ld\n", Count[TotalInCome]);
+            printf("Income: %ld\n", Count[InCome]);
+            printf("%ld ", Count[OpenBad]);
+            printf("%ld ", Count[ShortBad]);
+            printf("%ld ", Count[TitleBad]);
+            printf("%ld ", Count[AGSHBad]);
+            printf("%ld ", Count[OutputBad]);
+            printf("%ld ", Count[CaptainBad]);
+            printf("%ld ", Count[LCUpperBad]);
+            printf("%ld ", Count[LCLowerBad]);
+            printf("%ld ", Count[DxBad]);
+            printf("%ld ", Count[Retest]);
+            printf("%ld\n", Count[TopBad]);
+            printf("Good: %ld\n", Count[Good]);
+            printf("TotalGood: %ld\n", Count[TotalGood]);
+
             pfile = fopen(p->UPLoadFile, "a");
             for(forCount = 0; forCount < AgeCountNumber ; forCount++)
             {
@@ -565,14 +605,107 @@ int main(int argc, char *argv[])
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
     pinMode(WiringPiPIN_18, OUTPUT);
+    pinMode(WiringPiPIN_24, OUTPUT);
+
     pinMode(WiringPiPIN_22, INPUT);
     pinMode(WiringPiPIN_7, INPUT);
     pullUpDnControl (WiringPiPIN_22, PUD_UP); 
     pullUpDnControl (WiringPiPIN_7, PUD_DOWN); 
-   
+ 
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+
+    fptr = fopen("/home/pi/works/acg/barcode","r");
+    fseek(fptr, 0, SEEK_END);
+    filesize = ftell(fptr);
+    rewind(fptr);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, fptr);
+    fclose(fptr);
+       
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+    printf("machine No.:%s", FakeInput[2]);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    while(1)
+    {
+        node = (InputNode *) malloc(sizeof(InputNode));
+        if(node == NULL)
+        {
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+    node->link = NULL;
+    list = node;
+
+    memset(list->UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    sprintf(list->UPLoadFile, "%ld%s.txt",(long)now.tv_sec, FakeInput[2]);
+
+    fptr = fopen(list->UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#else
+    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#endif
+    fclose(fptr);
+  
+    FTPFlag = 1;
+    rc = pthread_create(&ftpThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(ftpThread, NULL);
+    printf("FTP thread done\n");
+
+    free(list);
+    list = NULL;
+    node = NULL;
+    
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
     assert(rc == 0);
+
 
     while(1)
     {
@@ -581,10 +714,10 @@ int main(int argc, char *argv[])
 
         while(list == NULL)
         {
-            ;
+            usleep(100000);
         }
-        //while(digitalRead(WiringPiPIN_7) == 0)
-        while(1)
+        while(digitalRead(WiringPiPIN_7) == 0)
+        //while(1)
         {
             usleep(100000);
         }
@@ -751,7 +884,6 @@ void * BarcodeInputFunction(void *argument)
 {
     char tempString[InputLength], *tempPtr;
     struct timeval now;
-    FILE *pfile;
     
     memset(Count, 0, sizeof(long)*AgeCountNumber);
     memset(ExCount, 0, sizeof(long)*AgeCountNumber);
@@ -932,7 +1064,7 @@ void * BarcodeInputFunction(void *argument)
             printf("UserNo scan error code\n");
         }
 
-        char FakeInput[5][InputLength];
+        /*char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
         int FakeInputNumber_2 = 0;
@@ -972,8 +1104,8 @@ void * BarcodeInputFunction(void *argument)
             charPosition++;
         }
         free(buffer);
-
-        sleep(1);
+        */
+        //sleep(1);
         memset(node->MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(node->MachineCode, FakeInput[2]);
 
@@ -994,6 +1126,7 @@ void * BarcodeInputFunction(void *argument)
         if(list == NULL) 
         {
             list = node;
+            digitalWrite (WiringPiPIN_24, LOW);
         }
         else
         {
@@ -1035,9 +1168,34 @@ void * WatchDogFunction(void *argument)
         while(list== NULL)
         {
             //printf("we wait\n");
+            digitalWrite (WiringPiPIN_24, HIGH);
             sleep(1);
         }       
 
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        gettimeofday(&now, NULL);
+            
+        fptr = fopen(list->UPLoadFile, "a");
+        if(fptr != NULL)
+        {
+#ifdef PrintMode
+           fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                          list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                          list->MachineCode, list->UserNo, MachSTART);
+#else
+           fprintf(fptr, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                                                          list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
+                                                          inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                          list->MachineCode, list->UserNo, MachSTART);
+#endif
+           fclose(fptr);
+        }
+ 
         SerialThreadFlag = 1;
         rc = pthread_create(&SerialThread, NULL, SerialFunction, NULL);
         assert(rc == 0);
@@ -1046,8 +1204,8 @@ void * WatchDogFunction(void *argument)
         rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
         assert(rc == 0);
 
-        //while(digitalRead(WiringPiPIN_22)== 1)
-        while(1)
+        while(digitalRead(WiringPiPIN_22)== 1)
+        //while(1)
         {
             pthread_mutex_lock(&Mutexlinklist);
             unsigned long goodCount = (unsigned long)atoi(list->CountNo);
@@ -1161,7 +1319,7 @@ void * WatchDogFunction(void *argument)
             //printf("link is empty\n");
             free(p);
             list = NULL;
-        
+            digitalWrite (WiringPiPIN_24, HIGH);
         }else;
         if(OrderInBox <= 1)
         {

@@ -90,6 +90,7 @@ short OrderInBox = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
+char FakeInput[5][InputLength];
 int PrintLeftLog = 0;
 
 long PINCount[6][8];
@@ -565,6 +566,8 @@ int main(int argc, char *argv[])
     char inputString[InputLength] , *tempPtr;
     int fd, r, rc;
     char *dev = "/dev/i2c-1";
+    struct ifreq ifr;
+    struct timeval now;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&mutex_2, NULL);
@@ -574,7 +577,7 @@ int main(int argc, char *argv[])
     pthread_cond_init(&cond, NULL);
     pthread_cond_init(&condFTP, NULL);
 
-    pthread_t barcodeInputThread, watchdogThread;
+    pthread_t barcodeInputThread, watchdogThread, ftpThread;
 
     wiringPiSetup(); 
 
@@ -659,6 +662,98 @@ int main(int argc, char *argv[])
     memset(PINCount, 0, sizeof(long)*48);
     memset(PINEXCount, 0, sizeof(long)*40);
     memset(I2CEXValue, 0, sizeof(int)*6);
+
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+    FILE *pfile;
+
+    pfile = fopen("/home/pi/works/ATS_2/barcode","r");
+    fseek(pfile, 0, SEEK_END);
+    filesize = ftell(pfile);
+    rewind(pfile);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, pfile);
+    fclose(pfile);
+       
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+    printf("machine No.:%s\n", FakeInput[2]);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    while(1)
+    {
+        node = (InputNode *) malloc(sizeof(InputNode));
+        if(node == NULL)
+        {
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+    node->link = NULL;
+    list = node;
+
+    memset(list->UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    sprintf(list->UPLoadFile, "%ld%s.txt",(long)now.tv_sec, FakeInput[2]);
+
+    pfile = fopen(list->UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#else
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#endif
+    fclose(pfile);
+  
+    FTPFlag = 1;
+    rc = pthread_create(&ftpThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(ftpThread, NULL);
+    printf("FTP thread done\n");
+
+    free(list);
+    list = NULL;
+    node = NULL;
+ 
 
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
@@ -913,6 +1008,7 @@ void * BarcodeInputFunction(void *argument)
             printf("UserNo scan error code\n");
         }
 
+        /*
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
@@ -954,7 +1050,7 @@ void * BarcodeInputFunction(void *argument)
         }
         free(buffer);
 
-        sleep(1);
+        sleep(1);*/
         memset(node->MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(node->MachineCode, FakeInput[2]);
 

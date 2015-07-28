@@ -36,7 +36,7 @@ int main ()
     int count ;
     unsigned int nextTime ;
 
-    if ((fd = serialOpen ("/dev/ttyAMA0", 9600)) < 0)
+    if ((fd = serialOpen ("/dev/ttyAMA0", 38400)) < 0)
     {
         fprintf (stderr, "Unable to open serial device: %s\n", strerror (errno)) ;
         return 1 ;
@@ -47,7 +47,7 @@ int main ()
         fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
         return 1 ;
     }
-    char s1[87] ={ 0x5a, 0x53, 0x00, 0x00, 0x7a, 0x00, 0x00, 0x11, 0x00, 0x00,
+    char s1[86] ={ 0x5a, 0x53, 0x00, 0x00, 0x7a, 0x00, 0x00, 0x11, 0x00, 0x00,
                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x42, 0x00, 0x04,
                    0x1c, 0x00, 0x00, 0x1e, 0x00, 0x81, 0x6e, 0x00, 0x00, 0x63,
                    0x0a, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
@@ -55,9 +55,9 @@ int main ()
                    0x6f, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00, 0xdd, 0x0a, 0x00,
                    0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02,
                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x02, 0x00,
-                   0x00, 0x0f, 0x02, 0x00, 0x00, 0xa7, '\0'};
+                   0x00, 0x0f, 0x02, 0x00, 0x00, 0xa7};
 
-    nextTime = millis () + 3000 ;
+    nextTime = millis () + 4000 ;
 
     int flag = 0;
     
@@ -70,13 +70,15 @@ int main ()
             if(flag == 0)
             {
                 int x = 0;
-                for(x = 0; x < 87; x++)
+                for(x = 0; x < 86; x++)
                 {
-                  serialPutchar(fd, s1[x]);
-                  //printf("%2x ",s1[x]);
+                    serialPutchar(fd, s1[x]);
+                    //printf("%2x ",s1[x]);
                 }
                 //printf("\n");
             }else;
+            s1[69] = s1[69] + 1;
+            s1[81] = s1[81] + 1;
         }
         fflush (stdout) ;
   }

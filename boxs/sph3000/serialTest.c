@@ -47,7 +47,7 @@ int main ()
         fprintf (stdout, "Unable to start wiringPi: %s\n", strerror (errno)) ;
         return 1 ;
     }
-    char s1[9] ={ 0xfb, 0xaa, 0x00, 0x20, 0x00, 0xc2, 0x00, 0xbf,'\0'};
+    char s1[11] ={ 0xfb, 0xff, 0xff, 0xaa, 0x00, 0x20, 0x00, 0xff, 0x00, 0xbf,'\0'};
 
     nextTime = millis () + 3000 ;
 
@@ -62,12 +62,12 @@ int main ()
             if(flag == 0)
             {
                 int x = 0;
-                for(x = 0; x < 9; x++)
+                for(x = 0; x < 11; x++)
                 {
                   serialPutchar(fd, s1[x]);
-                  printf("%2x ",s1[x]);
+                  //printf("%2x ",s1[x]);
                 }
-                printf("\n");
+                //printf("\n");
             }else;
         }
         fflush (stdout) ;

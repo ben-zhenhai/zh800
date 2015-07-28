@@ -36,6 +36,7 @@
 #define WiringPiPIN_18 5
 #define WiringPiPIN_22 6
 #define WiringPiPIN_7 7
+#define WiringPiPIN_24 10
 
 #define IN_P0 0x00
 #define IN_P1 0x01
@@ -73,7 +74,8 @@ enum
     MachLOCK,
     MachUNLOCK,
     MachSTOPForce1,
-    MachSTOPForce2
+    MachSTOPForce2,
+    MachSTART
 };
 
 short zhInterruptEnable = 0;
@@ -89,11 +91,12 @@ short OrderInBox = 0;
 
 char *shm, *s, *tail;
 char *shm_pop;
-int PrintLeftLog = 0;
+char FakeInput[5][InputLength];
 
 long PINCount[6][8];
 long PINEXCount[6][8];
 
+int PrintLeftLog = 0;
 int I2CEXValue[6];
 short CutRoll[2];
 
@@ -489,6 +492,8 @@ int main(int argc, char *argv[])
     char inputString[InputLength] , *tempPtr;
     int fd, r, rc;
     char *dev = "/dev/i2c-1";
+    struct ifreq ifr;
+    struct timeval now;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&mutex_2, NULL);
@@ -499,13 +504,15 @@ int main(int argc, char *argv[])
     pthread_cond_init(&cond, NULL);
     pthread_cond_init(&condFTP, NULL);
 
-    pthread_t barcodeInputThread, watchdogThread;
+    pthread_t barcodeInputThread, watchdogThread, ftpThread;
 
     wiringPiSetup(); 
 
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
     pinMode(WiringPiPIN_18, OUTPUT);
+    pinMode(WiringPiPIN_24, OUTPUT);
+
     pinMode(WiringPiPIN_22, INPUT);
     pinMode(WiringPiPIN_7, INPUT);
     pullUpDnControl (WiringPiPIN_22, PUD_UP); 
@@ -586,6 +593,97 @@ int main(int argc, char *argv[])
     memset(I2CEXValue, 0, sizeof(int)*6);
     memset(CutRoll, 0, sizeof(short)*2);
 
+    memset(FakeInput, 0, sizeof(char)*(5*InputLength));
+    int filesize, FakeInputNumber = 0;
+    int FakeInputNumber_2 = 0;
+    char * buffer, * charPosition;
+    short FlagNo = 0;        
+    FILE *pfile;
+
+    pfile = fopen("/home/pi/works/CS210/barcode","r");
+    fseek(pfile, 0, SEEK_END);
+    filesize = ftell(pfile);
+    rewind(pfile);
+    buffer = (char *) malloc (sizeof(char)*filesize);
+    charPosition = buffer;
+    fread(buffer, 1, filesize, pfile);
+    fclose(pfile);
+       
+    while(filesize > 1)
+    {
+        if(*charPosition == ' ')
+        {
+            FlagNo = 1;
+        }
+        else if(*charPosition != ' ' && FlagNo == 1)
+        {
+            FakeInputNumber++;
+            FakeInputNumber_2 = 0;
+
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+            FlagNo = 0;
+        }
+        else
+        {
+            FakeInput[FakeInputNumber][FakeInputNumber_2] = *charPosition;
+            FakeInputNumber_2++;
+        }
+        filesize--;
+        charPosition++;
+    }
+    free(buffer);
+    printf("machine No.:%s\n", FakeInput[2]);
+
+    //get ip address & time
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    gettimeofday(&now, NULL);
+
+    while(1)
+    {
+        node = (InputNode *) malloc(sizeof(InputNode));
+        if(node == NULL)
+        {
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+    node->link = NULL;
+    list = node;
+
+    memset(list->UPLoadFile, 0, sizeof(char)*UPLoadFileLength);
+    sprintf(list->UPLoadFile, "%ld%s.txt",(long)now.tv_sec, FakeInput[2]);
+
+    pfile = fopen(list->UPLoadFile, "w");
+#ifdef PrintMode
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#else
+    fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                           FakeInput[2], MachLOCK);
+#endif
+    fclose(pfile);
+  
+    FTPFlag = 1;
+    rc = pthread_create(&ftpThread, NULL, FTPFunction, NULL);
+    assert(rc == 0);
+    sleep(1);
+    FTPFlag = 0;
+    pthread_mutex_lock(&mutexFTP);
+    pthread_cond_signal(&condFTP);
+    pthread_mutex_unlock(&mutexFTP);
+    pthread_join(ftpThread, NULL);
+    printf("FTP thread done\n");
+
+    free(list);
+    list = NULL;
+    node = NULL;
+
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
     assert(rc == 0);
@@ -597,7 +695,7 @@ int main(int argc, char *argv[])
 
         while(list == NULL)
         {
-            ;
+            usleep(100000);
         }
 
         while(digitalRead(WiringPiPIN_7) == 0)
@@ -837,6 +935,7 @@ void * BarcodeInputFunction(void *argument)
             printf("UserNo scan error code\n");
         }
 
+        /*
         char FakeInput[5][InputLength];
         memset(FakeInput, 0, sizeof(char)*(5*InputLength));
         int filesize, FakeInputNumber = 0;
@@ -879,6 +978,7 @@ void * BarcodeInputFunction(void *argument)
         free(buffer);
        
         sleep(1);
+        */
         memset(node->MachineCode, 0 , sizeof(char)*InputLength);
         strcpy(node->MachineCode, FakeInput[2]);
 
@@ -893,6 +993,7 @@ void * BarcodeInputFunction(void *argument)
         {
             list = node;
             OrderInBox = OrderInBox + 1;
+            digitalWrite (WiringPiPIN_24, LOW);
         }
         else if(OrderInBox < 2)
         {
@@ -937,9 +1038,32 @@ void * WatchDogFunction(void *argument)
         while(list== NULL)
         {
             //printf("we wait\n");
+            digitalWrite (WiringPiPIN_24, HIGH);
             sleep(1);
         }       
-
+        fd = socket(AF_INET, SOCK_DGRAM, 0);
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy(ifr.ifr_name, ZHNetworkType, IFNAMSIZ-1);
+        ioctl(fd, SIOCGIFADDR, &ifr);
+        close(fd);
+        gettimeofday(&now, NULL);
+            
+        fptr = fopen(list->UPLoadFile, "a");
+        if(fptr != NULL)
+        {
+#ifdef PrintMode
+            fprintf(fptr, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
+                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                               list->MachineCode, list->UserNo, MachSTART);
+#else
+            fprintf(fptr, "%s %s %s %ld %ld 0 %s 16 %s %s 0 0 0 %02d\n", list->ISNo, list->ManagerCard, list->CountNo, 
+                                                                                 PINCount[1][6], (long)now.tv_sec,
+                                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                                 list->MachineCode, list->UserNo, MachSTART);
+#endif
+            fclose(fptr);
+        }
+ 
         zhInterruptEnable = 1;
         rc = pthread_create(&interruptThread, NULL, zhINTERRUPT1, NULL);
         assert(rc == 0);
@@ -1071,7 +1195,7 @@ void * WatchDogFunction(void *argument)
             //printf("link is empty\n");
             free(p);
             list = NULL;
-        
+            digitalWrite (WiringPiPIN_24, HIGH);
         }else;
         if(OrderInBox <= 1)
         {
