@@ -86,6 +86,10 @@
                 // not ready machine will fill with GRAY color
                 if ((json.NOTE !== "") && mapDoc.getElementById(json.ID)) {
                   mapDoc.getElementById(json.ID).style.fill = "#cccccc";
+                  if (json.ID === "G111") {
+                    mapDoc.getElementById('G111_2').style.fill = "#cccccc";
+                    mapDoc.getElementById('G111_3').style.fill = "#cccccc";
+                  }
                   totalGray++;
                 }
               });

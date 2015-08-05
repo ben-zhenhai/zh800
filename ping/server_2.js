@@ -29,6 +29,7 @@ n.on('message',function(m){
   //  console.log(m[i]);
   //}
   //console.log(JSON.stringify(m));
+  dbConn.send('init');
 });
 
 dailyCount.on('message', function(m) {
@@ -67,7 +68,7 @@ io.on('connection', function(socket) {
   socket.on('boxStatusPic', function(msg) {
     n.send('init');
     dailyCount.send('init');
-    dbConn.send('init');
+    //dbConn.send('init');
     console.log('get boxStatusPic.html msg:' + msg);
   });
 
