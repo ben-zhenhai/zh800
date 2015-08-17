@@ -21,6 +21,7 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -788,7 +789,32 @@ int main(int argc, char *argv[])
     free(list);
     list = NULL;
     node = NULL;
-   
+
+
+    pid_t proc = fork();
+    if(proc < 0)
+    {
+        printf("fork fail\n");
+        exit(EXIT_FAILURE);
+    }else if(proc == 0)
+    {
+        DIR *dp;
+        struct dirent *ep;
+        unsigned long currentVersion = 0;
+        char newFile[100];
+        while(1)
+        {
+            memset(newFile, 0, sizeof(char)*100);
+            dp = opendir(".");
+
+            sleep()
+        } 
+    }else
+    {
+        //no need to wait it, just run
+        ;
+    }
+ 
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
     assert(rc == 0);
@@ -1212,7 +1238,7 @@ void * BarcodeInputFunction(void *argument)
         if(list == NULL) 
         {
             list = node;
-            digitalWrite (WiringPiPIN_24, LOW);
+            //digitalWrite (WiringPiPIN_24, LOW);
         }
         else
         {
@@ -1254,7 +1280,7 @@ void * WatchDogFunction(void *argument)
         while(list== NULL)
         {
             //printf("we wait\n");
-            digitalWrite (WiringPiPIN_24, HIGH);
+            //digitalWrite (WiringPiPIN_24, HIGH);
             sleep(1);
         }       
 
@@ -1272,12 +1298,12 @@ void * WatchDogFunction(void *argument)
             fprintf(fptr, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                       list->ISNo, list->ManagerCard, list->CountNo, (long)now.tv_sec,
                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                      list->MachineCode, list->UserNo, MachJobSTART);
+                                                      list->MachineCode, list->UserNo, MachSTART);
 #else
             fprintf(fptr, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                       list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                      list->MachineCode, list->UserNo, MachJobSTART);
+                                                      list->MachineCode, list->UserNo, MachSTART);
 #endif
             fclose(fptr);
         }
@@ -1416,7 +1442,7 @@ void * WatchDogFunction(void *argument)
             //printf("link is empty\n");
             free(p);
             list = NULL;
-            digitalWrite (WiringPiPIN_24, HIGH);
+            //digitalWrite (WiringPiPIN_24, HIGH);
         }else;
         if(OrderInBox <= 1)
         {
@@ -1503,95 +1529,93 @@ void * FTPFunction(void *argument)
                 //{
                 //    fclose(hd_src);
                 //}
-                checkFlag = 1;
             }
             pthread_mutex_unlock(&Mutexlinklist);
-            if(checkFlag == 1)
+            printf("%s\n", UPLoadFile_3);
+            /*
+            if(stat(UPLoadFile_3, &file_info) < 0) 
             {
-                printf("%s\n", UPLoadFile_3);
-                if(stat(UPLoadFile_3, &file_info) < 0) 
-                {
-                    printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
+                printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
-                    Log(s, __func__, __LINE__, " FTP fail_1\n");
+                Log(s, __func__, __LINE__, " FTP fail_1\n");
 #endif
-                } 
-                else if(file_info.st_size > 0)
+            } 
+            else if(file_info.st_size > 0)
+            {
+                pid_t proc = fork();
+                if(proc < 0)
                 {
-                    pid_t proc = fork();
-                    if(proc < 0)
-                    {
-                        printf("fork child fail\n");
-                        return 0;
-                    }
-                    else if(proc == 0)
-                    {
-                        char filePath[UPLoadFileLength];
-                        char *pfile2;
-                        memset(filePath, 0, sizeof(char)*UPLoadFileLength);
-                        //strcpy(filePath, "/home/pi/zhlog/");
-                        //strcpy(filePath, "/home/pi/works/GT1318P/");
-                        strcpy(filePath, UPLoadFile_3);
-                        pfile2 = filePath;                       
-                        printf("%s\n", pfile2);
+                    printf("fork child fail\n");
+                    return 0;
+                }
+                else if(proc == 0)
+                {
+                    char filePath[UPLoadFileLength];
+                    char *pfile2;
+                    memset(filePath, 0, sizeof(char)*UPLoadFileLength);
+                    //strcpy(filePath, "/home/pi/zhlog/");
+                    //strcpy(filePath, "/home/pi/works/GT1318P/");
+                    strcpy(filePath, UPLoadFile_3);
+                    pfile2 = filePath;                       
+                    printf("%s\n", pfile2);
 
-                        execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
-                        //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+                    execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
+                    //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+                }
+                else
+                {
+                    int result = -1;
+                    wait(&result);
+                }
+            }*/
+            /*else if(file_info.st_size > 0)
+            {
+                strcat(Remote_url,UPLoadFile_3);
+                fsize = (curl_off_t)file_info.st_size;
+                curl_global_init(CURL_GLOBAL_ALL);
+                curl = curl_easy_init();
+                if(curl)
+                {
+                    hd_src = fopen(UPLoadFile_3, "rb");
+                    curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+                    curl_easy_setopt(curl, CURLOPT_USERPWD, "raspberry:1234");
+                    //curl_easy_setopt(curl, CURLOPT_USERPWD, "taicon_ftp:2769247");
+                    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+                    curl_easy_setopt(curl,CURLOPT_URL, Remote_url);
+                    curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
+                    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
+                    res = curl_easy_perform(curl);
+
+                    if(res != CURLE_OK)
+                    {
+                        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+#ifdef LogMode
+                        Log(s, __func__, __LINE__, " FTP fail_2\n");
+#endif
+                        digitalWrite (WiringPiPIN_15, LOW);
+                        digitalWrite (WiringPiPIN_16, LOW);
+                        digitalWrite (WiringPiPIN_18, LOW);
                     }
                     else
                     {
-                        int result = -1;
-                        wait(&result);
+                        digitalWrite (WiringPiPIN_15, LOW);
+                        digitalWrite (WiringPiPIN_16, HIGH);
+                        digitalWrite (WiringPiPIN_18, LOW);
                     }
-                }
-                /*else if(file_info.st_size > 0)
-                {
-                    strcat(Remote_url,UPLoadFile_3);
-                    fsize = (curl_off_t)file_info.st_size;
-                    curl_global_init(CURL_GLOBAL_ALL);
-                    curl = curl_easy_init();
-                    if(curl)
+
+                    //curl_slist_free_all (headerlist);
+                    curl_easy_cleanup(curl);
+                    if(hd_src)
                     {
-                        hd_src = fopen(UPLoadFile_3, "rb");
-                        curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
-                        curl_easy_setopt(curl, CURLOPT_USERPWD, "raspberry:1234");
-                        //curl_easy_setopt(curl, CURLOPT_USERPWD, "taicon_ftp:2769247");
-                        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-                        curl_easy_setopt(curl,CURLOPT_URL, Remote_url);
-                        curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
-                        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
-                        res = curl_easy_perform(curl);
-
-                        if(res != CURLE_OK)
-                        {
-                            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-#ifdef LogMode
-                            Log(s, __func__, __LINE__, " FTP fail_2\n");
-#endif
-                            digitalWrite (WiringPiPIN_15, LOW);
-                            digitalWrite (WiringPiPIN_16, LOW);
-                            digitalWrite (WiringPiPIN_18, LOW);
-                        }
-                        else
-                        {
-                            digitalWrite (WiringPiPIN_15, LOW);
-                            digitalWrite (WiringPiPIN_16, HIGH);
-                            digitalWrite (WiringPiPIN_18, LOW);
-                        }
-
-                        //curl_slist_free_all (headerlist);
-                        curl_easy_cleanup(curl);
-                        if(hd_src)
-                        {
-                            fclose(hd_src);
-                        }
-                    }    
-                    curl_global_cleanup();
-                }*/
-                else;
-                unlink(UPLoadFile_3);
-                checkFlag = 0;
-            }
+                        fclose(hd_src);
+                    }
+                }    
+                curl_global_cleanup();
+            }*/
+            /*
+            else;
+            unlink(UPLoadFile_3);
+            */
         }
     }
 #ifdef LogMode

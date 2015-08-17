@@ -20,6 +20,8 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -90,6 +92,7 @@ short IsBarcodeInputDone = 1;
 short OrderInBox = 0;
 
 char FakeInput[5][InputLength];
+char UPLoadFile_3[UPLoadFileLength];
 char *shm, *s, *tail;
 char *shm_pop;
 
@@ -127,6 +130,16 @@ void * zhINTERRUPT1(void *argument);
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
 
+void sig_fork(int signo)
+{
+    pid_t pid;
+    int stat;
+    pid=waitpid(0,&stat,WNOHANG);
+    printf("%s: child process finish upload %s\n", __func__, UPLoadFile_3);
+    unlink(UPLoadFile_3);
+    
+    return;
+}
 void StringCat(const char *str)
 {
     int x = strlen(str);
@@ -518,6 +531,7 @@ int main(int argc, char *argv[])
     pthread_t barcodeInputThread, watchdogThread, ftpThread;
 
     wiringPiSetup(); 
+    signal (SIGCHLD, sig_fork); 
 
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
@@ -1003,7 +1017,7 @@ void * BarcodeInputFunction(void *argument)
         {
             list = node;
             OrderInBox = OrderInBox + 1;
-            digitalWrite (WiringPiPIN_24, LOW);
+            //digitalWrite (WiringPiPIN_24, LOW);
         }
         else if(OrderInBox < 2)
         {
@@ -1048,7 +1062,7 @@ void * WatchDogFunction(void *argument)
         while(list== NULL)
         {
             //printf("we wait\n");
-            digitalWrite (WiringPiPIN_24, HIGH);
+            //digitalWrite (WiringPiPIN_24, HIGH);
             sleep(1);
         }       
         fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1204,7 +1218,7 @@ void * WatchDogFunction(void *argument)
             //printf("link is empty\n");
             free(p);
             list = NULL;
-            digitalWrite (WiringPiPIN_24, HIGH);
+            //digitalWrite (WiringPiPIN_24, HIGH);
         }else;
         if(OrderInBox <= 1)
         {
@@ -1255,7 +1269,6 @@ void * FTPFunction(void *argument)
     //curl_off_t fsize;
     //FILE *hd_src;
     struct stat file_info;
-    char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
@@ -1329,8 +1342,9 @@ void * FTPFunction(void *argument)
                     }
                     else
                     {
-                        int result = -1;
-                        wait(&result);
+                        //int result = -1;
+                        //wait(&result);
+                        waitpid(-1, NULL, WNOHANG);
                     }
                 } 
                 /*else if(file_info.st_size > 0)

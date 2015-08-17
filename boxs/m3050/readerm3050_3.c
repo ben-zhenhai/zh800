@@ -22,6 +22,8 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -57,10 +59,13 @@
 #define UPLoadFileLength 256
 #define CountPeriod 4 
 #define WriteFileCountValue 4 // sec
-#define FTPCountValue 300 //sec
+#define FTPCountValue 240 //sec
 #define FTPWakeUpValue 60 //sec
 #define zhMAXOUTPUT 10
 #define ErrorCheckMAXTRY 3
+
+#define ZHLOCKTIMER 100000
+#define ZHUNLOCKTIMER 900000
 
 #define Log(s,func, line, opt) StringCat(func);StringCat(opt)
 #define RS232SenderLength 18
@@ -99,7 +104,6 @@ short SerialThreadFlag;
 short WatchDogFlag = 0;
 short zhResetFlag = 0;
 short PrintLeftLog = 0;
-short FileFlag = 0;
 short updateFlag = 0;
 short zhTelnetFlag = 0;
 short FTPFlag = 0;
@@ -120,6 +124,7 @@ long ExProductCountArray[CountSize];
 char ISNo[InputLength], ManagerCard[InputLength], MachineCode[InputLength], UserNo[InputLength], CountNo[InputLength];
 char UPLoadFile[UPLoadFileLength];
 char tempString[InputLength];
+char UPLoadFile_3[UPLoadFileLength];
 
 void * zhLogFunction(void *argument);
 void * FTPFunction(void *arguemnt);
@@ -132,6 +137,16 @@ void StringCat(const char *str);
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
 int transferFormatINT(unsigned char x);
 long transferFormatLONG(unsigned char x);
+
+void sig_fork(int signo)
+{
+    pid_t pid;
+    int stat;
+    pid=waitpid(0,&stat,WNOHANG);
+    printf("%s, finish child process upload %s\n", __func__, UPLoadFile_3);
+    unlink(UPLoadFile_3);
+    return;
+}
 
 void * RemoteControl(void * argument)
 {
@@ -808,8 +823,7 @@ void * SerialFunction(void *argument)
                     {
 #ifdef PrintMode
                         fprintf(fileDst, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo,                    
-                                                                              ProductCountArray[GoodNumber]-ExProductCountArray[GoodNumber],
-                                                                              (long)now.tv_sec,
+                                                                              ProductCountArray[GoodNumber]-ExProductCountArray[GoodNumber], (long)now.tv_sec,
                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                               forCount+1, MachineCode, UserNo, MachRUNNING);
 #else
@@ -818,8 +832,7 @@ void * SerialFunction(void *argument)
                                                                               inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                               forCount+1, MachineCode, UserNo, MachRUNNING);
 #endif
-                    }
-                    else
+                    }else
                     {
 #ifdef PrintMode
                         fprintf(fileDst, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec, 
@@ -914,7 +927,7 @@ int main(int argc ,char *argv[])
 {
     char *dev = "/dev/i2c-1";
     int rc;    
-    pthread_t LogThread, SerialThread, FileThread, TelnetControlThread, FTPThread, InputThread;
+    pthread_t LogThread, SerialThread, TelnetControlThread, FTPThread, InputThread;
     int shmid;
     key_t key;
     struct ifreq ifr;
@@ -930,6 +943,7 @@ int main(int argc ,char *argv[])
     pthread_cond_init(&condFTP, NULL);
 
     wiringPiSetup(); 
+    signal (SIGCHLD, sig_fork);
   
     pinMode(WiringPiPIN_22, INPUT);
     pinMode(WiringPiPIN_7, INPUT);
@@ -974,7 +988,7 @@ int main(int argc ,char *argv[])
     s = shm + 1;
     Log(s, __func__, __LINE__, " ready to init\n");
 #endif
-    rc = pthread_create(&LogThread, NULL, InputFunction, NULL); 
+    rc = pthread_create(&InputThread, NULL, InputFunction, NULL); 
     assert(rc == 0);  
 
     char FakeInput[5][InputLength];
@@ -1068,6 +1082,9 @@ int main(int argc ,char *argv[])
 
         //lock
         digitalWrite (WiringPiPIN_24, HIGH);
+        usleep(ZHLOCKTIMER);
+        digitalWrite (WiringPiPIN_24, LOW);
+
         fd = open(dev, O_RDWR);
         if(fd < 0)
         {
@@ -1087,12 +1104,15 @@ int main(int argc ,char *argv[])
 #ifdef PrintInfo
         printf("Ready to work..\n");
 #endif
-
         WaitBarcodeInput = 1;
         while(1)
         {
-            sleep(1);
-            if(ReadytoRead)
+           //lock
+           digitalWrite (WiringPiPIN_24, HIGH);
+           usleep(ZHLOCKTIMER);
+           digitalWrite (WiringPiPIN_24, LOW);
+           usleep(ZHUNLOCKTIMER);
+           if(ReadytoRead)
             {
                 pthread_mutex_lock(&mutexInput);
                 ReadytoRead = 0;
@@ -1115,7 +1135,11 @@ int main(int argc ,char *argv[])
         }
         while(1)
         {
-            sleep(1);
+            //lock
+            digitalWrite (WiringPiPIN_24, HIGH);
+            usleep(ZHLOCKTIMER);
+            digitalWrite (WiringPiPIN_24, LOW);
+            usleep(ZHUNLOCKTIMER);
             if(ReadytoRead)
             {
                 pthread_mutex_lock(&mutexInput);
@@ -1139,7 +1163,11 @@ int main(int argc ,char *argv[])
         }
         while(1)
         {
-            sleep(1);
+            //lock
+            digitalWrite (WiringPiPIN_24, HIGH);
+            usleep(ZHLOCKTIMER);
+            digitalWrite (WiringPiPIN_24, LOW);
+            usleep(ZHUNLOCKTIMER);
             if(ReadytoRead)
             {
                 int stringLength = strlen(tempString);
@@ -1201,7 +1229,11 @@ int main(int argc ,char *argv[])
      
         while(1)
         {
-            sleep(1);
+            //lock
+            digitalWrite (WiringPiPIN_24, HIGH);
+            usleep(ZHLOCKTIMER);
+            digitalWrite (WiringPiPIN_24, LOW);
+            usleep(ZHUNLOCKTIMER);
             if(ReadytoRead)
             {
                 pthread_mutex_lock(&mutexInput);
@@ -1299,12 +1331,6 @@ int main(int argc ,char *argv[])
         digitalWrite (WiringPiPIN_18, LOW);
         */
 
-        pfile = fopen(UPLoadFile, "a");
-        if(pfile != NULL)
-        {
-            fclose(pfile);
-        }
-
         printf("%s %s %s %s %s %s\n", ISNo, ManagerCard, MachineCode, UserNo, CountNo, UPLoadFile);
         //get ip address & time
         fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1360,16 +1386,10 @@ int main(int argc ,char *argv[])
             rc = pthread_create(&SerialThread, NULL, SerialFunction, NULL);
             assert(rc == 0);
 
-            //FileFlag = 1;
-            //rc = pthread_create(&FileThread, NULL, FileFunction, NULL);
-            //assert(rc == 0);
 
             FTPFlag = 1;
             rc = pthread_create(&FTPThread, NULL, FTPFunction, NULL);
             assert(rc == 0);
-        
-            //unlock
-            digitalWrite (WiringPiPIN_24, LOW);
 
             while(zhResetFlag == 0)
             {
@@ -1426,13 +1446,6 @@ int main(int argc ,char *argv[])
             SerialThreadFlag = 0;
             pthread_join(SerialThread, NULL);
             usleep(300000);
-
-            //FileFlag = 0;
-            //pthread_mutex_lock(&mutex);
-            //pthread_cond_signal(&cond);
-            //pthread_mutex_unlock(&mutex);
-            //pthread_join(FileThread, NULL);
-            //sleep(1);
 
             //get ip address & time
             fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1522,6 +1535,9 @@ int main(int argc ,char *argv[])
             {
                 //lock
                 digitalWrite (WiringPiPIN_24, HIGH);
+                usleep(ZHLOCKTIMER);
+                digitalWrite (WiringPiPIN_24, LOW);
+                    
                 fd = open(dev, O_RDWR);
                 if(fd < 0)
                 {
@@ -1547,6 +1563,11 @@ int main(int argc ,char *argv[])
                 WaitBarcodeInput = 1;
                 while(1)
                 {
+                    //lock
+                    digitalWrite (WiringPiPIN_24, HIGH);
+                    usleep(ZHLOCKTIMER);
+                    digitalWrite (WiringPiPIN_24, LOW);
+                    usleep(ZHUNLOCKTIMER);
                     if(ReadytoRead == 1)
                     {
                         pthread_mutex_lock(&mutexInput);
@@ -1563,8 +1584,6 @@ int main(int argc ,char *argv[])
                             digitalWrite (WiringPiPIN_16, HIGH);
                             digitalWrite (WiringPiPIN_18, LOW);
 
-                            //unlock
-                            digitalWrite (WiringPiPIN_24, LOW);
                             fd = open(dev, O_RDWR);
                             if(fd < 0)
                             {
@@ -1593,6 +1612,8 @@ int main(int argc ,char *argv[])
                 {
                     //lock
                     digitalWrite (WiringPiPIN_24, HIGH);
+                    usleep(ZHLOCKTIMER);
+                    digitalWrite (WiringPiPIN_24, LOW);
                     fd = open(dev, O_RDWR);
                     if(fd < 0)
                     {
@@ -1618,7 +1639,11 @@ int main(int argc ,char *argv[])
                     WaitBarcodeInput = 1;
                     while(1)
                     {
-                        sleep(1);
+                        //lock
+                        digitalWrite (WiringPiPIN_24, HIGH);
+                        usleep(ZHLOCKTIMER);
+                        digitalWrite (WiringPiPIN_24, LOW);
+                        usleep(ZHUNLOCKTIMER);
                         if(ReadytoRead)
                         {
                             pthread_mutex_lock(&mutexInput);
@@ -1632,8 +1657,6 @@ int main(int argc ,char *argv[])
                                 memcpy(UserNo, tempPtr, sizeof(tempString)-3);
                                 pthread_mutex_unlock(&mutexInput);
 
-                                //unlock
-                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1664,8 +1687,6 @@ int main(int argc ,char *argv[])
                                 memcpy(FixerNo, tempPtr, sizeof(tempString)-3);
                                 pthread_mutex_unlock(&mutexInput);
                         
-                                //unlock
-                                digitalWrite (WiringPiPIN_24, LOW);
                                 fd = open(dev, O_RDWR);
                                 if(fd < 0)
                                 {
@@ -1877,9 +1898,8 @@ void * FTPFunction(void *argument)
     //CURL *curl;
     //CURLcode res;
     //curl_off_t fsize;
-    FILE *hd_src;
+    //FILE *hd_src;
     struct stat file_info, file_info_2;
-    char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
@@ -1911,11 +1931,11 @@ void * FTPFunction(void *argument)
             strcpy(UPLoadFile_3, UPLoadFile);
             gettimeofday(&now, NULL);
             sprintf(UPLoadFile,"%ld%s.txt",(long)now.tv_sec, MachineCode);
-            hd_src = fopen(UPLoadFile, "a");
-            if(hd_src != NULL)
-            {
-                fclose(hd_src);
-            }
+            //hd_src = fopen(UPLoadFile, "a");
+            //if(hd_src != NULL)
+            //{
+            //    fclose(hd_src);
+            //}
             pthread_mutex_unlock(&mutexFile);
             printf("new file: %s, old file: %s\n", UPLoadFile, UPLoadFile_3);
 
@@ -1949,8 +1969,9 @@ void * FTPFunction(void *argument)
                 }
                 else
                 {
-                    int result = -1;
-                    wait(&result);
+                    //int result = -1;
+                    //wait(&result);
+                    waitpid (-1, NULL, WNOHANG);
                 }
             }
             /*if(file_info.st_size > 0)
@@ -2000,7 +2021,7 @@ void * FTPFunction(void *argument)
                 curl_global_cleanup();
             }*/
             else;
-            unlink(UPLoadFile_3);
+            //unlink(UPLoadFile_3);
         }
     }
 #ifdef LogMode
