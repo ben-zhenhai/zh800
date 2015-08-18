@@ -9,6 +9,8 @@ rabbitMQ.connect('amqp://' + username + ":" + password + "@" + HOST, function(er
 
   if (err != null) {
     console.log("[ERROR] cannot connect to rabbitMQ server, error:" + err);
+    var fs = require('fs');
+    fs.unlinkSync(filename);
     return;
   }
 
@@ -16,6 +18,8 @@ rabbitMQ.connect('amqp://' + username + ":" + password + "@" + HOST, function(er
 
     if (err != null) {
       console.log("[ERROR] cannot open rabbitMQ channel error:" + err);
+      var fs = require('fs');
+      fs.unlinkSync(filename);
       return;
     }
 
