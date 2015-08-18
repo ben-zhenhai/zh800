@@ -1,4 +1,4 @@
-var HOST = '192.168.20.200'
+var HOST = 'localhost'
 var username = "zhenhai"
 var password = "zhenhai123456"
 var filename = process.argv.slice(2).toString();
@@ -41,9 +41,11 @@ rabbitMQ.connect('amqp://' + username + ":" + password + "@" + HOST, function(er
           console.log("[OK] Send [" + counter + "][" + line + "] to server...");
 
           if (counter == totalLines && isDone == true) {
-            console.log("END");
+            var fs = require('fs');
+            fs.unlinkSync(filename);
+            console.log("END\n");
             conn.close();
-            process.exit();
+            //process.exit();
           }
         });
       }
