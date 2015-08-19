@@ -51,9 +51,9 @@ app.get('/', function(req, res) {
   res.sendfile('boxStatus.html');
 });
 
-app.get('/pic2', function(req, res) {
-  res.sendfile('boxStatusPic.html');
-});
+//app.get('/pic2', function(req, res) {
+//  res.sendfile('boxStatusPic.html');
+//});
 
 app.get('/pic', function(req, res) {
   res.sendfile('boxStatusPic2.html');
@@ -83,7 +83,7 @@ io.on('connection', function(socket) {
 });
 
 http.listen(8080, function() {
-  console.log('lostening on 8080');
+  console.log('listening on 8080');
 });
 
 function sendMail(msg) {
