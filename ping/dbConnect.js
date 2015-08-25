@@ -4,7 +4,8 @@ var assert = require('assert');
 var url = 'mongodb://localhost:27017/zhenhai';
 
 var findData = function(db, callback) {
-  var collection = db.collection('dailyMachineCount');
+  //var collection = db.collection('dailyMachineCount');
+  var collection = db.collection('machineStatus');
 
   /*
   collection.find({}).toArray(function(err, docs) {
@@ -15,11 +16,11 @@ var findData = function(db, callback) {
   var stream = collection.find({}).stream();
   var data = [];
   stream.on("data", function(doc) {
-    console.log(doc.machineID + "::" + doc.status + "::" + doc.count_qty);
+    //console.log(doc.machineID + "::" + doc.status + "::" + doc.count_qty);
     var item = {};
     item["ID"] = doc.machineID;
     item["STATUS"] = doc.status;
-    item["QTY"] = doc.count_qty;
+    //item["QTY"] = doc.count_qty;
     data.push(item);
   });
 

@@ -176,19 +176,22 @@
             socket.on('dbConnect', function(msg) {
               var data = jQuery.parseJSON(msg);
               $.each(data, function(index, json) {
-                console.log(json.ID + "----------------------------" + json.STATUS + "----------------------------" + json.QTY);
+                //console.log(json.ID + "----------------------------" + json.STATUS + "----------------------------" + json.QTY);
                 //console.log(mapDoc.getElementById(json.ID).style.fill);
-                if (mapDoc.getElementById(json.ID).style.fill === "rgb(0, 255, 0)" && json.STATUS !=="01") {
-                  if (json.QTY == 0) {
-console.log(json.ID + " CYAN");
-                    mapDoc.getElementById(json.ID).style.fill = "#00ffff";
-                  } else {
-console.log(json.ID + " YELLOW");
-                    mapDoc.getElementById(json.ID).style.fill = "#ffff00";
+                if ( (mapDoc.getElementById(json.ID) !== null) && (mapDoc.getElementById(json.ID) !== "undefined") ) {
+                  if ((mapDoc.getElementById(json.ID).style.fill == "rgb(0, 255, 0)" || 
+                       mapDoc.getElementById(json.ID).style.fill == "#00ff00") && json.STATUS !=="01") {
+                       console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' + json.STATUS);
+//                    if (json.QTY == 0) {
+//                      mapDoc.getElementById(json.ID).style.fill = "#00ffff";
+//                    } else {
+                      mapDoc.getElementById(json.ID).style.fill = "#ffff00";
+//                    }
+                    //console.log("It's online but not working");
+                  } else if (mapDoc.getElementById(json.ID).style.fill == "rgb(255, 0, 0)" ||
+                             mapDoc.getElementById(json.ID).style.fill == "#ff0000") {
+                    //console.log("RED");
                   }
-                  //console.log("It's online but not working");
-                } else if (mapDoc.getElementById(json.ID).style.fill === "rgb(255, 0, 0)") {
-                  //console.log("RED");
                 }
               })
             });
