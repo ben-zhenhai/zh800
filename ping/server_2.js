@@ -18,7 +18,7 @@ var mailServer = email.server.connect({
   host: "www.zhenhai.com.tw",
   ssl: false
 });
-
+var resultArray = {};
 
 console.log("Alive server start.");
 
@@ -35,13 +35,13 @@ n.on('message',function(m){
 dailyCount.on('message', function(m) {
   console.log("-------->> get daily count data!");
   io.emit('dailyCount', JSON.stringify(m));
-  console.log(m);
+  //console.log(m);
 });
 
 dbConn.on('message', function(m) {
   console.log("-------->> get machine status data!");
   io.emit('dbConnect', JSON.stringify(m)); 
-  console.log(m);
+  //console.log(m);
 });
 
 app.use(express.static(__dirname + '/javascript'));

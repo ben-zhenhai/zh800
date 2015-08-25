@@ -3,7 +3,9 @@ var assert = require('assert');
 
 var url = 'mongodb://localhost:27017/zhenhai';
 
-var findData = function(db, callback) {
+var data = [];
+
+var getStatus = function(db, callback) {
   //var collection = db.collection('dailyMachineCount');
   var collection = db.collection('machineStatus');
 
@@ -14,33 +16,63 @@ var findData = function(db, callback) {
   });
   */
   var stream = collection.find({}).stream();
-  var data = [];
   stream.on("data", function(doc) {
     //console.log(doc.machineID + "::" + doc.status + "::" + doc.count_qty);
     var item = {};
     item["ID"] = doc.machineID;
     item["STATUS"] = doc.status;
-    //item["QTY"] = doc.count_qty;
+    item["QTY"] = 0;
     data.push(item);
   });
 
   stream.on("end", function() {
     db.close();
     process.send(data);
+    callback();
   });
 };
+
+var getQty = function(db, callback) {
+  var collection = db.collection('dailyMachineCount');
+
+  var stream = collection.find({}).stream();
+  stream.on("data", function(doc) {
+    var tmp = data.filter(function(item) {
+      return item.machineID === doc.machineID;
+    });
+    console.log(">>>>" + tmp[0].machineID + ">>>>" + doc.machineID + ">>>>" + doc.count_qty);
+  });
+
+  stream.on("end", function() {
+    callback();
+  });
+}
 
 function queryDatabase() {
   MongoClient.connect(url, function(err, db) {
     assert.equal(null, err);
     console.log("Connected correctly to server");
 
-    findData(db, function() {
+    getStatus(db, function() {
         db.close();
+	//queryDatabaseQty();
         // process.exit(code=0);
     });
   });
 }
+
+function queryDatabaseQty() {
+  MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    console.log("Connected correctly to server");
+
+    getQty(db, function() {
+      db.close();
+      // process.exit(code=0);
+    });
+  });
+}
+
 
 process.on("message", function(msg) {
   console.log("dbConnect.js get process msg: " + msg);

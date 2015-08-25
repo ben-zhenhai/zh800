@@ -139,6 +139,7 @@ MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
     data["SMALL_A"] = SMALL_A;
     data["SMALL_A4"] = SMALL_A4;
     data["SMALL_TC"] = SMALL_TC;
+/*
     console.log("---------------------------------------------------");
     console.log(BIG_E);
     console.log(BIG_G);
@@ -158,6 +159,7 @@ MongoClient.connect("mongodb://localhost:27017/zhenhai", function(err, db) {
     console.log(SMALL_A4);
     console.log(SMALL_TC);
     console.log("---------------------------------------------------");
+*/
     process.send(data);
   });
 });
