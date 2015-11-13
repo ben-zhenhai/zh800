@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <curl/curl.h>
+#include <sys/wait.h>
 
 #include "crc.h"
 
@@ -14,11 +15,16 @@
 //#define Version "tcjcc_ver"
 //#define FrontNameLength 9
 #define VersionNumberLength 8
-#define FileNameSize 40
-#define ExecuteFilePathLength 80
+#define FileNameSize 256
+#define ExecuteFilePathLength 256
 #define MaxRetryCount 5
 #define updatelist "updatelist"
 #define TempFilepath "/home/pi/zhlog/"
+
+char FtpServer[FileNameSize];
+char AccPw[FileNameSize];
+char Machine[FileNameSize];
+char NewestFileName[FileNameSize];
 
 struct FtpFile
 {
@@ -28,15 +34,43 @@ struct FtpFile
 
 struct MemoryStruct {
     char *memory;
-    size_t size;
-    
+    size_t size;    
 };
+
+
+//file name and crc value
+int CheckLocalFileCRCValueFunction(char *dlFilePath, int crcValue)
+{
+    FILE *filePtr;
+    int fileSize = 0;   
+    unsigned char *buffer;
+
+    printf("%s: %s %d\n ", __func__, dlFilePath, crcValue);
+
+    filePtr = fopen(dlFilePath, "r"); 
+    if(filePtr != NULL)
+    {
+        fseek(filePtr, 0, SEEK_END);
+        fileSize = ftell(filePtr);
+        rewind(filePtr);
+        buffer = (unsigned char *)malloc(sizeof(unsigned char)*fileSize);
+        fread(buffer, 1, fileSize, filePtr);
+        fclose(filePtr);
+        unsigned short crcResult = crcSlow(buffer, fileSize);
+        printf("crcResult: %d\n",crcResult);
+
+        if(buffer != NULL) free(buffer);
+
+        if(crcResult != crcValue) return 1;
+        else return 0;
+    }
+    return 1;
+}
 
 void GetNewFileName(char *a)
 {
     DIR *dp;
     struct dirent *ep;
-
     unsigned long currentVersion = 0;
     char getversion[VersionNumberLength+1];
     memset(getversion, 0, sizeof(char)*(VersionNumberLength+1));
@@ -76,6 +110,7 @@ void GetNewFileName(char *a)
         }
     }
 }
+
 static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {
     struct FtpFile *out=(struct FtpFile *)stream;
@@ -86,8 +121,6 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
     }
     return fwrite(buffer, size, nmemb, out->stream);
 }
-
-
 
 static size_t
 WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
@@ -117,35 +150,153 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
     return realsize;
 }
 
+
+int CheckNewestVersionFunction()
+{
+    CURL *curl_handle;
+    CURLcode res1;
+    struct MemoryStruct chunk;
+    char dlFileName[FileNameSize];
+    char dlAddress[FileNameSize];
+    char currentFile[FileNameSize];
+    int needUpdate = 0;
+
+    memset(dlAddress, 0, sizeof(char)*FileNameSize);
+    memset(dlFileName, 0, sizeof(char)*FileNameSize);
+    memset(currentFile, 0, sizeof(char)*FileNameSize);
+
+    chunk.memory = malloc(1);  
+    chunk.size = 0;   
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    curl_handle = curl_easy_init();
+
+    strcpy(dlAddress, FtpServer);
+    strcat(dlAddress, Machine);
+    printf("%s", dlAddress);
+    curl_easy_setopt(curl_handle, CURLOPT_URL, dlAddress);
+    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+
+    res1 = curl_easy_perform(curl_handle);
+
+    if(res1 != CURLE_OK) 
+    {
+        fprintf(stderr, "%s curl_easy_perform() failed: %s\n", __func__, curl_easy_strerror(res1));
+
+        curl_easy_cleanup(curl_handle);
+        if(chunk.memory)
+        {
+            free(chunk.memory);
+        }
+        curl_global_cleanup();
+
+        return 0;
+    }else 
+    {
+        printf("%lu bytes retrieved\n", (long)chunk.size);
+        unsigned stringLength = strlen(chunk.memory)+1;
+        int forCount; 
+        char *a;
+        a = chunk.memory;
+        unsigned long currentVersion = 0;
+ 
+        GetNewFileName(NewestFileName);
+        strcpy(currentFile, NewestFileName);
+        char *target_1 = NewestFileName;
+        char currentVersionArray[VersionNumberLength+1];
+    
+        target_1 = target_1 + FrontNameLength;
+        for(forCount = 0; forCount < VersionNumberLength; forCount++)
+        {
+            if(forCount != VersionNumberLength)
+            {
+                currentVersionArray[forCount] = *(target_1 + forCount);
+            }
+            else
+            {
+                currentVersionArray[forCount] = '\0';
+            }
+        }
+        currentVersion = atol(currentVersionArray);
+
+        printf("%ld The new File is: %s\n", currentVersion, NewestFileName);
+
+        for(forCount = 0; forCount< stringLength; ++forCount)
+        {
+            if(*a == '\n')
+            {
+                if(strncmp(dlFileName, Version, FrontNameLength) == 0)
+                {
+                    char *target = dlFileName;
+                    char newversion[VersionNumberLength+1];
+                    int forCount_2 = 0;
+                
+                    memset(newversion, 0, sizeof(char)*(VersionNumberLength+1));
+                    target = target + FrontNameLength;
+                    for(forCount_2 = 0; forCount_2 < VersionNumberLength; forCount_2++)
+                    {
+                        if(forCount_2 != VersionNumberLength)
+                        {
+                            newversion[forCount_2] = *(target+forCount_2);
+                        }
+                        else
+                        {
+                            //newversion[forCount_2] = '\0';
+                            ;
+                        }
+                    }
+                    unsigned long newVersion = atol(newversion);
+                    if (newVersion > currentVersion)
+                    {
+                        memset(NewestFileName, 0, sizeof(char)*FileNameSize);
+                        strcpy(NewestFileName, dlFileName);
+                        needUpdate = 1;
+                    }
+                    memset(dlFileName, 0, sizeof(char)*FileNameSize);
+                }
+            }else if(*a == ' ')
+            {
+                memset(dlFileName, 0, sizeof(char)*FileNameSize);
+            }
+            else
+            {
+                strncat(dlFileName, a, sizeof(char)*1);
+            }
+            printf("%c", *a);
+            a++;
+        }
+    }
+    curl_easy_cleanup(curl_handle);
+    if(chunk.memory)
+    {
+        free(chunk.memory);
+    }
+    curl_global_cleanup();
+    //delete file
+    unlink(currentFile);
+    return needUpdate; 
+}
+
 int main(int argc,char* argv[])
 {
     CURL *curl_handle;
-    CURLcode res1, res2, res3 ;
-    struct MemoryStruct chunk;
-    char newestFile[FileNameSize];
-    char currentFile[FileNameSize];
-    char ftpFileName[FileNameSize];
-    char machine[FileNameSize];
+    CURLcode res2, res3 ;
     char configString[ExecuteFilePathLength];
     char updatelistFilePath[ExecuteFilePathLength];
     char tempNewestFile[ExecuteFilePathLength];
-    short needUpdate = 0;
     FILE *pfile;
     char *buffer, *charPosition;
     int filesize = 0;
     int arrayIndex = 0;
-    char ftpServer[ExecuteFilePathLength];
-    char ftpServer_2[ExecuteFilePathLength];
-    char AccPw[ExecuteFilePathLength]; 
 
-    memset(newestFile, 0, sizeof(char)*FileNameSize);
-    memset(currentFile, 0, sizeof(char)*FileNameSize);
-    memset(ftpFileName, 0, sizeof(char)*FileNameSize);
-    memset(machine, 0, sizeof(char)*FileNameSize);
+    memset(NewestFileName, 0, sizeof(char)*FileNameSize);
+    memset(Machine, 0, sizeof(char)*FileNameSize);
     memset(configString, 0, sizeof(char)*ExecuteFilePathLength);
     memset(tempNewestFile, 0, sizeof(char)*ExecuteFilePathLength);
-    memset(ftpServer, 0, sizeof(char)*ExecuteFilePathLength);    
-    memset(ftpServer_2, 0, sizeof(char)*ExecuteFilePathLength);    
+    memset(FtpServer, 0, sizeof(char)*ExecuteFilePathLength);    
     memset(AccPw, 0, sizeof(char)*ExecuteFilePathLength);
     memset(updatelistFilePath, 0, sizeof(char)*ExecuteFilePathLength);
 
@@ -167,9 +318,9 @@ int main(int argc,char* argv[])
                 int forCount = 0;
                 for(forCount = 0; forCount < arrayIndex-7; ++forCount)
                 {
-                    ftpServer[forCount] =  configString[forCount+7];
+                    FtpServer[forCount] =  configString[forCount+7];
                 }
-                printf("%s|\n", ftpServer);
+                printf("%s|\n", FtpServer);
                 memset(configString, 0, sizeof(char)*ExecuteFilePathLength);
             }
             else if(strncmp(configString, "AccPw:", 6) == 0)
@@ -187,9 +338,9 @@ int main(int argc,char* argv[])
                 int forCount = 0;
                 for(forCount = 0; forCount < arrayIndex-12; ++forCount)
                 {
-                    machine[forCount] = configString[forCount+12];    
+                    Machine[forCount] = configString[forCount+12];    
                 }
-                printf("%s|\n", machine);
+                printf("%s|\n", Machine);
                 memset(configString, 0, sizeof(char)*ExecuteFilePathLength);
             }
             else;
@@ -208,131 +359,26 @@ int main(int argc,char* argv[])
         free(buffer);
         charPosition = NULL;
     }
-    chunk.memory = malloc(1);  
-    chunk.size = 0;   
-    sleep(10);
-
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    curl_handle = curl_easy_init();
-
-    strcpy(ftpServer_2, ftpServer);
-    strcat(ftpServer_2, machine);
-    curl_easy_setopt(curl_handle, CURLOPT_URL, ftpServer_2);
-    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
-
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-
-    res1 = curl_easy_perform(curl_handle);
-
-    if(res1 != CURLE_OK) {
-        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res1));
-    }
-    else {
-        printf("%lu bytes retrieved\n", (long)chunk.size);
-        unsigned stringLength = strlen(chunk.memory)+1;
-        unsigned int forCount = 0;
-        char *a;
-        a = chunk.memory;
-        unsigned long currentVersion = 0;
-        int forcount = 0;
- 
-        GetNewFileName(newestFile);
-        strcpy(currentFile, newestFile);
-        char *target_1 = newestFile;
-        char currentversion[VersionNumberLength+1];
-    
-        target_1 = target_1 + FrontNameLength;
-        for(forcount = 0; forcount < VersionNumberLength; forcount++)
-        {
-            if(forcount != VersionNumberLength)
-            {
-                currentversion[forcount] = *(target_1 + forcount);
-            }
-            else
-            {
-                currentversion[forcount] = '\0';
-            }
-        }
-        currentVersion = atoi(currentversion);
-
-        printf("%ld The new File is: %s\n", currentVersion,newestFile);
-
-        for(forCount = 0; forCount< stringLength; ++forCount)
-        {
-            if(*a == '\n')
-            {
-                if(strncmp(ftpFileName, Version, FrontNameLength) == 0)
-                {
-                    char *target = ftpFileName;
-                    char newversion[VersionNumberLength+1];
-                    unsigned long newVersion = 0;
-                
-                    memset(newversion, 0, sizeof(char)*(VersionNumberLength+1));
-                    target = target + FrontNameLength;
-                    for(forcount = 0; forcount < VersionNumberLength; forcount++)
-                    {
-                        if(forcount != VersionNumberLength)
-                        {
-                            newversion[forcount] = *(target+forcount);
-                        }
-                        else
-                        {
-                            //newversion[forcount] = '\0';
-                        }
-                    }
-                    newVersion = atoi(newversion);
-                    //printf(" %lu %s", newVersion, newversion);
-                    if (newVersion > currentVersion)
-                    {
-                        needUpdate = 1;
-                        memset(newestFile, 0, sizeof(char)*FileNameSize);
-                        strcpy(newestFile, ftpFileName);
-                    }
-                    memset(ftpFileName, 0, sizeof(char)*FileNameSize);
-                }
-            }else if(*a == ' ')
-            {
-               memset(ftpFileName, 0, sizeof(char)*FileNameSize);
-            }
-            else
-            {
-                strncat(ftpFileName, a, sizeof(char)*1);
-            }
-            printf("%c", *a);
-            a++;
-
-        }
-    }
-
-    curl_easy_cleanup(curl_handle);
-
-    if(chunk.memory)
-    {
-        free(chunk.memory);
-    }
-    curl_global_cleanup();
-
-
+    sleep(5);
     //ready to update
-    if(needUpdate){
+    if(CheckNewestVersionFunction())
+    {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         curl_handle = curl_easy_init();
     
         struct FtpFile ftpfile, ftpfile2;
         int updateSuccess = 0;
-        char downloadFileName[FileNameSize];
-        char crcCheckValue[FileNameSize];
+        char downloadFileName[FileNameSize]; //in updatelist
+        char crcCheckValue[FileNameSize];    //in updatelist
         int arrayPosition = 0;
         short fileNameEndFlag = 0;
 
-        int filesize2;
+        int filesize2 = 0;
         char *buffer2, *charPosition2;
+        char *buffer3, *charPosition3;
         char targetName[FileNameSize];
         char targetPath[ExecuteFilePathLength];
-        char machineType[FileNameSize];
+        char remoteFolder[FileNameSize];
 
         //update version list
         if(curl_handle)
@@ -340,13 +386,13 @@ int main(int argc,char* argv[])
             char RemoteURL[ExecuteFilePathLength];
 
             memset(RemoteURL, 0, sizeof(char)*ExecuteFilePathLength);
-            strcpy(RemoteURL, ftpServer);
-            strcat(RemoteURL, machine);
-            strcat(RemoteURL, newestFile);
+            strcpy(RemoteURL, FtpServer);
+            strcat(RemoteURL, Machine);
+            strcat(RemoteURL, NewestFileName);
             curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
             curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL);
             strcpy(tempNewestFile,TempFilepath);
-            strcat(tempNewestFile, newestFile);
+            strcat(tempNewestFile, NewestFileName);
             ftpfile.stream = NULL;
             ftpfile.filename = tempNewestFile;
             curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, my_fwrite);
@@ -354,7 +400,8 @@ int main(int argc,char* argv[])
 
             res2 = curl_easy_perform(curl_handle);
             curl_easy_cleanup(curl_handle);
-            if(CURLE_OK != res2) {
+            if(CURLE_OK != res2) 
+            {
                 fprintf(stderr, "curl told us %d\n", res2);
                 if(ftpfile.stream)
                     fclose(ftpfile.stream); /* close the local file */
@@ -364,30 +411,26 @@ int main(int argc,char* argv[])
                 return 0;
             }
         }
-
         if(ftpfile.stream)
             fclose(ftpfile.stream); /* close the local file */
 
         curl_global_cleanup();
-        //delete file
-        printf("current file %s | %s\n", currentFile, tempNewestFile);
-        unlink(currentFile);
 
         curl_global_init(CURL_GLOBAL_DEFAULT);
         curl_handle = curl_easy_init();
     
         //update updatelist 
-        //files need to update and  remote file path and local file path
+        //files need to update and remote file path and local file path
         if(curl_handle)
         {
             char RemoteURL[ExecuteFilePathLength];
 
             memset(RemoteURL, 0, sizeof(char)*ExecuteFilePathLength);
-            strcpy(RemoteURL, ftpServer);
-            strcat(RemoteURL, machine);
+            strcpy(RemoteURL, FtpServer);
+            strcat(RemoteURL, Machine);
             strcat(RemoteURL, updatelist);
-            curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
             curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL);
+            curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
             strcpy(updatelistFilePath,TempFilepath);
             strcat(updatelistFilePath, updatelist);
             ftpfile.stream = NULL;
@@ -416,25 +459,23 @@ int main(int argc,char* argv[])
         pfile = fopen(tempNewestFile, "r");
         fseek(pfile, 0, SEEK_END);
         filesize = ftell(pfile);
-        printf("filesize is %d\n", filesize);
         rewind(pfile);
-        buffer = (char *)malloc(sizeof(char)*filesize);
-        fread(buffer, 1, filesize, pfile);
+        buffer3 = (char *)malloc(sizeof(char)*filesize);
+        fread(buffer3, 1, filesize, pfile);
         fclose(pfile);
-        charPosition = buffer;
+        charPosition3 = buffer3;
         memset(downloadFileName, 0, sizeof(char)*FileNameSize);
         memset(crcCheckValue, 0, sizeof(char)*FileNameSize);
 
         printf("ready to compare %d\n", filesize);
 
         memset(targetName, 0, sizeof(char)*FileNameSize);
-        memset(machineType, 0, sizeof(char)*FileNameSize);
+        memset(remoteFolder, 0, sizeof(char)*FileNameSize);
         memset(targetPath, 0, sizeof(char)*ExecuteFilePathLength);
 
         pfile = fopen(updatelistFilePath, "r");
         fseek(pfile, 0, SEEK_END);
         filesize2 = ftell(pfile);
-        printf("filesize is %d\n", filesize2);
         rewind(pfile);
         buffer2 = (char *)malloc(sizeof(char)*filesize2);
         fread(buffer2, 1, filesize2, pfile);
@@ -442,33 +483,31 @@ int main(int argc,char* argv[])
 
         while(filesize > 0)
         {   
-            if(*charPosition != '\n' && *charPosition != 0x0d) 
+            if(*charPosition3 != '\n' && *charPosition3 != 0x0d) 
             {
-                if(*charPosition == ' ')
+                if(*charPosition3 == ' ')
                 {
                     fileNameEndFlag = 1;
                     arrayPosition  = 0;
-                    charPosition++;
+                    charPosition3++;
                     filesize--;
                 }
                 if(fileNameEndFlag == 0)
                 {
-                    downloadFileName[arrayPosition] = *charPosition;
+                    downloadFileName[arrayPosition] = *charPosition3;
                 }else
                 {
-                    crcCheckValue[arrayPosition] = *charPosition;
+                    crcCheckValue[arrayPosition] = *charPosition3;
                 }
                 ++arrayPosition;
-            }
-            else if(*charPosition == '\n')
+            }else if(*charPosition3 == '\n')
             {
                 short fileNameEndFlag2 = 0;
                 int arrayPosition2 = 0;
-                int filesize3 = 0;
+                int filesize3 = filesize2;
                 memset(targetName, 0, sizeof(char)*FileNameSize);
                 memset(targetPath, 0, sizeof(char)*ExecuteFilePathLength);
-                memset(machineType, 0, sizeof(char)*FileNameSize);
-                filesize3 = filesize2;
+                memset(remoteFolder, 0, sizeof(char)*FileNameSize);
                 charPosition2 = buffer2;
                 
                 while(filesize3 > 0)
@@ -484,7 +523,7 @@ int main(int argc,char* argv[])
                         }
                         if(fileNameEndFlag2 == 2)
                         {
-                            machineType[arrayPosition2] = *charPosition2;
+                            remoteFolder[arrayPosition2] = *charPosition2;
                         }
                         else if(fileNameEndFlag2 == 1)
                         {
@@ -497,168 +536,202 @@ int main(int argc,char* argv[])
                     }
                     else if( *charPosition2 == '\n')
                     {
-                        //printf("%s|%s|%s\n", targetName, targetPath, machineType);
+                        printf("%s|%s|%s|%s|\n", targetName, targetPath, remoteFolder, downloadFileName);
+                        // implement function for check local file first
+                         
                         if(strcmp(downloadFileName, targetName) == 0)
                         {
                             int retryCount = MaxRetryCount;
-                            while(retryCount > 0)
-                            {                  
-                                curl_global_init(CURL_GLOBAL_DEFAULT);
-                                curl_handle = curl_easy_init();
-                                char road[ExecuteFilePathLength];
-                                char actualFileName[ExecuteFilePathLength];                       
+                            char actualFileName[ExecuteFilePathLength];
+                            memset(actualFileName, 0, sizeof(char)*ExecuteFilePathLength);
+                            strcpy(actualFileName, targetPath);
+                            strcat(actualFileName, targetName);
  
-                                memset(road, 0, sizeof(char)*ExecuteFilePathLength);
-                                memset(actualFileName, 0, sizeof(char)*ExecuteFilePathLength);
-                                strcpy(road, targetPath);
-                                printf("%s|%s|%s|\n", targetName, targetPath, road);
-                                if(curl_handle)
-                                {
-                                    char RemoteURL2[ExecuteFilePathLength];
-                                    memset(RemoteURL2, 0, sizeof(char)*ExecuteFilePathLength);
-                                    strcpy(RemoteURL2, ftpServer);
-                                    strcat(RemoteURL2, machineType);
-                                    strcat(RemoteURL2, downloadFileName);
-                                    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
+                            if(CheckLocalFileCRCValueFunction(&actualFileName[0], atoi(crcCheckValue)))
+                            {
+                                while(retryCount > 0)
+                                {                  
+                                    curl_global_init(CURL_GLOBAL_DEFAULT);
+                                    curl_handle = curl_easy_init();
+                                    char road[ExecuteFilePathLength];
+ 
+                                    memset(road, 0, sizeof(char)*ExecuteFilePathLength);
+                                    printf("%s|%s|\n", targetName, targetPath);
+                                    if(curl_handle)
+                                    {
+                                        char RemoteURL2[ExecuteFilePathLength];
+                                        memset(RemoteURL2, 0, sizeof(char)*ExecuteFilePathLength);
+                                        strcpy(RemoteURL2, FtpServer);
+                                        strcat(RemoteURL2, remoteFolder);
+                                        strcat(RemoteURL2, targetName);
+                                        curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
        
-                                    curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL2);
-                                    ftpfile2.stream = NULL;
-                                    ftpfile2.filename = road;
-                                    strcat(ftpfile2.filename, downloadFileName);
-                                    strcpy(actualFileName, ftpfile2.filename);
-                                    strcat(ftpfile2.filename, ".temp");
-                                    printf("%s\n",ftpfile2.filename);
-                                    //ftpfile2.filename = downloadFileName;  
-                                    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, my_fwrite);
-                                    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &ftpfile2);
+                                        curl_easy_setopt(curl_handle, CURLOPT_URL, RemoteURL2);
+                                        strcpy(road, targetPath);
+                                        strcat(road, targetName);
+                                        strcat(road, ".temp");
+                                        ftpfile2.filename = road;
+                                        ftpfile2.stream = NULL;
+                                        curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, my_fwrite);
+                                        curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &ftpfile2);
 
-                                    res3 = curl_easy_perform(curl_handle);
-                                    curl_easy_cleanup(curl_handle);
-                                    if(CURLE_OK != res3) 
-                                    {
-                                        fprintf(stderr, "curl told us %d\n", res3);
+                                        res3 = curl_easy_perform(curl_handle);
+                                        curl_easy_cleanup(curl_handle);
+                                        if(CURLE_OK != res3) 
+                                        {
+                                            fprintf(stderr, "curl told us %d\n", res3);
+                                        }
                                     }
-                                }
+                                    if(ftpfile2.stream)
+                                        fclose(ftpfile2.stream); /* close the local file */
+                                    curl_global_cleanup();
 
-                                if(ftpfile2.stream)
-                                    fclose(ftpfile2.stream); /* close the local file */
-
-                                curl_global_cleanup();
-                                if(res3 == CURLE_OK)
-                                {
-                                    //check crc
-                                    pfile = fopen(ftpfile2.filename, "r");
-                                    unsigned char *crcBuffer;
-                                    fseek(pfile, 0, SEEK_END);
-                                    int fileSize = ftell(pfile);
-                                    rewind(pfile);
-                                    crcBuffer = (unsigned char *)malloc(sizeof(unsigned char)*fileSize);
-                                    fread(crcBuffer, 1, fileSize, pfile);
-                                    fclose(pfile);
-                       
-                                    unsigned short crcResult = crcSlow(crcBuffer, fileSize);
-                                    printf("crc result:%d %d\n", crcResult, atoi(crcCheckValue));
-                                    free(crcBuffer);
+                                    if(res3 == CURLE_OK)
+                                    {
+                                        //check crc
+                                        pfile = fopen(road, "r");
+                                        if(pfile != NULL)
+                                        {
+                                            unsigned char *crcBuffer;
+                                            fseek(pfile, 0, SEEK_END);
+                                            int fileSize = ftell(pfile);
+                                            rewind(pfile);
+                                            crcBuffer = (unsigned char *)malloc(sizeof(unsigned char)*fileSize);
+                                            fread(crcBuffer, 1, fileSize, pfile);
+                                            fclose(pfile);
                                     
-                                    if(crcResult == atoi(crcCheckValue))
-                                    {
-                                        updateSuccess = updateSuccess + 1;            
-                                        //printf("crc result:%d %d\n", crcResult, atoi(crcCheckValue));
-                                        char *checkFilename;
-                                        int i = 0, j = 0;
-                                        char c;
-                                        checkFilename = (char *)malloc(sizeof(char)*strlen(ftpfile2.filename));
-                                        strcpy(checkFilename, ftpfile2.filename);
-                                        
-                                        for(i = 0, j = strlen(checkFilename)-1; i < j; i++, j--)
-                                        {
-                                            c = checkFilename[i];
-                                            checkFilename[i] = checkFilename[j];
-                                            checkFilename[j] = c;
-                                        }
-                                        if(strncmp(checkFilename, "pmet.zg.rat", 11) == 0)
-                                        {
-                                            pid_t proc = fork();
-                                            if(proc < 0)
+                                            unsigned short crcResult = crcSlow(crcBuffer, fileSize);
+                                            printf("crc result:%d %d\n", crcResult, atoi(crcCheckValue));
+                                            if(crcBuffer != NULL)
                                             {
-                                                printf("fork fail\n");
-                                                return -1;
-                                            }else if(proc == 0)
-                                            {
-                                                execlp("mv", "mv", ftpfile2.filename, actualFileName, (char *) 0);
-                                                return 0;
-                                            }else
-                                            {
-                                                int  result = -1;
-                                                wait(&result);
+                                                printf("ready to free crcBuffer\n");
+                                                free(crcBuffer);
                                             }
-                                            printf("%s\n", actualFileName);
-                                            pid_t proc2 = fork();
-                                            if(proc2 < 0)
+                                    
+                                            if(crcResult == atol(crcCheckValue))
                                             {
-                                                printf("fork fail\n");
-                                                return -1;
-                                            }else if(proc2 == 0)
-                                            {
-                                                execlp("rm" , "rm", "-rvf" , "/home/pi/mongodb", (char *) 0); 
-                                            }else
-                                            {
-                                                int result = -1;
-                                                wait(&result);
-                                            }
-                                            proc2 = fork();
-                                            if(proc2 < 0)
-                                            {
-                                                printf("fork fail\n");
-                                                return -1;
-                                            }else if(proc2 == 0)
-                                            {
-                                                execlp("tar", "tar", "zxvf", actualFileName, "-C","/home/pi/", (char *) 0);
-                                            }else
-                                            {
-                                                int result = -1;
-                                                wait(&result);
-                                            }
+                                                updateSuccess = updateSuccess + 1;            
+                                                int i = 0, j = 0;
+                                                char c;
+                                                char *checkFilename;
+                                                checkFilename = (char *)malloc(sizeof(char)*strlen(road));
+                                                strcpy(checkFilename, road);
+                                                int compareSuccess = 0;
+ 
+                                                for(i = 0, j = strlen(road); i < j; i++, j--)
+                                                {
+                                                    c = checkFilename[i];
+                                                    checkFilename[i] = checkFilename[j];
+                                                    checkFilename[j] = c;
+                                                }
+                                                if(strncmp(checkFilename, "pmet.zg.rat", 11) == 0)
+                                                {
+                                                    compareSuccess = 1;
+                                                }
+                                                if(checkFilename != NULL)
+                                                {
+                                                    printf("%s ready to free checkFilename\n", checkFilename);
+                                                    free(checkFilename);
+                                                }
+                                                if(compareSuccess)
+                                                {
 
-                                        }
-                                        else
-                                        {
-                                            pid_t proc = fork();
-                                            if(proc < 0)
-                                            {
-                                                printf("fork fail\n");
-                                                return -1;
-                                            }else if(proc == 0)
-                                            {
-                                                execlp("chmod", "chmod", "744", ftpfile2.filename, (char *) 0);
-                                                return 0;
-                                            }else
-                                            { 
-                                                int result = -1;
-                                                wait(&result);
-                                            }
+                                                    pid_t proc = fork();
+                                                    if(proc < 0)
+                                                    {
+                                                        printf("fork fail\n");
+                                                        return -1;
+                                                    }else if(proc == 0)
+                                                    {
+                                                        unlink(actualFileName);
 
-                                            pid_t proc_2 = fork();
-                                            if(proc_2 < 0)
-                                            {
-                                                printf("fork fail\n");
-                                                return -1;
-                                            }else if(proc_2 == 0)
-                                            {
-                                                execlp("mv", "mv", ftpfile2.filename, actualFileName, (char *) 0);
-                                                return 0;
-                                            }else
-                                            { 
-                                                int result = -1;
-                                                wait(&result);
+                                                        execlp("mv", "mv", road, actualFileName, (char *) 0);
+                                                        exit(0);
+                                                    }else
+                                                    {
+                                                        int  result = -1;
+                                                        wait(&result);
+                                                    }
+                                                    if(strcmp(actualFileName, "/home/pi/new_patch/mongodb.tar.gz") == 0)
+                                                    {
+                                                        printf("ready to remove mongo folder\n");
+                                                        pid_t proc2 = fork();
+                                                        if(proc2 < 0)
+                                                        {
+                                                            printf("fork fail\n");
+                                                            return -1;
+                                                        }else if(proc2 == 0)
+                                                        {
+                                                            execlp("rm" , "rm", "-rvf" , "/home/pi/mongodb", (char *) 0); 
+                                                            exit(0);
+                                                        }else
+                                                        {
+                                                            int result = -1;
+                                                            wait(&result);
+                                                        }
+                                                    }
+                                                    pid_t proc3 = fork();
+                                                    if(proc3 < 0)
+                                                    {
+                                                        printf("fork fail\n");
+                                                        return -1;
+                                                    }else if(proc3 == 0)
+                                                    {   
+                                                        execlp("tar", "tar", "zxvf", actualFileName, "-C","/home/pi/", (char *) 0);
+                                                        exit(0);
+                                                    }else
+                                                    {
+                                                        int result = -1;
+                                                        wait(&result);
+                                                    }
+                                                }else
+                                                {
+                                                    char actualFileName[ExecuteFilePathLength];
+                                                    memset(actualFileName, 0, sizeof(char)*ExecuteFilePathLength);
+                                                    strcpy(actualFileName, targetPath);
+                                                    strcat(actualFileName, targetName);
+ 
+                                                    pid_t proc = fork();
+                                                    if(proc < 0)
+                                                    {
+                                                        printf("fork fail\n");
+                                                        return -1;
+                                                    }else if(proc == 0)
+                                                    {
+                                                        execlp("chmod", "chmod", "744", road,(char *) 0);
+                                                        exit(0);
+                                                    }else
+                                                    { 
+                                                        int result = -1;
+                                                        wait(&result);
+                                                    }
+                                                    pid_t proc_2 = fork();
+                                                    if(proc_2 < 0)
+                                                    {
+                                                        printf("fork fail\n");
+                                                        return -1;
+                                                    }else if(proc_2 == 0)
+                                                    {
+                                                        unlink(actualFileName);
+                                                        execlp("mv", "mv", road, actualFileName, (char *) 0);
+                                                        exit(0);
+                                                    }else
+                                                    { 
+                                                        int result = -1;
+                                                        wait(&result);
+                                                    }
+                                                }
+                                                break;
                                             }
                                         }
-                                        free(checkFilename);
-                                        break;
                                     }
+                                    retryCount = retryCount -1;
+                                    sleep(5);
                                 }
-                                retryCount = retryCount -1;
-                                sleep(5);
+                            }else
+                            {
+                                updateSuccess = updateSuccess + 1;            
+                                printf("This file no need to upgrade\n");
                             }
                             if(retryCount <= 0)
                             {
@@ -667,7 +740,7 @@ int main(int argc,char* argv[])
                             }
                             memset(targetName, 0, sizeof(char)*FileNameSize);
                             memset(targetPath, 0, sizeof(char)*ExecuteFilePathLength);
-                            memset(machineType, 0, sizeof(char)*FileNameSize);
+                            memset(remoteFolder, 0, sizeof(char)*FileNameSize);
                             arrayPosition2 = 0;
                             fileNameEndFlag2 = 0;
                             break;
@@ -676,7 +749,7 @@ int main(int argc,char* argv[])
                         {
                             memset(targetName, 0, sizeof(char)*FileNameSize);
                             memset(targetPath, 0, sizeof(char)*ExecuteFilePathLength);
-                            memset(machineType, 0, sizeof(char)*FileNameSize);
+                            memset(remoteFolder, 0, sizeof(char)*FileNameSize);
                             arrayPosition2 = 0;
                             fileNameEndFlag2 = 0;
                         }
@@ -691,19 +764,23 @@ int main(int argc,char* argv[])
                 fileNameEndFlag = 0;
 
             }else;
-            ++charPosition;
+            ++charPosition3;
             --filesize;
         }
-        if(buffer != NULL)
-        { 
-            free(buffer);
-            charPosition = NULL;
+        if(buffer3 != NULL)
+        {
+            printf("ready to free buffer3\n"); 
+            free(buffer3);
+            charPosition3 = NULL;
+            printf("free buffer3 done\n"); 
         }
 
         if(buffer2 != NULL)
         {
+            printf("ready to free buffer2\n"); 
             free(buffer2);
             charPosition2 = NULL;      
+            printf("free buffer2 done\n"); 
         }
         if(updateSuccess > 0)
         {
@@ -716,15 +793,15 @@ int main(int argc,char* argv[])
                 return -1;
             }else if(proc_3 == 0)
             {
-                execlp("mv", "mv", tempNewestFile, newestFile, (char *)0);
+                execlp("mv", "mv", tempNewestFile, NewestFileName, (char *)0);
                 return 0;
             }else
             { 
                 int result = -1;
                 wait(&result);
             }
-            printf("oooooooooooo\n");
-            pid_t proc_4 = fork();
+            //we will sync in .bashrc
+            /*pid_t proc_4 = fork();
             if(proc_4 < 0)
             {
                 printf("fork fail\n");
@@ -737,7 +814,7 @@ int main(int argc,char* argv[])
             {
                 int result = -1;
                 wait(&result);
-            }
+            }*/
         }
     }else
     {

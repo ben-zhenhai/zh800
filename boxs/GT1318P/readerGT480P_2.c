@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -79,7 +80,8 @@ enum{
     MachUNLOCK,
     MachSTOPForce1,
     MachSTOPForce2,
-    MachSTART
+    MachSTART,
+    MachSTANDBY
 };
 
 enum
@@ -106,6 +108,7 @@ char *shm, *s, *tail;
 char *shm_pop;
 char output[RS232_Length];
 char FakeInput[5][InputLength];
+char UPLoadFile_3[UPLoadFileLength];
 long Count[AgeCountNumber];
 long ExCount[AgeCountNumber];
 int PrintLeftLog = 0;
@@ -120,10 +123,9 @@ typedef struct INPUTNODE
     char MachineCode[InputLength];
     char UserNo[InputLength];
     char CountNo[InputLength];
-    char UPLoadFile[UPLoadFileLength];
-  
-    struct InputNode *link;
+    char UPLoadFile[UPLoadFileLength]; 
 
+    struct InputNode *link;
 } InputNode;
 
 InputNode *list = NULL;
@@ -147,6 +149,16 @@ double CXLowBoundSetter(char CX1, char CX2, char CX3);
 float DXSetter(char DX1, char DX2, char DX3);
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
+
+void sig_fork(int signo)
+{
+    pid_t pid;
+    int stat;
+    pid=waitpid(0,&stat,WNOHANG);
+    printf("%s, finish child process upload %s\n", __func__, UPLoadFile_3);
+    //unlink(UPLoadFile_3);
+    return;
+}
 
 void StringCat(const char *str)
 {
@@ -615,7 +627,7 @@ void *FileFunction(void *argument)
             if(p != NULL)
             {
                 pfile = fopen(p->UPLoadFile, "a");
-                for(ForCount = 0; ForCount < (AgeCountNumber-1) ; ForCount++)
+                for(ForCount = 0; ForCount < AgeCountNumber ; ForCount++)
                 {
                     if((ExCount[ForCount] != Count[ForCount]) && ForCount == 0)
                     {
@@ -688,6 +700,7 @@ int main(int argc, char *argv[])
     pthread_t barcodeInputThread, watchdogThread, ftpThread;
 
     wiringPiSetup(); 
+    signal (SIGCHLD, sig_fork);
 
     pinMode(WiringPiPIN_15, OUTPUT);
     pinMode(WiringPiPIN_16, OUTPUT);
@@ -768,10 +781,10 @@ int main(int argc, char *argv[])
     pfile = fopen(list->UPLoadFile, "w");
 #ifdef PrintMode
     fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #else
     fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTADNBY);
 #endif
     fclose(pfile);
   
@@ -790,31 +803,6 @@ int main(int argc, char *argv[])
     list = NULL;
     node = NULL;
 
-
-    pid_t proc = fork();
-    if(proc < 0)
-    {
-        printf("fork fail\n");
-        exit(EXIT_FAILURE);
-    }else if(proc == 0)
-    {
-        DIR *dp;
-        struct dirent *ep;
-        unsigned long currentVersion = 0;
-        char newFile[100];
-        while(1)
-        {
-            memset(newFile, 0, sizeof(char)*100);
-            dp = opendir(".");
-
-            sleep()
-        } 
-    }else
-    {
-        //no need to wait it, just run
-        ;
-    }
- 
     WatchDogFlag = 1; 
     rc = pthread_create(&watchdogThread, NULL, WatchDogFunction, NULL);
     assert(rc == 0);
@@ -1348,7 +1336,15 @@ void * WatchDogFunction(void *argument)
                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                           list->MachineCode, list->UserNo, MachJobDone);
 #endif
-
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTADNBY);
+#endif
                     fclose(fptr);
                     jobDoneFlag = 1;
                     pthread_mutex_unlock(&Mutexlinklist);
@@ -1401,6 +1397,15 @@ void * WatchDogFunction(void *argument)
                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                           list->MachineCode, list->UserNo, MachSTOPForce1);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTADNBY);
+#endif
                 }else
                 {
 #ifdef PrintMode
@@ -1409,10 +1414,19 @@ void * WatchDogFunction(void *argument)
                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                           list->MachineCode, list->UserNo, MachSTOPForce2);
 #else
-                    fprintf(pfile, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
+                    fprintf(fptr, "%s %s %s %ld %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
                                                           list->ISNo, list->ManagerCard, list->CountNo, Count[Good], (long)now.tv_sec,
                                                           inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                           list->MachineCode, list->UserNo, MachSTOPForce2);
+#endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                        (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                        list->MachineCode, MachSTADNBY);
 #endif
                 }
                 fclose(fptr);
@@ -1493,11 +1507,9 @@ void * FTPFunction(void *argument)
     //curl_off_t fsize;
     //FILE *hd_src;
     struct stat file_info;
-    char UPLoadFile_3[UPLoadFileLength];
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
-    short checkFlag = 0;
 
     while(FTPFlag){
         //char Remote_url[UPLoadFileLength] = "ftp://192.168.20.254:21/home/";
@@ -1524,15 +1536,15 @@ void * FTPFunction(void *argument)
                 strcpy(UPLoadFile_3, p->UPLoadFile);
                 gettimeofday(&now, NULL);
                 sprintf(p->UPLoadFile,"%ld%s.txt",(long)now.tv_sec, p->MachineCode);
-                //hd_src = fopen(p->UPLoadFile, "a");
-                //if(hd_src != NULL)
-                //{
-                //    fclose(hd_src);
-                //}
+                /*hd_src = fopen(p->UPLoadFile, "a");
+                if(hd_src != NULL)
+                {
+                    fclose(hd_src);
+                }*/
             }
             pthread_mutex_unlock(&Mutexlinklist);
             printf("%s\n", UPLoadFile_3);
-            /*
+            
             if(stat(UPLoadFile_3, &file_info) < 0) 
             {
                 printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
@@ -1546,7 +1558,7 @@ void * FTPFunction(void *argument)
                 if(proc < 0)
                 {
                     printf("fork child fail\n");
-                    return 0;
+                    exit(0);
                 }
                 else if(proc == 0)
                 {
@@ -1557,17 +1569,18 @@ void * FTPFunction(void *argument)
                     //strcpy(filePath, "/home/pi/works/GT1318P/");
                     strcpy(filePath, UPLoadFile_3);
                     pfile2 = filePath;                       
-                    printf("%s\n", pfile2);
+                    printf("ready to upload: %s\n", pfile2);
 
                     execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
                     //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
                 }
                 else
                 {
-                    int result = -1;
-                    wait(&result);
+                    //int result = -1;
+                    //wait(&result);
+                    waitpid (-1, NULL, WNOHANG);
                 }
-            }*/
+            }
             /*else if(file_info.st_size > 0)
             {
                 strcat(Remote_url,UPLoadFile_3);
@@ -1612,10 +1625,8 @@ void * FTPFunction(void *argument)
                 }    
                 curl_global_cleanup();
             }*/
-            /*
-            else;
-            unlink(UPLoadFile_3);
-            */
+            else
+                unlink(UPLoadFile_3);
         }
     }
 #ifdef LogMode

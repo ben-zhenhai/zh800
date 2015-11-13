@@ -76,7 +76,8 @@ enum{
     MachUNLOCK,
     MachSTOPForce1,
     MachSTOPForce2,
-    MachSTART
+    MachSTART,
+    MachSTANDBY
 };
 
 short zhInterruptEnable = 0;
@@ -135,8 +136,8 @@ void sig_fork(int signo)
     pid_t pid;
     int stat;
     pid=waitpid(0,&stat,WNOHANG);
-    printf("%s: child process finish upload %s\n", __func__, UPLoadFile_3);
-    unlink(UPLoadFile_3);
+    printf("%s: child process finish upload\n", __func__);
+    //unlink(UPLoadFile_3);
     
     return;
 }
@@ -687,10 +688,10 @@ int main(int argc, char *argv[])
     pfile = fopen(list->UPLoadFile, "w");
 #ifdef PrintMode
     fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #else
     fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #endif
     fclose(pfile);
   
@@ -1126,6 +1127,15 @@ void * WatchDogFunction(void *argument)
                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                  list->MachineCode, list->UserNo, MachJobDone);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n",
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#endif
                     fclose(fptr);
                     jobDoneFlag = 1;
                     pthread_mutex_unlock(&Mutexlinklist);
@@ -1175,6 +1185,15 @@ void * WatchDogFunction(void *argument)
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                              list->MachineCode, list->UserNo, MachSTOPForce1);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n",
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#endif
                 }else
                 {
 #ifdef PrintMode
@@ -1186,6 +1205,15 @@ void * WatchDogFunction(void *argument)
                                                                 list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
                                                                              inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                              list->MachineCode, list->UserNo, MachSTOPForce2);
+#endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n",
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
 #endif
                 }
                 fclose(fptr);
@@ -1272,7 +1300,6 @@ void * FTPFunction(void *argument)
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
-    short checkFlag = 0;
 
     while(FTPFlag)
     {
@@ -1293,7 +1320,6 @@ void * FTPFunction(void *argument)
         if(FTPCount == 0 || FTPFlag == 0 || size > 100000)
         {
             pthread_mutex_lock(&Mutexlinklist);
-            
             InputNode *p = list;
             if(p != NULL)
             {
@@ -1306,97 +1332,93 @@ void * FTPFunction(void *argument)
                 //{
                 //    fclose(hd_src);
                 //}
-                checkFlag = 1;
             }
             pthread_mutex_unlock(&Mutexlinklist);
-            if(checkFlag == 1)
-            {
-                printf("%s\n", UPLoadFile_3);
-                if(stat(UPLoadFile_3, &file_info) < 0) 
-                {
-                    printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
-#ifdef LogMode
-                    Log(s, __func__, __LINE__, " FTP fail_1\n");
-#endif
-                }else if(file_info.st_size > 0)
-                {
-                    pid_t proc = fork();
-                    if(proc < 0)
-                    {
-                        printf("fork child fail\n");
-                        return 0;
-                    }
-                    else if(proc == 0)
-                    {
-                        char filePath[UPLoadFileLength];
-                        char *pfile2;
-                        memset(filePath, 0, sizeof(char)*UPLoadFileLength);
-                        //strcpy(filePath, "/home/pi/zhlog/");
-                        //strcpy(filePath, "/home/pi/works/CAS3000/");
-                        strcpy(filePath, UPLoadFile_3);
-                        pfile2 = filePath;                       
-                        printf("%s\n", pfile2);
 
-                        execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
-                        //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+            printf("%s\n", UPLoadFile_3);
+            if(stat(UPLoadFile_3, &file_info) < 0) 
+            {
+                printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
+#ifdef LogMode
+                Log(s, __func__, __LINE__, " FTP fail_1\n");
+#endif
+            }else if(file_info.st_size > 0)
+            {
+                pid_t proc = fork();
+                if(proc < 0)
+                {
+                    printf("fork child fail\n");
+                    return 0;
+                }
+                else if(proc == 0)
+                {
+                    char filePath[UPLoadFileLength];
+                    char *pfile2;
+                    memset(filePath, 0, sizeof(char)*UPLoadFileLength);
+                    //strcpy(filePath, "/home/pi/zhlog/");
+                    //strcpy(filePath, "/home/pi/works/CAS3000/");
+                    strcpy(filePath, UPLoadFile_3);
+                    pfile2 = filePath;                       
+                    printf("%s\n", pfile2);
+
+                    execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
+                    //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+                    exit(0);
+                }
+                else
+                {
+                    //int result = -1;
+                    //wait(&result);
+                    waitpid(-1, NULL, WNOHANG);
+                }
+            } 
+            /*else if(file_info.st_size > 0)
+            {
+                strcat(Remote_url,UPLoadFile_3);
+                fsize = (curl_off_t)file_info.st_size;
+                curl_global_init(CURL_GLOBAL_ALL);
+
+                curl = curl_easy_init();
+                if(curl)
+                {
+                    hd_src = fopen(UPLoadFile_3, "rb");
+                    curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+                    curl_easy_setopt(curl, CURLOPT_USERPWD, "raspberry:1234");
+                    //curl_easy_setopt(curl, CURLOPT_USERPWD, "taicon_ftp:2769247");
+                    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+                    curl_easy_setopt(curl,CURLOPT_URL, Remote_url);
+                    curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
+                    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
+                    res = curl_easy_perform(curl);
+
+                    if(res != CURLE_OK)
+                    {
+                        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+#ifdef LogMode
+                        Log(s, __func__, __LINE__, " FTP fail_2\n");
+#endif
+                        digitalWrite (WiringPiPIN_15, LOW);
+                        digitalWrite (WiringPiPIN_16, LOW);
+                        digitalWrite (WiringPiPIN_18, LOW);
                     }
                     else
                     {
-                        //int result = -1;
-                        //wait(&result);
-                        waitpid(-1, NULL, WNOHANG);
+                        digitalWrite (WiringPiPIN_15, LOW);
+                        digitalWrite (WiringPiPIN_16, HIGH);
+                        digitalWrite (WiringPiPIN_18, LOW);
                     }
-                } 
-                /*else if(file_info.st_size > 0)
-                {
-                    strcat(Remote_url,UPLoadFile_3);
-                    fsize = (curl_off_t)file_info.st_size;
 
-                    curl_global_init(CURL_GLOBAL_ALL);
-
-                    curl = curl_easy_init();
-                    if(curl)
+                    //curl_slist_free_all (headerlist);
+                    curl_easy_cleanup(curl);
+                    if(hd_src)
                     {
-                        hd_src = fopen(UPLoadFile_3, "rb");
-                        curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
-                        curl_easy_setopt(curl, CURLOPT_USERPWD, "raspberry:1234");
-                        //curl_easy_setopt(curl, CURLOPT_USERPWD, "taicon_ftp:2769247");
-                        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-                        curl_easy_setopt(curl,CURLOPT_URL, Remote_url);
-                        curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
-                        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
-                        res = curl_easy_perform(curl);
-
-                        if(res != CURLE_OK)
-                        {
-                            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-#ifdef LogMode
-                            Log(s, __func__, __LINE__, " FTP fail_2\n");
-#endif
-                            digitalWrite (WiringPiPIN_15, LOW);
-                            digitalWrite (WiringPiPIN_16, LOW);
-                            digitalWrite (WiringPiPIN_18, LOW);
-                        }
-                        else
-                        {
-                            digitalWrite (WiringPiPIN_15, LOW);
-                            digitalWrite (WiringPiPIN_16, HIGH);
-                            digitalWrite (WiringPiPIN_18, LOW);
-                        }
-
-                        //curl_slist_free_all (headerlist);
-                        curl_easy_cleanup(curl);
-                        if(hd_src)
-                        {
-                            fclose(hd_src);
-                        }
-                    }    
-                    curl_global_cleanup();
-                }*/
-                else;
-                //unlink(UPLoadFile_3);
-                checkFlag = 0;
-            }
+                        fclose(hd_src);
+                    }
+                }    
+                curl_global_cleanup();
+            }*/
+            else    
+                unlink(UPLoadFile_3);
         }
     }
 #ifdef LogMode

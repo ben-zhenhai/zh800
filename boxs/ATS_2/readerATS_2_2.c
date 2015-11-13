@@ -77,7 +77,8 @@ enum{
     MachUNLOCK,
     MachSTOPForce1,
     MachSTOPForce2,
-    MachSTART
+    MachSTART,
+    MachSTANDBY
 };
 
 short zhInterruptEnable = 0;
@@ -138,7 +139,7 @@ void sig_fork(int signo)
     int stat;
     pid=waitpid(0,&stat,WNOHANG);
     printf("%s: child process finish upload %s\n", __func__, UPLoadFile_3);
-    unlink(UPLoadFile_3);
+    //unlink(UPLoadFile_3);
     
     return;
 }
@@ -751,10 +752,10 @@ int main(int argc, char *argv[])
     pfile = fopen(list->UPLoadFile, "w");
 #ifdef PrintMode
     fprintf(pfile, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #else
     fprintf(pfile, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #endif
     fclose(pfile);
   
@@ -853,7 +854,6 @@ void * BarcodeInputFunction(void *argument)
 {
     char tempString[InputLength], *tempPtr;
     struct timeval now;
-    FILE *pfile;
 
     /*scanner check
     * 1. ISNO
@@ -1208,6 +1208,15 @@ void * WatchDogFunction(void *argument)
                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                  list->MachineCode, list->UserNo, MachJobDone);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#endif
                     fclose(fptr);
                     jobDoneFlag = 1;
                     pthread_mutex_unlock(&Mutexlinklist);
@@ -1260,6 +1269,15 @@ void * WatchDogFunction(void *argument)
                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                  list->MachineCode, list->UserNo, MachSTOPForce1);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#endif
                 }else
                 {
 #ifdef PrintMode
@@ -1271,6 +1289,15 @@ void * WatchDogFunction(void *argument)
                                                                                  PINCount[1][7] + PINCount[2][7], (long)now.tv_sec,
                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                  list->MachineCode, list->UserNo, MachSTOPForce2);
+#endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 17 %s 0 0 0 0 %02d\n", 
+                                                                (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                                list->MachineCode, MachSTANDBY);
 #endif
                 }
                 fclose(fptr);
@@ -1357,7 +1384,6 @@ void * FTPFunction(void *argument)
     struct timeval now;
     struct timespec outtime;
     int FTPCount = 0;
-    short checkFlag = 0;
 
     while(FTPFlag)
     {
@@ -1391,48 +1417,46 @@ void * FTPFunction(void *argument)
                 //{
                 //    fclose(hd_src);
                 //}
-                checkFlag = 1;
             }
             pthread_mutex_unlock(&Mutexlinklist);
-            if(checkFlag == 1)
+            printf("%s\n", UPLoadFile_3);
+            if(stat(UPLoadFile_3, &file_info) < 0) 
             {
-                printf("%s\n", UPLoadFile_3);
-                if(stat(UPLoadFile_3, &file_info) < 0) 
-                {
-                    printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
+                printf("Couldnt open %s: %s\n", UPLoadFile_3, strerror(errno));
 #ifdef LogMode
-                    Log(s, __func__, __LINE__, " FTP fail_1\n");
+                Log(s, __func__, __LINE__, " FTP fail_1\n");
 #endif
-                }
-                else if(file_info.st_size > 0)
+            }
+            else if(file_info.st_size > 0)
+            {
+                pid_t proc = fork();
+                if(proc < 0)
                 {
-                    pid_t proc = fork();
-                    if(proc < 0)
-                    {
-                        printf("fork child fail\n");
-                        return 0;
-                    }
-                    else if(proc == 0)
-                    {
-                        char filePath[UPLoadFileLength];
-                        char *pfile2;
-                        memset(filePath, 0, sizeof(char)*UPLoadFileLength);
-                        //strcpy(filePath, "/home/pi/zhlog/");
-                        //strcpy(filePath, "/home/pi/works/ATS_2/");
-                        strcpy(filePath, UPLoadFile_3);
-                        pfile2 = filePath;                       
-                        printf("%s\n", pfile2);
-
-                        execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
-                        //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
-                    }
-                    else
-                    {
-                        //int result = -1;
-                        //wait(&result);
-                        waitpid(-1, NULL, WNOHANG);
-                    }
+                    printf("fork child fail\n");
+                    return 0;
                 }
+                else if(proc == 0)
+                {
+                    char filePath[UPLoadFileLength];
+                    char *pfile2;
+                    memset(filePath, 0, sizeof(char)*UPLoadFileLength);
+                    //strcpy(filePath, "/home/pi/zhlog/");
+                    //strcpy(filePath, "/home/pi/works/ATS_2/");
+                    strcpy(filePath, UPLoadFile_3);
+                    pfile2 = filePath;                       
+                    printf("%s\n", pfile2);
+
+                    execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", filePath, (char *)0);
+                    //execl("../../.nvm/v0.10.25/bin/node", "node", "../../mongodb/SendDataClient.js", filePath, (char *)0);
+                    exit(0);
+                }
+                else
+                {
+                    //int result = -1;
+                    //wait(&result);
+                    waitpid(-1, NULL, WNOHANG);
+                }
+            }
                 /*else if(file_info.st_size > 0)
                 {
                     strcat(Remote_url,UPLoadFile_3);
@@ -1479,10 +1503,7 @@ void * FTPFunction(void *argument)
                     }    
                     curl_global_cleanup();
                 }*/
-                else;
-                //unlink(UPLoadFile_3);
-                checkFlag = 0;
-            }
+            else    unlink(UPLoadFile_3);
         }
     }
 #ifdef LogMode

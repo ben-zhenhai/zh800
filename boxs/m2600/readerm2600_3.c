@@ -53,7 +53,7 @@
 #define CONFIG_P0 0x06
 #define CONFIG_P1 0x07
 
-#define WatchDogCountValue 600000 //msec
+#define WatchDogCountValue 1200000 //msec
 #define InputLength 256
 #define UPLoadFileLength 256
 #define CountPeriod 300 //msec
@@ -90,7 +90,8 @@ enum
     MachUNLOCK,
     MachSTOPForce1,
     MachSTOPForce2,
-    MachSTART
+    MachSTART,
+    MachSTANDBY
 };
 
 enum
@@ -158,7 +159,7 @@ void sig_fork(int signo)
     int stat;
     pid=waitpid(0,&stat,WNOHANG);
     printf("%s, finish child process upload %s\n", __func__, UPLoadFile_3);
-    unlink(UPLoadFile_3);
+    //unlink(UPLoadFile_3);
     return;
 }
 
@@ -298,11 +299,7 @@ void * zhLogFunction(void *argument)
                     gettimeofday(&now, NULL);
                     ts = *localtime(&now.tv_sec);
                     strftime(buff, sizeof(buff), "%Y/%m/%d_%H:%M:%S", &ts);
-#ifdef PrintMode
-                    fprintf(pfile,"m2600\t%s\t%ld\t",buff,productCountArray[GoodNumber]-ExproductCountArray[GoodNumber]);
-#else
                     fprintf(pfile,"m2600\t%s\t%ld\t",buff,productCountArray[GoodNumber]);
-#endif
                 }
             }      
     
@@ -727,12 +724,12 @@ void * InputFunction(void * argument)
     char getStringinBuffer[InputLength];
     while(1)
     {
-        memset(getStringinBuffer, 0, sizeof(char));
+        memset(getStringinBuffer, 0, sizeof(char)*InputLength);
         gets(getStringinBuffer);
         if(WaitBarcodeInput && ReadytoRead == 0)
         {
             pthread_mutex_lock(&mutexInput);
-            memset(tempString, 0, sizeof(char));
+            memset(tempString, 0, sizeof(char)*InputLength);
             strcpy(tempString, getStringinBuffer);
             ReadytoRead = 1;
             pthread_mutex_unlock(&mutexInput); 
@@ -868,10 +865,10 @@ int main(int argc ,char *argv[])
     pfile = fopen(UPLoadFile, "w");
 #ifdef PrintMode
     fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           MachineCode, MachLOCK);
+                                                                           MachineCode, MachSTANDBY);
 #else
     fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           MachineCode, MachLOCK);
+                                                                           MachineCode, MachSTANDBY);
 #endif
     fclose(pfile);
 
@@ -884,7 +881,6 @@ int main(int argc ,char *argv[])
     pthread_cond_signal(&condFTP);
     pthread_mutex_unlock(&mutexFTP);
     pthread_join(FTPThread, NULL);
-
 
     //the mechine always standby
     while(1)
@@ -1176,6 +1172,7 @@ int main(int argc ,char *argv[])
 #endif
         fclose(pfile);
  
+        //memset(productCountArray, 0, sizeof(long)*3);
         memset(ExproductCountArray, 0, sizeof(long)*3);
         memset(ExmessageArray, 0, sizeof(int)*9);
         memset(LayoutCount, 0, sizeof(long)*(9*8));
@@ -1224,7 +1221,7 @@ int main(int argc ,char *argv[])
             while(zhResetFlag == 0)
             {
                 usleep(100000);
-                if(productCountArray[GoodNumber] >= goodCount)
+                if(ExproductCountArray[GoodNumber] >= goodCount)
                 //if(productCountArray[GoodNumber] >= 0)
                 {
                     //finish job
@@ -1306,6 +1303,15 @@ int main(int argc ,char *argv[])
                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                     MachineCode, UserNo, MachJobDone);
 #endif
+#ifdef PrintMode
+                fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#else
+                fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n",
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#endif
                 fclose(pfile);
             }else if(MasterFlag == 0)
             {
@@ -1324,6 +1330,15 @@ int main(int argc ,char *argv[])
                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                     MachineCode, UserNo, MachSTOPForce1);
 #endif
+#ifdef PrintMode
+                    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#else
+                    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n",
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#endif
                     fclose(pfile);
                 }
                 else
@@ -1341,6 +1356,15 @@ int main(int argc ,char *argv[])
                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                     MachineCode, UserNo, MachSTOPForce2);
 #endif
+#ifdef PrintMode
+                    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#else
+                    fprintf(pfile, "0 0 0 0 %ld 0 %s 1 %s 0 0 0 0 %02d\n",
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            MachineCode, MachSTANDBY);
+#endif
                     fclose(pfile);
                 }
             }else
@@ -1348,8 +1372,7 @@ int main(int argc ,char *argv[])
                 pfile = fopen(UPLoadFile, "a");
 #ifdef PrintMode
                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 1 %s %s 0 0 0 %02d\n", 
-                                                                    ISNo, ManagerCard, CountNo, 
-                                                                    (long)now.tv_sec,
+                                                                    ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                     inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                     MachineCode, UserNo, MachLOCK);
 #else
@@ -1855,8 +1878,8 @@ void * FTPFunction(void *argument)
                 }
                 curl_global_cleanup();
             }*/
-            else;
-            //unlink(UPLoadFile_3);
+            else
+                unlink(UPLoadFile_3);
         }
     }
 #ifdef LogMode

@@ -77,7 +77,8 @@ enum
     MachUNLOCK,
     MachSTOPForce1,
     MachSTOPForce2,
-    MachSTART
+    MachSTART,
+    MachSTANDBY
 };
 
 short zhInterruptEnable = 0;
@@ -137,9 +138,8 @@ void sig_fork(int signo)
     pid_t pid;
     int stat;
     pid=waitpid(0,&stat,WNOHANG);
-    printf("%s: child process finish upload %s\n", __func__, UPLoadFile_3);
-    unlink(UPLoadFile_3);
-    
+    printf("%s: child process finish upload\n", __func__);
+    //unlink(UPLoadFile_3);    
     return;
 }
 
@@ -375,9 +375,7 @@ void * FileFunction(void *argument)
     struct timeval now;
     struct timespec outtime;
     struct ifreq ifr;
-
     int fd;
-
     long size; 
     int ForCount, ForCount2;
     FILE * pfile;
@@ -677,10 +675,10 @@ int main(int argc, char *argv[])
     pfile = fopen(list->UPLoadFile, "w");
 #ifdef PrintMode
     fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #else
     fprintf(pfile, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                           FakeInput[2], MachLOCK);
+                                                                           FakeInput[2], MachSTANDBY);
 #endif
     fclose(pfile);
   
@@ -1167,6 +1165,15 @@ void * WatchDogFunction(void *argument)
                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                list->MachineCode, list->UserNo, MachSTOPForce1);
 #endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            list->MachineCode, MachSTANDBY);
+#endif
                 }else
                 {
 #ifdef PrintMode
@@ -1178,6 +1185,15 @@ void * WatchDogFunction(void *argument)
                                                                list->ISNo, list->ManagerCard, list->CountNo, PINCount[1][6], (long)now.tv_sec,
                                                                                  inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
                                                                                  list->MachineCode, list->UserNo, MachSTOPForce2);
+#endif
+#ifdef PrintMode
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            list->MachineCode, MachSTANDBY);
+#else
+                    fprintf(fptr, "0 0 0 0 %ld 0 %s 16 %s 0 0 0 0 %02d\n", 
+                                                            (long)now.tv_sec, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
+                                                            list->MachineCode, MachSTANDBY);
 #endif
                 }
                 fclose(fptr);
@@ -1387,8 +1403,8 @@ void * FTPFunction(void *argument)
                     }    
                     curl_global_cleanup();
                 }*/
-                else;
-                //unlink(UPLoadFile_3);
+                else
+                    unlink(UPLoadFile_3);
                 checkFlag = 0;
             }
         }
