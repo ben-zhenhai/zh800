@@ -543,17 +543,13 @@ int main()
                         //wait(&result);
                         //printf("upload success\n");
                         waitpid(-1, NULL, WNOHANG);
-                        pthread_mutex_lock(&MutexEEPROM);
                         if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
                         {
-                            EarseEEPROMData();
-                            EarseEEPROMData();
                         }else
                         {
                             //sprintf(ZHList->GoodNo, "%ld", ExCount[GOODCOUNT]);
                             //WriteEEPROMData();
                         }
-                        pthread_mutex_unlock(&MutexEEPROM);
                     }   
                 }else 
                 {
@@ -588,6 +584,11 @@ int main()
                 return 0;
             }else if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
             {
+                pthread_mutex_lock(&MutexEEPROM);
+                EarseEEPROMData();
+                EarseEEPROMData();
+                pthread_mutex_unlock(&MutexEEPROM);
+
                 memset(Count, 0, sizeof(unsigned long)*EVENTSIZE);
                 memset(ExCount, 0, sizeof(unsigned long)*EVENTSIZE);
                 GoodCount = 0;                

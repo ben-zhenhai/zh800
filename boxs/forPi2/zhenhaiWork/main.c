@@ -968,7 +968,7 @@ int main()
 
             if(stat(uploadFilePath, &fileInfo) == 0)
             {
-                int fileSize = fileInfo.st_size+1;
+                int fileSize = fileInfo.st_size;
                 if(fileSize > 0)
                 {
                     pid_t proc = fork();
@@ -988,17 +988,12 @@ int main()
                         //wait(&result);
                         //printf("upload success\n");
                         waitpid(-1, NULL, WNOHANG);
-                        pthread_mutex_lock(&MutexEEPROM);
                         if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
                         {
-                            ZHEarseEEPROMData();
-                            ZHEarseEEPROMData();
-                            printf("Erase eeprom done!\n");
                         }else
                         {
                             ;
                         }
-                        pthread_mutex_unlock(&MutexEEPROM);
                     }   
                 }else 
                 {
@@ -1039,6 +1034,11 @@ int main()
                 return 0;
             }else if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
             {
+                pthread_mutex_lock(&MutexEEPROM);
+                ZHEarseEEPROMData();
+                ZHEarseEEPROMData();
+                printf("Erase eeprom done!\n");
+                pthread_mutex_unlock(&MutexEEPROM);
 
                 DisableUpDown = 0;
                 memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
