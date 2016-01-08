@@ -52,6 +52,8 @@ rabbitMQ.connect('amqp://' + username + ":" + password + "@" + HOST, function(er
             //process.exit();
           }
         });
+      } else {
+        conn.close();
       }
     });
   });
