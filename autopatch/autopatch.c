@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <curl/curl.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "crc.h"
 
@@ -20,6 +21,7 @@
 #define MaxRetryCount 5
 #define updatelist "updatelist"
 #define TempFilepath "/home/pi/zhlog/"
+#define LogFilePath "/home/pi/zhlog/patchlog"
 
 char FtpServer[FileNameSize];
 char AccPw[FileNameSize];
@@ -37,7 +39,6 @@ struct MemoryStruct {
     size_t size;    
 };
 
-
 //file name and crc value
 int CheckLocalFileCRCValueFunction(char *dlFilePath, int crcValue)
 {
@@ -45,9 +46,9 @@ int CheckLocalFileCRCValueFunction(char *dlFilePath, int crcValue)
     int fileSize = 0;   
     unsigned char *buffer;
 
-    printf("%s: %s %d\n ", __func__, dlFilePath, crcValue);
+    printf("[%s]%s %d\n", __func__, dlFilePath, crcValue);
 
-    filePtr = fopen(dlFilePath, "r"); 
+    filePtr = fopen(dlFilePath, "r");
     if(filePtr != NULL)
     {
         fseek(filePtr, 0, SEEK_END);
@@ -57,7 +58,7 @@ int CheckLocalFileCRCValueFunction(char *dlFilePath, int crcValue)
         fread(buffer, 1, fileSize, filePtr);
         fclose(filePtr);
         unsigned short crcResult = crcSlow(buffer, fileSize);
-        printf("crcResult: %d\n",crcResult);
+        printf("check crc Result: %d\n",crcResult);
 
         if(buffer != NULL) free(buffer);
 
@@ -136,34 +137,30 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
     }
 
     memcpy(&(mem->memory[mem->size]), contents, realsize);
-    /*a = contents;
-    while(a != NULL)
-    {
-        printf("%c",*a);
-        a++;
-    }*/
-    //printf("%s",contents);
-    //printf("\n string length: %d\n", strlen(contents)+1);
     mem->size += realsize;
     mem->memory[mem->size] = 0;
 
     return realsize;
 }
 
-
 int CheckNewestVersionFunction()
 {
     CURL *curl_handle;
-    CURLcode res1;
+    CURLcode result;
     struct MemoryStruct chunk;
     char dlFileName[FileNameSize];
     char dlAddress[FileNameSize];
     char currentFile[FileNameSize];
     int needUpdate = 0;
+    FILE *filePtr;
+    time_t now;
+    struct tm  ts;
+    char buf[80];
 
     memset(dlAddress, 0, sizeof(char)*FileNameSize);
     memset(dlFileName, 0, sizeof(char)*FileNameSize);
     memset(currentFile, 0, sizeof(char)*FileNameSize);
+    memset(buf, 0, sizeof(char)*80);
 
     chunk.memory = malloc(1);  
     chunk.size = 0;   
@@ -174,17 +171,21 @@ int CheckNewestVersionFunction()
 
     strcpy(dlAddress, FtpServer);
     strcat(dlAddress, Machine);
-    printf("%s", dlAddress);
+    printf("%s\n", dlAddress);
     curl_easy_setopt(curl_handle, CURLOPT_URL, dlAddress);
     curl_easy_setopt(curl_handle, CURLOPT_USERPWD, AccPw);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
 
-    res1 = curl_easy_perform(curl_handle);
-
-    if(res1 != CURLE_OK) 
+    result = curl_easy_perform(curl_handle);
+    // Get current time
+    time(&now);
+    // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+    ts = *localtime(&now);
+    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+    if(result != CURLE_OK) 
     {
-        fprintf(stderr, "%s curl_easy_perform() failed: %s\n", __func__, curl_easy_strerror(res1));
+        fprintf(stderr, "%s curl_easy_perform() failed: %s\n", __func__, curl_easy_strerror(result));
 
         curl_easy_cleanup(curl_handle);
         if(chunk.memory)
@@ -193,6 +194,12 @@ int CheckNewestVersionFunction()
         }
         curl_global_cleanup();
 
+        filePtr = fopen(LogFilePath, "a");
+        if(filePtr != NULL)
+        {
+            fprintf(filePtr,"%s access server fail\n", buf);
+            fclose(filePtr);    
+        }
         return 0;
     }else 
     {
@@ -289,8 +296,11 @@ int main(int argc,char* argv[])
     char tempNewestFile[ExecuteFilePathLength];
     FILE *pfile;
     char *buffer, *charPosition;
-    int filesize = 0;
+    int fileSize = 0;
     int arrayIndex = 0;
+    time_t     now;
+    struct tm  ts;
+    char       buf[80];
 
     memset(NewestFileName, 0, sizeof(char)*FileNameSize);
     memset(Machine, 0, sizeof(char)*FileNameSize);
@@ -299,17 +309,18 @@ int main(int argc,char* argv[])
     memset(FtpServer, 0, sizeof(char)*ExecuteFilePathLength);    
     memset(AccPw, 0, sizeof(char)*ExecuteFilePathLength);
     memset(updatelistFilePath, 0, sizeof(char)*ExecuteFilePathLength);
+    memset(buf, 0, sizeof(char)*80);
 
     pfile = fopen("config", "r");
     fseek(pfile, 0, SEEK_END);
-    filesize = ftell(pfile);
+    fileSize = ftell(pfile);
     rewind(pfile);   
-    buffer = (char *)malloc(sizeof(char)*filesize);
-    fread(buffer, 1, filesize, pfile);
+    buffer = (char *)malloc(sizeof(char)*fileSize);
+    fread(buffer, 1, fileSize, pfile);
     fclose(pfile);
     charPosition = buffer;
 
-    while(filesize > 0)
+    while(fileSize > 0)
     {
         if(*charPosition == '\n')
         {
@@ -330,7 +341,6 @@ int main(int argc,char* argv[])
                 {
                     AccPw[forCount] = configString[forCount+6];
                 }
-                //printf("%s|\n", AccPw);
                 memset(configString, 0, sizeof(char)*ExecuteFilePathLength);
             }
             else if(strncmp(configString, "MachineType:", 12) == 0)
@@ -352,7 +362,7 @@ int main(int argc,char* argv[])
         }
         //printf("%c", *charPosition);
         ++charPosition;
-        --filesize;
+        --fileSize;
     }
     if(buffer != NULL)
     {
@@ -373,9 +383,9 @@ int main(int argc,char* argv[])
         int arrayPosition = 0;
         short fileNameEndFlag = 0;
 
-        int filesize2 = 0;
-        char *buffer2, *charPosition2;
-        char *buffer3, *charPosition3;
+        int fileSize2 = 0;
+        char *bufferForupdatelist, *charPositionForupdatelist;
+        char *bufferTempNewestFile, *charPositionTempNewestFile;
         char targetName[FileNameSize];
         char targetPath[ExecuteFilePathLength];
         char remoteFolder[FileNameSize];
@@ -408,6 +418,18 @@ int main(int argc,char* argv[])
 
                 curl_global_cleanup();
                 printf("no need to update\n");
+
+                time(&now);
+                ts = *localtime(&now);
+                memset(buf, 0, sizeof(char)*80);
+                strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+                pfile = fopen(LogFilePath, "a");
+                if(pfile != NULL)
+                {
+                    fprintf(pfile,"%s download newest file list fail\n", buf);
+                    fclose(pfile);
+                }
                 return 0;
             }
         }
@@ -446,6 +468,19 @@ int main(int argc,char* argv[])
                     fclose(ftpfile.stream); /* close the local file */
 
                 curl_global_cleanup();
+                curl_global_cleanup();
+
+                time(&now);
+                ts = *localtime(&now);
+                memset(buf, 0, sizeof(char)*80);
+                strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+                pfile = fopen(LogFilePath, "a");
+                if(pfile != NULL)
+                {
+                    fprintf(pfile,"%s download updatelist fail\n", buf);
+                    fclose(pfile);
+                }
                 printf("no need to update\n");
                 return 0;
             }
@@ -458,16 +493,16 @@ int main(int argc,char* argv[])
 
         pfile = fopen(tempNewestFile, "r");
         fseek(pfile, 0, SEEK_END);
-        filesize = ftell(pfile);
+        fileSize = ftell(pfile);
         rewind(pfile);
-        buffer3 = (char *)malloc(sizeof(char)*filesize);
-        fread(buffer3, 1, filesize, pfile);
+        bufferTempNewestFile = (char *)malloc(sizeof(char)*fileSize);
+        fread(bufferTempNewestFile, 1, fileSize, pfile);
         fclose(pfile);
-        charPosition3 = buffer3;
+        charPositionTempNewestFile = bufferTempNewestFile;
         memset(downloadFileName, 0, sizeof(char)*FileNameSize);
         memset(crcCheckValue, 0, sizeof(char)*FileNameSize);
 
-        printf("ready to compare %d\n", filesize);
+        printf("ready to compare %d\n", fileSize);
 
         memset(targetName, 0, sizeof(char)*FileNameSize);
         memset(remoteFolder, 0, sizeof(char)*FileNameSize);
@@ -475,66 +510,66 @@ int main(int argc,char* argv[])
 
         pfile = fopen(updatelistFilePath, "r");
         fseek(pfile, 0, SEEK_END);
-        filesize2 = ftell(pfile);
+        fileSize2 = ftell(pfile);
         rewind(pfile);
-        buffer2 = (char *)malloc(sizeof(char)*filesize2);
-        fread(buffer2, 1, filesize2, pfile);
+        bufferForupdatelist = (char *)malloc(sizeof(char)*fileSize2);
+        fread(bufferForupdatelist, 1, fileSize2, pfile);
         fclose(pfile);
 
-        while(filesize > 0)
+        while(fileSize > 0)
         {   
-            if(*charPosition3 != '\n' && *charPosition3 != 0x0d) 
+            if(*charPositionTempNewestFile != '\n' && *charPositionTempNewestFile != 0x0d) 
             {
-                if(*charPosition3 == ' ')
+                if(*charPositionTempNewestFile == ' ')
                 {
                     fileNameEndFlag = 1;
                     arrayPosition  = 0;
-                    charPosition3++;
-                    filesize--;
+                    charPositionTempNewestFile++;
+                    fileSize--;
                 }
                 if(fileNameEndFlag == 0)
                 {
-                    downloadFileName[arrayPosition] = *charPosition3;
+                    downloadFileName[arrayPosition] = *charPositionTempNewestFile;
                 }else
                 {
-                    crcCheckValue[arrayPosition] = *charPosition3;
+                    crcCheckValue[arrayPosition] = *charPositionTempNewestFile;
                 }
                 ++arrayPosition;
-            }else if(*charPosition3 == '\n')
+            }else if(*charPositionTempNewestFile == '\n')
             {
                 short fileNameEndFlag2 = 0;
                 int arrayPosition2 = 0;
-                int filesize3 = filesize2;
+                int fileSize3 = fileSize2;
                 memset(targetName, 0, sizeof(char)*FileNameSize);
                 memset(targetPath, 0, sizeof(char)*ExecuteFilePathLength);
                 memset(remoteFolder, 0, sizeof(char)*FileNameSize);
-                charPosition2 = buffer2;
+                charPositionForupdatelist = bufferForupdatelist;
                 
-                while(filesize3 > 0)
+                while(fileSize3 > 0)
                 {
-                    if(*charPosition2 != '\n' && *charPosition2 != 0x0d) 
+                    if(*charPositionForupdatelist != '\n' && *charPositionForupdatelist != 0x0d) 
                     {
-                        if(*charPosition2 == ' ')
+                        if(*charPositionForupdatelist == ' ')
                         {
                             fileNameEndFlag2 = fileNameEndFlag2 + 1;
                             arrayPosition2 = 0;
-                            charPosition2++;
-                            filesize3--;
+                            charPositionForupdatelist++;
+                            fileSize3--;
                         }
                         if(fileNameEndFlag2 == 2)
                         {
-                            remoteFolder[arrayPosition2] = *charPosition2;
+                            remoteFolder[arrayPosition2] = *charPositionForupdatelist;
                         }
                         else if(fileNameEndFlag2 == 1)
                         {
-                            targetPath[arrayPosition2] = *charPosition2;
+                            targetPath[arrayPosition2] = *charPositionForupdatelist;
                         }else
                         {
-                            targetName[arrayPosition2] = *charPosition2;
+                            targetName[arrayPosition2] = *charPositionForupdatelist;
                         }
                         ++arrayPosition2;
                     }
-                    else if( *charPosition2 == '\n')
+                    else if( *charPositionForupdatelist == '\n')
                     {
                         printf("%s|%s|%s|%s|\n", targetName, targetPath, remoteFolder, downloadFileName);
                         // implement function for check local file first
@@ -635,7 +670,6 @@ int main(int argc,char* argv[])
                                                 }
                                                 if(compareSuccess)
                                                 {
-
                                                     pid_t proc = fork();
                                                     if(proc < 0)
                                                     {
@@ -730,11 +764,33 @@ int main(int argc,char* argv[])
                                 }
                             }else
                             {
-                                updateSuccess = updateSuccess + 1;            
+                                updateSuccess = updateSuccess + 1;
+                                time(&now);
+                                ts = *localtime(&now);
+                                memset(buf, 0, sizeof(char)*80);
+                                strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
                                 printf("This file no need to upgrade\n");
+                                pfile = fopen(LogFilePath, "a");
+                                if(pfile != NULL)
+                                {
+                                    fprintf(pfile,"%s %s not need to update(crc correct)\n", buf, targetName);
+                                    fclose(pfile);
+                                }
                             }
                             if(retryCount <= 0)
                             {
+                                time(&now);
+                                ts = *localtime(&now);
+                                memset(buf, 0, sizeof(char)*80);
+                                strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+                                pfile = fopen(LogFilePath, "a");
+                                if(pfile != NULL)
+                                {
+                                    fprintf(pfile,"%s %s fail to update(Max retry)\n", buf, targetName);
+                                    fclose(pfile);
+                                }
                                 printf("Download Fail: MAX retry\n");
                                 unlink(tempNewestFile);
                             }
@@ -755,8 +811,8 @@ int main(int argc,char* argv[])
                         }
                     }
                     else;
-                    ++charPosition2;
-                    --filesize3;
+                    ++charPositionForupdatelist;
+                    --fileSize3;
                 }
                 memset(downloadFileName, 0, sizeof(char)*FileNameSize);
                 memset(crcCheckValue, 0, sizeof(char)*FileNameSize);
@@ -764,27 +820,27 @@ int main(int argc,char* argv[])
                 fileNameEndFlag = 0;
 
             }else;
-            ++charPosition3;
-            --filesize;
+            ++charPositionTempNewestFile;
+            --fileSize;
         }
-        if(buffer3 != NULL)
+        if(bufferTempNewestFile != NULL)
         {
-            printf("ready to free buffer3\n"); 
-            free(buffer3);
-            charPosition3 = NULL;
-            printf("free buffer3 done\n"); 
+            printf("ready to free bufferTempNewestFile\n"); 
+            free(bufferTempNewestFile);
+            charPositionTempNewestFile = NULL;
+            printf("free bufferTempNewestFile done\n"); 
         }
 
-        if(buffer2 != NULL)
+        if(bufferForupdatelist != NULL)
         {
-            printf("ready to free buffer2\n"); 
-            free(buffer2);
-            charPosition2 = NULL;      
-            printf("free buffer2 done\n"); 
+            printf("ready to free bufferForupdatelist\n"); 
+            free(bufferForupdatelist);
+            charPositionForupdatelist = NULL;
+            printf("free bufferForupdatelist done\n"); 
         }
         if(updateSuccess > 0)
         {
-            printf("%d file update success\nready to reboot...\n", updateSuccess);
+            printf("%d file update success\n", updateSuccess);
             //execlp("reboot", "reboot", (char *)0);
             pid_t proc_3 = fork();
             if(proc_3 < 0)
@@ -800,25 +856,30 @@ int main(int argc,char* argv[])
                 int result = -1;
                 wait(&result);
             }
-            //we will sync in .bashrc
-            /*pid_t proc_4 = fork();
-            if(proc_4 < 0)
-            {
-                printf("fork fail\n");
-                return -1;
-            }else if(proc_4 == 0)
-            {
-                execlp("sync","sync",(char *)0);
-                return 0;
-            }else
-            {
-                int result = -1;
-                wait(&result);
-            }*/
+            time(&now);
+            ts = *localtime(&now);
+            strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+            //pfile = fopen(LogFilePath, "a");
+            //if(pfile != NULL)
+            //{
+            //    fprintf(pfile,"%s update success\n", buf);
+            //    fclose(pfile);
+            //}
         }
     }else
     {
         printf("no need to update\n");
+        time(&now);
+        ts = *localtime(&now);
+        strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+        pfile = fopen(LogFilePath, "a");
+        if(pfile != NULL)
+        {
+            fprintf(pfile,"%s no need to update\n", buf);
+            fclose(pfile);
+        }
     }
     return 0;
 }
