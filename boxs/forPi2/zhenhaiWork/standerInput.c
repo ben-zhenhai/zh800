@@ -21,7 +21,26 @@ void * InputFunction(void *argument)
                 {
                     memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
                     memcpy(ISNo, tempBarcodeInput, sizeof(char)*INPUTLENGTH);
+
+                    int x = ReadLastFinishLotNo();
+                    if(x == 0 && strcmp(ISNo, LastISNo) == 0)
+                    {
+                        printf("Need input managerment No\n");
+                        BarcodeIndex = NEEDPRIVILEGE;
+                    }else
+                    {
+                        memset(LastISNo, 0, sizeof(char)*INPUTLENGTH);
+                    }
                     InputDone = 1;
+                }
+                else if(strncmp(tempBarcodeInput, "XXXM", 4) == 0 && CanChangeRepairModeFlag == 1)
+                {
+                    char *tempPtr = tempBarcodeInput + 4;
+                    memset(RepairNo, 0, sizeof(char)*INPUTLENGTH);
+                    memcpy(RepairNo, tempPtr, sizeof(char)*(INPUTLENGTH-4));
+                    CanChangeRepairModeFlag = 2;
+                    InputDone = 1;
+                    printf("get repair event\n");
                 }
                 else
                 {
@@ -121,6 +140,21 @@ void * InputFunction(void *argument)
                 else 
                 {
                     printf("scan Fix Item NO. error!\n");
+                }
+                break;
+            case  NEEDPRIVILEGE:
+                if(strncmp(tempBarcodeInput, "XXXA", 4) == 0)
+                {
+                    char *tempPtr = tempBarcodeInput + 4;
+                    memset(PrivilegeNo, 0, sizeof(char)*INPUTLENGTH);
+                    memcpy(PrivilegeNo, tempPtr, sizeof(char)*(INPUTLENGTH-4));
+                    BarcodeIndex = ISNO;
+                    InputDone = 1;
+                }else
+                {
+                    BarcodeIndex = 0;
+                    memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
+                    InputDone = 1;
                 }
                 break;
             default:

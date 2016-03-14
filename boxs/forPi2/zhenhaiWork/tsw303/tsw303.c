@@ -74,6 +74,7 @@ int SetI2cConfig()
     return 0;
 }
 
+/*
 int WriteFile(int mode)
 {
     FILE *filePtr;
@@ -100,7 +101,7 @@ int WriteFile(int mode)
                 {
                     if(forCount == GOODCOUNT)
                     {
-                        if(abs(Count[forCount] - ExCount[forCount]) > 10)
+                        if(abs(Count[forCount] - ExCount[forCount]) > ZHMAXOUTPUT)
                         {
                             fprintf(filePtr, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -219,6 +220,7 @@ int WriteFile(int mode)
     fclose(filePtr);
     return 0;
 }
+*/
 
 void * ZHSerialFunction(void *argument)
 {
@@ -509,7 +511,7 @@ void * WatchdogFunction(void *argument)
                 newDataIncome = 0;
             }else 
             {
-                watchdogCoolDown = watchdogCoolDown - WRITEFILECOUNTVALUE;
+                //watchdogCoolDown = watchdogCoolDown - WRITEFILECOUNTVALUE;
                 printf("%d\n", watchdogCoolDown);   
             }
             if(watchdogCoolDown <= 0)

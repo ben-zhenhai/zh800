@@ -1,5 +1,9 @@
 #include "lcd.h"
 
+#define LCDCOMMANDPOSITION 10
+#define LCDCOMMANDPREFIX 5
+#define LCDCOMMANDPOSTFIX 3
+
 int UpdateScreenFunction(int screenIndex)
 {
     unsigned char infoScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x00, 0x0d};
@@ -33,17 +37,17 @@ int UpdateScreenFunction(int screenIndex)
 #ifdef DEBUG
             printf("array size:%d\n", arraySize);
 #endif
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX)); 
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, countNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, countNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, ZHList->CountNo, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -51,23 +55,22 @@ int UpdateScreenFunction(int screenIndex)
             }
  
             //good count
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + 7));
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + 7));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX));
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX));
             countPtr = (unsigned char *)malloc(sizeof(unsigned char)*7);
             memset(countPtr, 0, sizeof(unsigned char)*7);
-
          
-            sprintf(countPtr, "%ld", (GoodCount%1000000));
+            sprintf(countPtr, "%ld", (GoodCount%10000000));
 
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, goodNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, goodNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, countPtr, 7);
             commandPtr = commandPtr + 7;
-            memcpy(commandPtr, endString, 3);
-            SendCommandMessageFunction(commandArrayPtr, 18 + 7);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -79,22 +82,22 @@ int UpdateScreenFunction(int screenIndex)
                 countPtr = NULL;
             }
 
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + 7));
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + 7));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX));
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX));
             countPtr = (unsigned char *)malloc(sizeof(unsigned char)*7);
             memset(countPtr, 0, sizeof(unsigned char)*7);
          
-            sprintf(countPtr, "%ld", (TotalBadCount%1000000));
+            sprintf(countPtr, "%ld", (TotalBadCount%10000000));
 
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, totalBadNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, totalBadNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, countPtr, 7);
             commandPtr = commandPtr + 7;
-            memcpy(commandPtr, endString, 3);
-            SendCommandMessageFunction(commandArrayPtr, 18 + 7);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 7 + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -163,34 +166,31 @@ int UpdateScreenFunction(int screenIndex)
         unsigned char countNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char userNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xcf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
 
-
         unsigned char * commandArrayPtr;
         unsigned char * commandPtr,  * managerPtr;
         int arraySize = 0;
 
         SendCommandMessageFunction(infoScreen, 13);
         nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
-        //sleep(1);
         
         //lot no
-
         if(ZHNode != NULL)
         {
             if(strlen(ZHNode->ISNo) > 0)
             { 
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*32); 
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX)); 
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, lotPostionColorString, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, lotPostionColorString, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHNode->ISNo, 14);
                 commandPtr = commandPtr +14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
                 //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL) 
                 {
                     free(commandArrayPtr);
@@ -200,18 +200,18 @@ int UpdateScreenFunction(int screenIndex)
             if(strlen(ZHNode->ManagerCard) > 0)
             {
                 //part no. 1
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*28);
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*28);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString1, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, partPositionColorString1, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHNode->ManagerCard, 10);
                 commandPtr = commandPtr + 10;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 28);
+                SendCommandMessageFunction(commandArrayPtr, (LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -219,20 +219,20 @@ int UpdateScreenFunction(int screenIndex)
                 }
         
                 //part no. 2
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*32);
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString2, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, partPositionColorString2, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 managerPtr = ZHNode->ManagerCard;
                 managerPtr = managerPtr + 10;
                 memcpy(commandPtr, managerPtr, 14);
                 commandPtr = commandPtr + 14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -249,19 +249,19 @@ int UpdateScreenFunction(int screenIndex)
 #ifdef DEBUG
             printf("array size:%d\n", arraySize);
 #endif
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, countNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, countNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, ZHNode->CountNo, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
             //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -276,18 +276,18 @@ int UpdateScreenFunction(int screenIndex)
                 arraySize = arraySize - 24;
                 userNoPtr = ZHNode->UserNo + 24;
             }
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, userNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, userNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, userNoPtr, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -323,19 +323,19 @@ int UpdateScreenFunction(int screenIndex)
         {
             if(strlen(ZHList->ISNo) > 0)
             { 
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*32); 
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX)); 
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, lotPostionColorString, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, lotPostionColorString, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHList->ISNo, 14);
                 commandPtr = commandPtr +14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
                 //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL) 
                 {
                     free(commandArrayPtr);
@@ -345,18 +345,18 @@ int UpdateScreenFunction(int screenIndex)
             if(strlen(ZHList->ManagerCard) > 0)
             {
                 //part no. 1
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*28);
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*28);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString1, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, partPositionColorString1, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHList->ManagerCard, 10);
                 commandPtr = commandPtr + 10;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 28);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -364,20 +364,20 @@ int UpdateScreenFunction(int screenIndex)
                 }
         
                 //part no. 2
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*32);
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString2, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
+                memcpy(commandPtr, partPositionColorString2, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 managerPtr = ZHList->ManagerCard;
                 managerPtr = managerPtr + 10;
                 memcpy(commandPtr, managerPtr, 14);
                 commandPtr = commandPtr + 14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -392,19 +392,19 @@ int UpdateScreenFunction(int screenIndex)
             //count no.
             arraySize = strlen(ZHList->CountNo);
             printf("array size:%d\n", arraySize);
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX)); 
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, countNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, countNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, ZHList->CountNo, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
             //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -445,17 +445,17 @@ int UpdateScreenFunction(int screenIndex)
             memset(ipAddrArray, 0, sizeof(char)*17);
             strncpy(ipAddrArray, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), sizeof(char)*17);
             arraySize = 17;
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX)); 
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, ipAddressPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, ipAddressPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, ipAddrArray, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -472,17 +472,17 @@ int UpdateScreenFunction(int screenIndex)
 #ifdef DEBUG
         printf("array size:%d\n", arraySize);
 #endif
-        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-        memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
+        memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
         commandPtr = commandArrayPtr;
-        memcpy(commandPtr, startString, 5);
-        commandPtr = commandPtr + 5;
-        memcpy(commandPtr, machineNoPositionColorString, 10);
-        commandPtr = commandPtr + 10;
+        memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+        commandPtr = commandPtr + LCDCOMMANDPREFIX;
+        memcpy(commandPtr, machineNoPositionColorString, LCDCOMMANDPOSITION);
+        commandPtr = commandPtr + LCDCOMMANDPOSITION;
         memcpy(commandPtr, MachineNo, arraySize);
         commandPtr = commandPtr + arraySize;
-        memcpy(commandPtr, endString, 3);
-        SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+        memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
+        SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
         if(commandArrayPtr != NULL) 
         {
             free(commandArrayPtr);
@@ -518,19 +518,19 @@ int UpdateScreenFunction(int screenIndex)
         {
             if(strlen(ZHList->ISNo) > 0)
             { 
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*32); 
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX)); 
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, lotPostionColorString, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, lotPostionColorString, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHList->ISNo, 14);
                 commandPtr = commandPtr +14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
                 //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL) 
                 {
                     free(commandArrayPtr);
@@ -540,18 +540,18 @@ int UpdateScreenFunction(int screenIndex)
             if(strlen(ZHList->ManagerCard) > 0)
             {
                 //part no. 1
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*28);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                 memset(commandArrayPtr, 0, sizeof(unsigned char)*28);
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString1, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, partPositionColorString1, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 memcpy(commandPtr, ZHList->ManagerCard, 10);
                 commandPtr = commandPtr + 10;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 28);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -559,20 +559,20 @@ int UpdateScreenFunction(int screenIndex)
                 }
         
                 //part no. 2
-                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*32);
-                memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
+                memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                 commandPtr = commandArrayPtr;
-                memcpy(commandPtr, startString, 5);
-                commandPtr = commandPtr + 5;
-                memcpy(commandPtr, partPositionColorString2, 10);
-                commandPtr = commandPtr + 10;
+                memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                memcpy(commandPtr, partPositionColorString2, LCDCOMMANDPOSITION);
+                commandPtr = commandPtr + LCDCOMMANDPOSITION;
                 managerPtr = ZHList->ManagerCard;
                 managerPtr = managerPtr + 10;
                 memcpy(commandPtr, managerPtr, 14);
                 commandPtr = commandPtr + 14;
-                memcpy(commandPtr, endString, 3);
+                memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                SendCommandMessageFunction(commandArrayPtr, 32);
+                SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                 if(commandArrayPtr != NULL)
                 {
                     free(commandArrayPtr);
@@ -589,20 +589,20 @@ int UpdateScreenFunction(int screenIndex)
 #ifdef DEBUF
             printf("array size:%d\n", arraySize);
 #endif
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, countNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, countNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, ZHList->CountNo, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
             //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
-            if(commandArrayPtr != NULL) 
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
+            if(commandArrayPtr != NULL)
             {
                 free(commandArrayPtr);
                 commandPtr = NULL;
@@ -616,18 +616,18 @@ int UpdateScreenFunction(int screenIndex)
                 arraySize = arraySize - 24;
                 userNoPtr = ZHList->UserNo + 24;
             }  
-            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-            memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+            commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + arraySize + LCDCOMMANDPOSITION + LCDCOMMANDPOSTFIX)); 
+            memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION  + arraySize + LCDCOMMANDPOSTFIX));
             commandPtr = commandArrayPtr;
-            memcpy(commandPtr, startString, 5);
-            commandPtr = commandPtr + 5;
-            memcpy(commandPtr, userNoPositionColorString, 10);
-            commandPtr = commandPtr + 10;
+            memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+            commandPtr = commandPtr + LCDCOMMANDPREFIX;
+            memcpy(commandPtr, userNoPositionColorString, LCDCOMMANDPOSITION);
+            commandPtr = commandPtr + LCDCOMMANDPOSITION;
             memcpy(commandPtr, userNoPtr, arraySize);
             commandPtr = commandPtr + arraySize;
-            memcpy(commandPtr, endString, 3);
+            memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-            SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+            SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION  + arraySize + LCDCOMMANDPOSTFIX);
             if(commandArrayPtr != NULL) 
             {
                 free(commandArrayPtr);
@@ -759,19 +759,19 @@ void * ChangeScreenEventListenFunction(void *argument)
                     //lot no
                     if(strlen(nodePtr->ISNo) > 0)
                     { 
-                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*32); 
-                        memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX)); 
+                        memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                         commandPtr = commandArrayPtr;
-                        memcpy(commandPtr, startString, 5);
-                        commandPtr = commandPtr + 5;
-                        memcpy(commandPtr, lotPostionColorString, 10);
-                        commandPtr = commandPtr + 10;
+                        memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                        commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                        memcpy(commandPtr, lotPostionColorString, LCDCOMMANDPOSITION);
+                        commandPtr = commandPtr + LCDCOMMANDPOSITION;
                         memcpy(commandPtr, nodePtr->ISNo, 14);
-                        commandPtr = commandPtr +14;
-                        memcpy(commandPtr, endString, 3);
+                        commandPtr = commandPtr + 14;
+                        memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
                         //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-                        SendCommandMessageFunction(commandArrayPtr, 32);
+                        SendCommandMessageFunction(commandArrayPtr, (LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                         if(commandArrayPtr != NULL) 
                         {
                             free(commandArrayPtr);
@@ -781,18 +781,18 @@ void * ChangeScreenEventListenFunction(void *argument)
                     if(strlen(nodePtr->ManagerCard) > 0)
                     {
                         //part no. 1
-                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*28);
-                        memset(commandArrayPtr, 0, sizeof(unsigned char)*28);
+                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
+                        memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                         commandPtr = commandArrayPtr;
-                        memcpy(commandPtr, startString, 5);
-                        commandPtr = commandPtr + 5;
-                        memcpy(commandPtr, partPositionColorString1, 10);
-                        commandPtr = commandPtr + 10;
+                        memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                        commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                        memcpy(commandPtr, partPositionColorString1, LCDCOMMANDPOSITION);
+                        commandPtr = commandPtr + LCDCOMMANDPOSITION;
                         memcpy(commandPtr, nodePtr->ManagerCard, 10);
                         commandPtr = commandPtr + 10;
-                        memcpy(commandPtr, endString, 3);
+                        memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                        SendCommandMessageFunction(commandArrayPtr, 28);
+                        SendCommandMessageFunction(commandArrayPtr, (LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 10 + LCDCOMMANDPOSTFIX));
                         if(commandArrayPtr != NULL)
                         {
                             free(commandArrayPtr);
@@ -800,20 +800,20 @@ void * ChangeScreenEventListenFunction(void *argument)
                         }
         
                         //part no. 2
-                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*32);
-                        memset(commandArrayPtr, 0, sizeof(unsigned char)*32);
+                        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char )*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
+                        memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX));
                         commandPtr = commandArrayPtr;
-                        memcpy(commandPtr, startString, 5);
-                        commandPtr = commandPtr + 5;
-                        memcpy(commandPtr, partPositionColorString2, 10);
-                        commandPtr = commandPtr + 10;
+                        memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                        commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                        memcpy(commandPtr, partPositionColorString2, LCDCOMMANDPOSITION);
+                        commandPtr = commandPtr + LCDCOMMANDPOSITION;
                         managerPtr = nodePtr->ManagerCard;
                         managerPtr = managerPtr + 10;
                         memcpy(commandPtr, managerPtr, 14);
                         commandPtr = commandPtr + 14;
-                        memcpy(commandPtr, endString, 3);
+                        memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                        SendCommandMessageFunction(commandArrayPtr, 32);
+                        SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + 14 + LCDCOMMANDPOSTFIX);
                         if(commandArrayPtr != NULL)
                         {
                             free(commandArrayPtr);
@@ -830,20 +830,20 @@ void * ChangeScreenEventListenFunction(void *argument)
 #ifdef DEBUG
                     printf("array size:%d\n", arraySize);
 #endif
-                    commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-                    memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+                    commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX)); 
+                    memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
                     commandPtr = commandArrayPtr;
-                    memcpy(commandPtr, startString, 5);
-                    commandPtr = commandPtr + 5;
-                    memcpy(commandPtr, countNoPositionColorString, 10);
-                    commandPtr = commandPtr + 10;
+                    memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                    commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                    memcpy(commandPtr, countNoPositionColorString, LCDCOMMANDPOSITION);
+                    commandPtr = commandPtr + LCDCOMMANDPOSITION;
                     memcpy(commandPtr, nodePtr->CountNo, arraySize);
                     commandPtr = commandPtr + arraySize;
-                    memcpy(commandPtr, endString, 3);
+                    memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
                     //31 4 31 3 10 0 78 0 3c ff ff ff 0 0 0 31 32 33 34 35 36 37 38 39 30 31 32 33 34 a 0 d
-                    SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
-                    if(commandArrayPtr != NULL) 
+                    SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
+                    if(commandArrayPtr != NULL)
                     {
                         free(commandArrayPtr);
                         commandPtr = NULL;
@@ -857,18 +857,18 @@ void * ChangeScreenEventListenFunction(void *argument)
                         arraySize = arraySize - 24;
                         userNoPtr = nodePtr->UserNo + 24;
                     }  
-                    commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
-                    memset(commandArrayPtr, 0, sizeof(unsigned char)*(18 + arraySize));
+                    commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
+                    memset(commandArrayPtr, 0, sizeof(unsigned char)*(LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX));
                     commandPtr = commandArrayPtr;
-                    memcpy(commandPtr, startString, 5);
-                    commandPtr = commandPtr + 5;
-                    memcpy(commandPtr, userNoPositionColorString, 10);
-                    commandPtr = commandPtr + 10;
+                    memcpy(commandPtr, startString, LCDCOMMANDPREFIX);
+                    commandPtr = commandPtr + LCDCOMMANDPREFIX;
+                    memcpy(commandPtr, userNoPositionColorString, LCDCOMMANDPOSITION);
+                    commandPtr = commandPtr + LCDCOMMANDPOSITION;
                     memcpy(commandPtr, userNoPtr, arraySize);
                     commandPtr = commandPtr + arraySize;
-                    memcpy(commandPtr, endString, 3);
+                    memcpy(commandPtr, endString, LCDCOMMANDPOSTFIX);
 
-                    SendCommandMessageFunction(commandArrayPtr, 18 + arraySize);
+                    SendCommandMessageFunction(commandArrayPtr, LCDCOMMANDPREFIX + LCDCOMMANDPOSITION + arraySize + LCDCOMMANDPOSTFIX);
                     if(commandArrayPtr != NULL) 
                     {
                        free(commandArrayPtr);

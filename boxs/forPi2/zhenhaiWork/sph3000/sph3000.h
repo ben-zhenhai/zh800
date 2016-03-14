@@ -35,7 +35,7 @@ pthread_mutex_t MutexSerial;
 unsigned char SerialFunctionFlag;
 unsigned char UpdateFlag;
 
-int WriteFile(int mode);
+//int WriteFile(int mode);
 int SetI2cConfig();
 void * ZHSerialFunction(void *argument);
 void * WatchdogFunction(void *argument);

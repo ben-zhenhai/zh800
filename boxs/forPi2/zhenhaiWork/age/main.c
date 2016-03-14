@@ -17,6 +17,8 @@
 #include "gt_1318p/gt_1318p.h"
 #define GT1318P
 
+#define GOODRATE 1.04
+
 void sig_fork(int signo)
 {
     pid_t pid;
@@ -446,7 +448,7 @@ int main()
                     printf("cancel done (force exit)\n");
                     //force leave
                     pthread_mutex_lock(&MutexFile);
-                    if(ExCount[GOODCOUNT] >= (long)(atol(ZHList->CountNo)/1.04))
+                    if(ExCount[GOODCOUNT] >= (long)(atol(ZHList->CountNo)/GOODRATE))
                     {
                         WriteFile(MachSTOPForce1);
                         WriteFile(MachSTANDBY);    
@@ -543,13 +545,17 @@ int main()
                         //wait(&result);
                         //printf("upload success\n");
                         waitpid(-1, NULL, WNOHANG);
+                        pthread_mutex_lock(&MutexEEPROM);
                         if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
                         {
+                            EarseEEPROMData();
+                            EarseEEPROMData();
                         }else
                         {
                             //sprintf(ZHList->GoodNo, "%ld", ExCount[GOODCOUNT]);
                             //WriteEEPROMData();
                         }
+                        pthread_mutex_unlock(&MutexEEPROM);
                     }   
                 }else 
                 {
@@ -584,11 +590,6 @@ int main()
                 return 0;
             }else if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
             {
-                pthread_mutex_lock(&MutexEEPROM);
-                EarseEEPROMData();
-                EarseEEPROMData();
-                pthread_mutex_unlock(&MutexEEPROM);
-
                 memset(Count, 0, sizeof(unsigned long)*EVENTSIZE);
                 memset(ExCount, 0, sizeof(unsigned long)*EVENTSIZE);
                 GoodCount = 0;                

@@ -4,17 +4,19 @@
 //#endif
 
 #include "zhenhai.h"
+#include "eeprom.h"
 
 enum
 {
-    ISNO = 0,
+    ISNO = 1,
     MANAGERCARD,
-    USERNO,
     COUNTNO,
+    USERNO,
     SCANDONE,
     REPAIRMODE,
     REPAIRDONE,
-    FIXITEM
+    FIXITEM,
+    NEEDPRIVILEGE
 };
 
 void *InputFunction(void *arguemtn);

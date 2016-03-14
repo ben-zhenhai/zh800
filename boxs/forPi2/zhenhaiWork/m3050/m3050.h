@@ -37,7 +37,7 @@ unsigned char NewDataIncome; //for check have new data or not
 //global flag
 unsigned char SerialFunctionFlag;
 
-int WriteFile(int mode);
+//int WriteFile(int mode);
 int SetI2cConfig();
 void * ZHSerialFunction(void *argument);
 unsigned long TransferFormatLongFunction(unsigned char x);

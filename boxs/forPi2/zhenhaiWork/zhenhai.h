@@ -110,6 +110,7 @@ enum
 
 //globle value
 char ISNo[INPUTLENGTH];
+char LastISNo[INPUTLENGTH];
 char ManagerCard[INPUTLENGTH];
 char MachineNo[INPUTLENGTH];
 char UserNo[INPUTLENGTH];
@@ -118,6 +119,8 @@ char GoodNo[INPUTLENGTH];
 char FixItemNo[INPUTLENGTH];
 char RepairNo[INPUTLENGTH];
 char UploadFilePath[INPUTLENGTH];
+char PrivilegeNo[INPUTLENGTH];
+char IntoRepairModeTimeStamp[10];
 
 pthread_cond_t CondWatchdog, CondMain;
 pthread_mutex_t MutexInput, MutexFile, MutexWatchdog, MutexMain, MutexEEPROM;
@@ -129,6 +132,7 @@ unsigned char WatchdogThreadFlag;
 unsigned char WatchdogResetFlag;
 unsigned char WatchdogCoolDownCount;
 unsigned char BarcodeIndex;
+unsigned char LastBarcodeIndex;
 unsigned char UploadFileFlag;
 unsigned char ZHResetFlag;
 unsigned char SerialFuntionFlag;

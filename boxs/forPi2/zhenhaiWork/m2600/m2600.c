@@ -5,6 +5,7 @@ int SetI2cConfig()
     return 0;
 }
 
+/*
 int WriteFile(int mode)
 {
     FILE *filePtr;
@@ -154,6 +155,7 @@ int WriteFile(int mode)
     fclose(filePtr);
     return 0;
 }
+*/
 
 void * ZHSerialFunction(void *argument)
 {

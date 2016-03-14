@@ -7,13 +7,14 @@
 #include "../lcd.h"
 
 #define EVENTSIZE 25
-#define WATCHDOGVALUE 1200000
+#define WATCHDOGVALUE 120000
 #define WATCHDOGPERIOD 100
 #define WRITEFILECOUNTVALUE 4000
 #define GOODCOUNT 0
 #define ERRORCHECKMAXRETRY 20
 #define RS232LENGTH 5
 #define ERRORTYPE 22
+#define ZHMAXOUTPUT 10
 
 enum
 {
@@ -32,7 +33,7 @@ pthread_mutex_t MutexSerial;
 unsigned char SerialFunctionFlag;
 unsigned char UpdateFlag;
 
-int WriteFile(int mode);
+//int WriteFile(int mode);
 int SetI2cConfig();
 void * ZHSerialFunction(void *argument);
 void * WatchdogFunction(void *argument);

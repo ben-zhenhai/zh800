@@ -5,18 +5,14 @@
 
 #include "zhenhai.h"
 
-//#define LOCALTEST
-
 #include "lock.h"
-#include "standerInput.h"
-#include "eeprom.h"
 #include "ftp.h"
 
-#include "tsw100/tsw100.h"
-#define ZHTSW100
+//#include "tsw100/tsw100.h"
+//#define ZHTSW100
 
-//#include "tsw303/tsw303.h"
-//#define ZHTSW303
+#include "tsw303/tsw303.h"
+#define ZHTSW303
 
 //#include "m800/m800.h"
 //#define ZHM800
@@ -48,7 +44,231 @@
 //#include "sph3000/sph3000.h"
 //#define ZHSPH3000
 
+#if defined(ZHSPH3000) || defined(ZHM3050) || defined(ZHM2600) || defined(ZHM168T)
+#define PINDEFINESHIFT 1
+#else
+#define PINDEFINESHIFT 2
+#endif
+
+#define ZHMACHLOG "/home/pi/zhlog/machStageLog"
+#define GOODRATE 1.03
+//#define LOCALTEST
+
 static unsigned char WaitMainFunctionScanBarcodeDone;
+
+int WriteFile(int mode)
+{
+    FILE *filePtr, *logPtr;
+    int forCount = 0;
+    struct timeval now;
+    static struct  timeval changeIntoRepairmodeTimeStemp;
+    struct ifreq ifr;
+    int fd;
+    time_t nowLog;
+    struct tm ts; 
+    char buf[80];   
+
+    memset(buf, 0, sizeof(char)*80);
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNETWORKTYPE, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+
+    //printf("shift %d\n", PINDEFINESHIFT);
+    
+    filePtr = fopen(UploadFilePath, "a");
+    logPtr = fopen(ZHMACHLOG, "w");
+    time(&nowLog);
+    ts = *localtime(&nowLog);
+    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+    switch(mode)
+    {
+        case MachRUNNING:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachRunning", buf);
+            for(forCount = 0; forCount < EVENTSIZE; forCount++)
+            {
+                if(Count[forCount] != ExCount[forCount])
+                {
+                    if(forCount == GOODCOUNT)
+                    {
+#ifdef ZHM3100
+                        if(abs((Count[forCount] - Count[forCount+1]) - (ExCount[forCount] - ExCount[forCount+1])) > ZHMAXOUTPUT )
+                        {
+                            fprintf(filePtr, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachRUNNING);
+                        }
+#else
+                        if(abs(Count[forCount] - ExCount[forCount]) > ZHMAXOUTPUT)
+                        {
+                            fprintf(filePtr, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachRUNNING);
+                        }
+#endif
+                        else
+                        {
+                            fprintf(filePtr, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                ISNo, ManagerCard, CountNo, 
+                                                                Count[forCount] - ExCount[forCount], (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachRUNNING);
+                        }
+                    }
+                    else
+                    {
+                        fprintf(filePtr, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                Count[forCount] - ExCount[forCount],
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                forCount+PINDEFINESHIFT, MachineNo, UserNo, MachRUNNING);
+                    }
+                }else;
+            }
+        break;
+        case MachREPAIRING:
+            gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
+            sprintf(IntoRepairModeTimeStamp, "%ld", (long)changeIntoRepairmodeTimeStemp.tv_sec);
+            fprintf(logPtr, "%s MachREPAIRING", buf);
+            if(strlen(ISNo)> 0)
+            {
+                fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                ISNo, ManagerCard, CountNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, RepairNo, MachREPAIRING);
+            }else
+            {
+                fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, RepairNo, MachREPAIRING);
+            }
+        break;
+        case MachREPAIRING2:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachREPAIRING2", buf);
+            if(strlen(ISNo)>0)
+            {
+                fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                atoi(FixItemNo), MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+            }else
+            {
+                fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                atoi(FixItemNo), MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+            }           
+        break;
+        case MachREPAIRDone:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachREPAIRDone", buf);
+            if(strlen(ISNo)>0)
+            {
+                fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
+            }else
+            {
+                fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
+            }
+        break;
+        case MachJobDone:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachRJobDone", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachJobDone);
+        break;
+        case MachLOCK:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachRLOCK", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachLOCK);          
+        break;
+        case MachUNLOCK:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachRUNLOCK", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachUNLOCK); 
+        break;
+        case MachSTOPForce1:
+            fprintf(logPtr, "%s MachSTOPForce1", buf);
+            gettimeofday(&now, NULL);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachSTOPForce1);        
+        break;
+        case MachSTOPForce2:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachSTOPForce2", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachSTOPForce2);        
+        break;
+        case MachSTART:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachSTOPSTART", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+        break;
+        case MachSTANDBY:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachSTANDBY", buf);
+            fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s 0 0 0 0 %02d\n", (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, MachSTANDBY);
+        break;
+        case MachRESUMEFROMPOWEROFF:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachSRESUMEFROMPOWEROFF", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s 0 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, MachRESUMEFROMPOWEROFF);
+        break;
+        case MachPOWEROFF:
+            gettimeofday(&now, NULL);
+            fprintf(logPtr, "%s MachPOWEROFF", buf);
+            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachPOWEROFF);
+        break;
+        default:
+        ;
+    }
+    //write data into file
+    fclose(filePtr);
+    fclose(logPtr);
+    return 0;
+}
 
 //nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
 void sig_fork(int signo)
@@ -61,11 +281,38 @@ void sig_fork(int signo)
     return;
 }
 
+void * PowerOffEventListenFunction(void *argument)
+{
+    printf("%s start\n", __func__);
+    while(1)
+    {
+        if(digitalRead(ZHPIN29) == 1)
+        {
+#ifndef LOCALTEST
+            printf("even trigger (PIN_29)\n");
+            ZHResetFlag = 1;
+            LoopLeaveEventIndex = ZHPowerOffEvent;
+            pthread_mutex_lock(&MutexMain);
+            UploadFileFlag = 0;
+            pthread_cond_signal(&CondMain);
+            pthread_mutex_unlock(&MutexMain);
+#endif
+            //break;
+        }
+        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+    }
+//#ifdef DEBUG
+    printf("[%s|%d]exit\n",__func__, __LINE__);
+//#endif
+}
+
 void * EventListenFunction(void *argument)
-{   
+{
+    printf("LastBarcodeIndex is %d\nBarcodeIndex is %d\n", LastBarcodeIndex, BarcodeIndex);
     while(1)
     {    
-        CanChangeRepairModeFlag = 0;     
+        //CanChangeRepairModeFlag = 0;     
+        CanChangeRepairModeFlag = 1;     
         InputDone = 0;
         if(BarcodeIndex == 0 || BarcodeIndex == SCANDONE)
         {
@@ -76,9 +323,32 @@ void * EventListenFunction(void *argument)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
             }
+            if(CanChangeRepairModeFlag == 2)
+            {
+                LastBarcodeIndex = BarcodeIndex;
+                BarcodeIndex = FIXITEM;
+                pthread_mutex_lock(&MutexFile);
+                WriteFile(MachREPAIRING);
+                pthread_mutex_unlock(&MutexFile);
+                IsInRepairMode = 1;
+            }
             DisableUpDown = 1;
             ScreenIndex = 0;
-            UpdateScreenFunction(0);    
+            UpdateScreenFunction(0);
+        }
+        //1
+        InputDone = 0;
+        if(BarcodeIndex == NEEDPRIVILEGE)
+        {
+            while(InputDone == 0)
+            {
+                LockMachineFunction();
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                UnlockMachineFunction();
+            }
+            DisableUpDown = 1;
+            ScreenIndex = 0;
+            UpdateScreenFunction(0);        
         }
         //2
         InputDone = 0;
@@ -114,6 +384,7 @@ void * EventListenFunction(void *argument)
         InputDone = 0;
         if(BarcodeIndex == COUNTNO)
         {
+            printf("%s %d\n", __func__, InputDone);
             BarcodeIndex = USERNO;
             while(InputDone == 0)
             {
@@ -121,152 +392,171 @@ void * EventListenFunction(void *argument)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
             }
+            if(CanChangeRepairModeFlag == 2)
+            {
+                LastBarcodeIndex = BarcodeIndex - 1;
+                BarcodeIndex = FIXITEM;
+                pthread_mutex_lock(&MutexFile);
+                WriteFile(MachREPAIRING);
+                pthread_mutex_unlock(&MutexFile);
+                IsInRepairMode = 1;
+            }else
+            {
+                BarcodeIndex = SCANDONE;
+            }
+
             DisableUpDown = 1;
             ScreenIndex = 0;
             UpdateScreenFunction(0);    
         }
-        BarcodeIndex = SCANDONE;
-        CanChangeRepairModeFlag = 1;
+        if(BarcodeIndex == SCANDONE)
+        {
+            //test for new rapair fetch
+            //CanChangeRepairModeFlag = 1;
         
-        while(!UploadFileFlag)
-        {
-            nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
-            //printf("we wait\n");
-        }
+            while(!UploadFileFlag)
+            {
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                //printf("we wait\n");
+            }
 
-        while(1)
-        {
-            ZHResetFlag = 0;
-            LoopLeaveEventIndex = ZHTimeoutExitEvent;
-            pthread_mutex_lock(&MutexEEPROM);
-            //because write eeprom need more time, a check for go through too fast
-            pthread_mutex_unlock(&MutexEEPROM);
+            while(1)
+            {
+                ZHResetFlag = 0;
+                LoopLeaveEventIndex = ZHTimeoutExitEvent;
+                pthread_mutex_lock(&MutexEEPROM);
+                //because write eeprom need more time, a check for prevent going through too fast
+                pthread_mutex_unlock(&MutexEEPROM);
  
-            while(!ZHResetFlag)
-            {
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                GoodCount = ExCount[GOODCOUNT];
+                while(!ZHResetFlag)
+                {
+                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    GoodCount = ExCount[GOODCOUNT];
 #ifdef M3100
-                if(ExCount[GOODCOUNT]-ExCount[GOODCOUNT-1] >= atol(CountNo))
-                //if(ExCount[GOODCOUNT] >= 0)
-                {
-                    //finish job                 
-                    printf("Good Count Number arrival!\n");
-                    ZHResetFlag = 1; 
-                    LoopLeaveEventIndex = ZHNormalExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }
+                    if(ExCount[GOODCOUNT]-ExCount[GOODCOUNT-1] >= atol(CountNo))
+                    //if(ExCount[GOODCOUNT] >= 0)
+                    {
+                        //finish job                 
+                        printf("Good Count Number arrival!\n");
+                        ZHResetFlag = 1; 
+                        LoopLeaveEventIndex = ZHNormalExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }
 #else
-                if(ExCount[GOODCOUNT] >= atol(CountNo))
-                //if(ExCount[GOODCOUNT] >= 0)
-                {
-                    //finish job                 
-                    printf("Good Count Number arrival!\n");
-                    ZHResetFlag = 1; 
-                    LoopLeaveEventIndex = ZHNormalExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }
+                    if(ExCount[GOODCOUNT] >= atol(CountNo))
+                    //if(ExCount[GOODCOUNT] >= 0)
+                    {
+                        //finish job                 
+                        printf("Good Count Number arrival!\n");
+                        ZHResetFlag = 1; 
+                        LoopLeaveEventIndex = ZHNormalExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }
 #endif
-                else if(digitalRead(ZHPIN40) == 0)
-                {
-                    printf("event trigger (PIN_40)!\n");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHChangeUserExitEvent;                    
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }else if(digitalRead(ZHPIN7) == 1)
-                {
-                    //finish job
-                    printf("event trigger (PIN_7)\n");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHForceExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }else if(digitalRead(ZHPIN29) == 1)
-                {
+                    else if(digitalRead(ZHPIN40) == 0)
+                    {
+                        printf("event trigger (PIN_40)!\n");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHChangeUserExitEvent;                    
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }else if(digitalRead(ZHPIN7) == 1)
+                    {
+                        //finish job
+                        printf("event trigger (PIN_7)\n");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHForceExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }
+                    /*else if(digitalRead(ZHPIN29) == 1)
+                    {
 #ifndef LOCALTEST
-                    printf("even trigger (PIN_29)");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHPowerOffEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                        printf("even trigger (PIN_29)");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHPowerOffEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
 #endif
-                }
-                else;
-            }       
+                    }*/
+                    else;
+                }       
 
-            pthread_mutex_lock(&MutexMain);
-            UploadFileFlag = 0;
-            pthread_cond_signal(&CondMain);
-            pthread_mutex_unlock(&MutexMain);
+                pthread_mutex_lock(&MutexMain);
+                UploadFileFlag = 0;
+                pthread_cond_signal(&CondMain);
+                pthread_mutex_unlock(&MutexMain);
             
-            if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
-            {
-                //normal leave
-                printf("not timeout leave\n");
-                break;
-            }else
-            {
-                //timeout leave
-                printf("timeout leave\n");
-                WaitMainFunctionScanBarcodeDone = 1;
-                while(WaitMainFunctionScanBarcodeDone)
+                if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
                 {
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                    //normal leave
+                    printf("not timeout leave\n");
+                    break;
+                }else
+                {
+                    //timeout leave
+                    printf("timeout leave\n");
+                    WaitMainFunctionScanBarcodeDone = 1;
+                    while(WaitMainFunctionScanBarcodeDone)
+                    {
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                    }
                 }
             }
+        }else if(BarcodeIndex == FIXITEM)
+        {
+            while(1)
+            {
+                InputDone = 0;
+                while(InputDone == 0)
+                {
+                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                }
+                if(CanChangeRepairModeFlag == 4)
+                {
+                    pthread_mutex_lock(&MutexFile);
+                    WriteFile(MachREPAIRDone);
+                    pthread_mutex_unlock(&MutexFile);
+                    BarcodeIndex = LastBarcodeIndex;
+                    IsInRepairMode = 0;
+                    ZHEarseRepairStage();
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0);    
+                    break;
+                }else
+                {
+                    pthread_mutex_lock(&MutexFile);
+                    WriteFile(MachREPAIRING2);
+                    pthread_mutex_unlock(&MutexFile);
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0);    
+                }
+            }
+        }else
+        {
+            printf("nothing %d\n", BarcodeIndex);
         }
     }
 }
 
 int main()
 {
-    pthread_t inputThread, eventListenThread, watchDogThread, changeScreenThread;
+    pthread_t inputThread, eventListenThread, watchDogThread, changeScreenThread, poweroffThread;
 
 #if defined(ZHTSW100) || defined(ZHM2200A)
     pthread_t interruptThread1, interruptThread2, interruptThread3;
 #endif
 
-//#ifdef ZHM2200A
-//    pthread_t interruptThread1, interruptThread2, interruptThread3;
-//#endif
-
 #if defined (ZHM800) || defined (ZHM3100) || defined (ZHM2200)
     pthread_t interruptThread1, interruptThread2;
 #endif
-
-//#ifdef ZHM3100
-//    pthread_t interruptThread1, interruptThread2;
-//#endif
 
 #if defined (ZHTAICON) || defined (ZHNCR236)
     pthread_t interruptThread1;
 #endif
 
-//#ifdef ZHNCR236
-//    pthread_t interruptThread1;
-//#endif
-
 #if defined (ZHTSW303) || defined (ZHM3050) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
     pthread_t serialThread;
 #endif
-
-//#ifdef ZHM3050
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHM2200
-//    pthread_t interruptThread1;
-//#endif
-
-//#ifdef ZHM2600
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHM168T
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHSPH3000
-//    pthread_t serialThread;
-//#endif
 
     int rc = 0;
     int filesize = 0;
@@ -286,18 +576,6 @@ int main()
 #if defined (ZHTSW303) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
     pthread_mutex_init(&MutexSerial, NULL);
 #endif
-
-//#ifdef ZHM2600
-//    pthread_mutex_init(&MutexSerial, NULL);
-//#endif
-
-//#ifdef ZHM168T
-//pthread_mutex_init(&MutexSerial, NULL);
-//#endif
-
-//#ifdef ZHSPH3000
-//pthread_mutex_init(&MutexSerial, NULL);
-//#endif
 
 #ifdef ZHM3050
     pthread_mutex_init(&MutexSerial, NULL);
@@ -322,27 +600,9 @@ int main()
     memset(CutRoll, 0, sizeof(short)*4);
 #endif
 
-//#ifdef ZHM800
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//    memset(CutRoll, 0, sizeof(short)*2);
-//#endif
-
-//#ifdef ZHM3100
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//    memset(CutRoll, 0, sizeof(short)*2);
-//#endif
-
 #if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200)
     memset(I2CEXValue, 0, sizeof(int)*6);
 #endif
-
-//#ifdef ZHNCR236
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//#endif
-
-//#ifdef ZHM2200
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//#endif
 
 #ifdef ZHM2600
     memset(MessageArray, 0, sizeof(int)*6);
@@ -387,7 +647,6 @@ int main()
     pinMode(ZHPIN15, OUTPUT);
     pinMode(ZHPIN16, OUTPUT);
     pinMode(ZHPIN18, OUTPUT);
-    //pinMode(ZHPIN24, OUTPUT);
     pinMode(ZHPIN31, OUTPUT);
 
     filePtr = fopen(BarcodeFilePath , "r");
@@ -418,8 +677,8 @@ int main()
         printf("read machine's number error");
         return 0;
     }
-    //unmask for test batter 
-    //digitalWrite (ZHPIN31, HIGH);
+    //unmask for test battery 
+    digitalWrite (ZHPIN31, HIGH);
 
     memset(UploadFilePath, 0, sizeof(char)*INPUTLENGTH);
     gettimeofday(&now, NULL);
@@ -440,7 +699,7 @@ int main()
             }else if(proc == 0)
             {
                 //execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", UploadFilePath, (char *)0);
-                execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", UploadFilePath, (char *)0);
+                //execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", UploadFilePath, (char *)0);
                 exit(0);
             }else
             {
@@ -461,21 +720,23 @@ int main()
     sprintf(UploadFilePath,"%ld%s.txt",(long)now.tv_sec+1, MachineNo);
     printf("new file name:%s\n", UploadFilePath);
 
-#ifdef LOCALTEST
+    BarcodeIndex = 0;
+
+//#ifdef LOCALTEST
     if(0)
-#else
-    if(!GetRemoteDataFunction())
-#endif
+//#else
+//    if(!GetRemoteDataFunction())
+//#endif
     {
         WriteFile(MachRESUMEFROMPOWEROFF);
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(GoodNo);
         GoodCount = ExCount[GOODCOUNT];
         BarcodeIndex = COUNTNO;
-        sleep(1);
         DisableUpDown = 1;
         ScreenIndex = 0;
         UpdateScreenFunction(0);
         printf("get data from remote\n");  
+        isFirstinLoop = 0;
     }
 #ifdef LOCALTEST
     else if(0)
@@ -487,11 +748,11 @@ int main()
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(GoodNo);
         GoodCount = ExCount[GOODCOUNT];
         BarcodeIndex = COUNTNO;
-        sleep(1);
         DisableUpDown = 1;
         ScreenIndex = 0;
         UpdateScreenFunction(0);
         printf("get data from local\n");  
+        isFirstinLoop = 0;
     }else
     {
         printf("load data fail\n");
@@ -499,7 +760,19 @@ int main()
         ScreenIndex = 3;
         UpdateScreenFunction(3);
     }
-   
+    
+    if(IsResumeFromRepair() == 0)
+    {
+        printf("Resume From Repair\n");
+        CanChangeRepairModeFlag = 2;
+        LastBarcodeIndex = BarcodeIndex;
+        BarcodeIndex = FIXITEM;
+        IsInRepairMode = 1;
+        DisableUpDown = 1;
+        ScreenIndex = 0;
+        UpdateScreenFunction(0);
+    }
+ 
     rc = pthread_create(&inputThread, NULL, InputFunction, NULL);
     assert(rc == 0);
 
@@ -509,20 +782,25 @@ int main()
     rc = pthread_create(&changeScreenThread, NULL, ChangeScreenEventListenFunction, NULL);
     assert(rc == 0);
 
+    rc = pthread_create(&poweroffThread, NULL, PowerOffEventListenFunction, NULL);
+    assert(rc == 0);
+ 
     while(1)
     {
         unsigned char cancelThreadDone = 0;
         
-        while(BarcodeIndex != SCANDONE)
+        while(BarcodeIndex != SCANDONE && LoopLeaveEventIndex != ZHPowerOffEvent)
         {
             nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
         }
-        if(isFirstinLoop)
+        
+        if(isFirstinLoop && strlen(ISNo) > 0 && strlen(ManagerCard) > 0 && strlen(UserNo) > 0 && strlen(CountNo) > 0)
         {
             //first time, we need to write MachSTAR to FILE
             WriteFile(MachSTART);
             isFirstinLoop = 0;
-            digitalWrite (ZHPIN31, HIGH);
+           
+            //digitalWrite (ZHPIN31, HIGH);
         }
 #ifdef DEUBG 
         printf("[%s|%d]", __func__, __LINE__);
@@ -540,19 +818,6 @@ int main()
         assert(rc == 0);
 #endif
 
-/*
-#ifdef ZHM2200A
-        rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
-        assert(rc == 0);
-        
-        rc = pthread_create(&interruptThread2, NULL, ZHI2cReaderFunction2, NULL);
-        assert(rc == 0);
-    
-        rc = pthread_create(&interruptThread3, NULL, ZHI2cReaderFunction3, NULL);
-        assert(rc == 0);
-#endif
-*/
-
 #ifdef ZHM2200
         rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
         assert(rc == 0);
@@ -566,52 +831,16 @@ int main()
         assert(rc == 0); 
 #endif
 
-/*
-#ifdef ZHM3100
-        rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
-        assert(rc == 0);
-        
-        rc = pthread_create(&interruptThread2, NULL, ZHI2cReaderFunction2, NULL);
-        assert(rc == 0); 
-#endif
-*/
-
 #if defined (ZHTAICON) || defined (ZHNCR236)
         rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
         assert(rc == 0);
 #endif
-/*
-#ifdef ZHNCR236
-        rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
-        assert(rc == 0);
-#endif
-*/
 
 #if defined (ZHTSW303) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
         SerialFunctionFlag = 1;
         rc = pthread_create(&serialThread, NULL, ZHSerialFunction, NULL);
         assert(rc == 0);
 #endif
-
-/*
-#ifdef ZHM2600
-        SerialFunctionFlag = 1;
-        rc = pthread_create(&serialThread, NULL, ZHSerialFunction, NULL);
-        assert(rc == 0);
-#endif
-
-#ifdef ZHM168T
-        SerialFunctionFlag = 1;
-        rc = pthread_create(&serialThread, NULL, ZHSerialFunction, NULL);
-        assert(rc == 0);
-#endif
-
-#ifdef ZHSPH3000
-        SerialFunctionFlag = 1;
-        rc = pthread_create(&serialThread, NULL, ZHSerialFunction, NULL);
-        assert(rc == 0);
-#endif
-*/
 
 #ifdef ZHM3050
         SerialFunctionFlag = 1;
@@ -648,7 +877,6 @@ int main()
                 UnlockMachineFunction();
 
 #if defined (ZHTSW100) || defined (ZHM2200A)
-                printf("ready to cancel thread\n");
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(interruptThread1);
                 pthread_join(interruptThread1, NULL);
@@ -661,39 +889,11 @@ int main()
                 pthread_cancel(interruptThread3);
                 pthread_join(interruptThread3, NULL);
 #endif
-/*
-#ifdef ZHM2200A
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread1);
-                pthread_join(interruptThread1, NULL);
-        
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread2);
-                pthread_join(interruptThread2, NULL);
-        
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread3);
-                pthread_join(interruptThread3, NULL);
-#endif
-*/
 #if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(interruptThread1);
                 pthread_join(interruptThread1, NULL);
 #endif
-/*
-#ifdef ZHNCR236
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread1);
-                pthread_join(interruptThread1, NULL);
-#endif
-
-#ifdef ZHM2200
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread1);
-                pthread_join(interruptThread1, NULL);
-#endif
-*/
 #if defined (ZHM800) || defined (ZHM3100)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(interruptThread1);
@@ -703,43 +903,12 @@ int main()
                 pthread_cancel(interruptThread2);
                 pthread_join(interruptThread2, NULL);
 #endif
-/*
-#ifdef ZHM3100
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread1);
-                pthread_join(interruptThread1, NULL);
-        
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                pthread_cancel(interruptThread2);
-                pthread_join(interruptThread2, NULL);
-#endif
-*/
+
 #if defined (ZHTSW303) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 SerialFunctionFlag = 0;
                 pthread_join(serialThread, NULL);
 #endif                
-
-/*
-#ifdef ZHM2600
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                SerialFunctionFlag = 0;
-                pthread_join(serialThread, NULL);
-#endif  
-
-#ifdef ZHM168T
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                SerialFunctionFlag = 0;
-                pthread_join(serialThread, NULL);
-#endif  
-
-
-#ifdef ZHSPH3000
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
-                SerialFunctionFlag = 0;
-                pthread_join(serialThread, NULL);
-#endif 
-*/
 
 #ifdef ZHM3050
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
@@ -747,7 +916,7 @@ int main()
                 pthread_join(serialThread, NULL);
                 printf("cancel done %d\n", LoopLeaveEventIndex);
 #else
-                printf("ready to cancle watchdogThread %d\n", LoopLeaveEventIndex);
+                printf("ready to cancel watchdogThread %d\n", LoopLeaveEventIndex);
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_mutex_lock(&MutexWatchdog);
                 WatchdogThreadFlag = 0;
@@ -771,13 +940,13 @@ int main()
                     //force leave
                     pthread_mutex_lock(&MutexFile);
 #ifdef ZHM3100
-                    if(ExCount[GOODCOUNT] - ExCount[GOODCOUNT-1] >= (atol(CountNo)/ 1.04))
+                    if(ExCount[GOODCOUNT] - ExCount[GOODCOUNT-1] >= (atol(CountNo)/ GOODRATE))
                     {
                         WriteFile(MachSTOPForce1);
                         WriteFile(MachSTANDBY);    
                     }
 #else
-                    if(ExCount[GOODCOUNT] >= (atol(CountNo)/1.04))
+                    if(ExCount[GOODCOUNT] >= (atol(CountNo)/GOODRATE))
                     {
                         WriteFile(MachSTOPForce1);
                         WriteFile(MachSTANDBY);    
@@ -789,12 +958,7 @@ int main()
                         WriteFile(MachSTANDBY);    
                     }
                     pthread_mutex_unlock(&MutexFile);
-                }else if(LoopLeaveEventIndex == ZHPowerOffEvent)
-                {
-                    pthread_mutex_lock(&MutexFile);
-                    WriteFile(MachPOWEROFF);
-                    pthread_mutex_unlock(&MutexFile);
-                }else
+                }else if(LoopLeaveEventIndex == ZHTimeoutExitEvent || LoopLeaveEventIndex == ZHChangeUserExitEvent)
                 { 
                     char tempUserNo[INPUTLENGTH];
 
@@ -812,7 +976,7 @@ int main()
                     sprintf(UploadFilePath, "%ld%s.txt", (long)now.tv_sec, MachineNo);
                     pthread_mutex_unlock(&MutexFile); 
 
-                    printf("Uplaod for timeout or changeUser ");
+                    printf("Uplaod for timeout or changeUser\n");
                     printf("old file:%s, new file %s\n", uploadFilePath, UploadFilePath);
 
                     if(stat(uploadFilePath, &fileInfo) == 0)
@@ -829,7 +993,7 @@ int main()
                             }else if(proc == 0)
                             {
                                 //execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", uploadFilePath, (char *)0);
-                                execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
+                                //execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
                                 exit(0);
                             }else
                             {
@@ -844,29 +1008,31 @@ int main()
                             unlink(uploadFilePath);
                         }
                     }
-                    //unlink(uploadFilePath);
 
                     //reset for hinet user need to scan
                     strcpy(tempUserNo, UserNo); 
                     memset(UserNo, 0, sizeof(char)*INPUTLENGTH);
+                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
 
                     InputDone = 0;
                     BarcodeIndex = USERNO;
-                    while(InputDone == 0)
+                    while(InputDone == 0 && LoopLeaveEventIndex != ZHPowerOffEvent)
                     {
+                        LockMachineFunction();
                         nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                        UnlockMachineFunction();
                     }
-                   
+ 
                     if(CanChangeRepairModeFlag == 2)
                     {
                         //into repair mode
                         pthread_mutex_lock(&MutexFile);
                         WriteFile(MachREPAIRING);
                         pthread_mutex_unlock(&MutexFile);
-                        isInPairMode = 1;
+                        IsInRepairMode = 1;
                         //DisableUpDown = 1;
                         //ScreenIndex = 7;
                         //UpdateScreenFunction(7);    
@@ -899,7 +1065,7 @@ int main()
                                 }else if(proc == 0)
                                 {
                                     //execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", uploadFilePath, (char *)0);
-                                    execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
+                                    //execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
                                     exit(0);
                                 }else
                                 {
@@ -917,16 +1083,19 @@ int main()
                         {
                             InputDone = 0;
                             BarcodeIndex = FIXITEM;
-                            while(InputDone == 0)
+                            while(InputDone == 0 && LoopLeaveEventIndex != ZHPowerOffEvent)
                             {
+                                LockMachineFunction();
                                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                                UnlockMachineFunction();
                             }                            
                             if(CanChangeRepairModeFlag == 4)
                             {
                                 pthread_mutex_lock(&MutexFile);
                                 WriteFile(MachREPAIRDone);
                                 pthread_mutex_unlock(&MutexFile);
-                                BarcodeIndex = SCANDONE;                                
+                                BarcodeIndex = SCANDONE;
+                                CanChangeRepairModeFlag = 1; 
                                 break;
                             }else
                             {
@@ -937,22 +1106,44 @@ int main()
                                 ScreenIndex = 0;
                                 UpdateScreenFunction(0);    
                             }
+                            if(LoopLeaveEventIndex == ZHPowerOffEvent)
+                            {
+                                //write stage and repair id
+                                //WriteRepairStageEEPROMDATA();
+                                break;
+                            }
                         }
                         strcpy(UserNo, tempUserNo); 
-                        isInPairMode = 0;
+                        IsInRepairMode = 0;
 
                     }else
                     {
                         printf("[%s|%d]%s %s %s %s %s %s\n", __func__, __LINE__,ISNo, ManagerCard, CountNo, UserNo, MachineNo, UploadFilePath);
                         BarcodeIndex = SCANDONE;
                     }
-                    pthread_mutex_lock(&MutexFile);
-                    WriteFile(MachUNLOCK);
-                    pthread_mutex_unlock(&MutexFile);
-                    WaitMainFunctionScanBarcodeDone = 0;
-                    DisableUpDown = 1;
-                    ScreenIndex = 0;
-                    UpdateScreenFunction(0);    
+                    if(LoopLeaveEventIndex != ZHPowerOffEvent)
+                    {
+                        pthread_mutex_lock(&MutexFile);
+                        WriteFile(MachUNLOCK);
+                        pthread_mutex_unlock(&MutexFile);
+                        WaitMainFunctionScanBarcodeDone = 0;
+                        DisableUpDown = 1;
+                        ScreenIndex = 0;
+                        UpdateScreenFunction(0);
+                    }
+                }else;
+                if(LoopLeaveEventIndex == ZHPowerOffEvent)
+                {
+                    if(CanChangeRepairModeFlag == 2 || CanChangeRepairModeFlag == 3)
+                    {
+                        WriteRepairStageEEPROMDATA();
+                    }
+                    if(strlen(ISNo) > 0 && strlen(ManagerCard) > 0 && strlen(CountNo) > 0)
+                    {
+                        pthread_mutex_lock(&MutexFile);
+                        WriteFile(MachPOWEROFF);
+                        pthread_mutex_unlock(&MutexFile);
+                    }
                 }
             }
             //upload
@@ -980,7 +1171,7 @@ int main()
                     }else if(proc == 0)
                     {
                         //execl("../.nvm/v0.10.25/bin/node", "node", "../mongodb/SendDataClient.js", uploadFilePath, (char *)0);
-                        execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
+                        //execl("/home/pi/.nvm/v0.10.25/bin/node", "node", "/home/pi/mongodb/SendDataClient.js", uploadFilePath, (char *)0);
                         exit(0);
                     }else
                     {
@@ -988,21 +1179,19 @@ int main()
                         //wait(&result);
                         //printf("upload success\n");
                         waitpid(-1, NULL, WNOHANG);
-                        if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
-                        {
-                        }else
-                        {
-                            ;
-                        }
                     }   
                 }else 
                 {
-                    printf("unlink\n");
+                    printf("unlink file\n");
                     unlink(uploadFilePath);
                 }
             }
             if(LoopLeaveEventIndex == ZHPowerOffEvent)
             {
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                pthread_cancel(poweroffThread);
+                pthread_join(poweroffThread, NULL);
+
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(inputThread);
                 pthread_join(inputThread, NULL);
@@ -1024,6 +1213,7 @@ int main()
                     ZHEarseEEPROMData();
                     printf("done\n");
                 }
+                LockMachineFunction();
 
                 sleep(10);
                 digitalWrite (ZHPIN31, LOW);
@@ -1041,6 +1231,7 @@ int main()
                 pthread_mutex_unlock(&MutexEEPROM);
 
                 DisableUpDown = 0;
+                WriteLastFinishLotNo();
                 memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
                 memset(ManagerCard, 0, sizeof(char)*INPUTLENGTH);
                 memset(CountNo, 0, sizeof(char)*INPUTLENGTH);
@@ -1060,30 +1251,10 @@ int main()
                 memset(I2CEXValue, 0, sizeof(int)*6);
                 memset(CutRoll, 0, sizeof(short)*4);
 #endif
-/*   
-#ifdef ZHM800
-                memset(I2CEXValue, 0, sizeof(int)*6);
-                memset(CutRoll, 0, sizeof(short)*2);
-#endif
-
-#ifdef ZHM3100
-                memset(I2CEXValue, 0, sizeof(int)*6);
-                memset(CutRoll, 0, sizeof(short)*2);
-#endif
-*/
 
 #if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200) 
                 memset(I2CEXValue, 0, sizeof(int)*6);
 #endif
-
-/*
-#ifdef ZHNCR236
-                memset(I2CEXValue, 0, sizeof(int)*6);
-#endif
-#ifdef ZHM2200
-                memset(I2CEXValue, 0, sizeof(int)*6);
-#endif
-*/
 
 #ifdef ZHM2600
                 memset(MessageArray, 0, sizeof(int)*6);
@@ -1098,12 +1269,8 @@ int main()
 #ifdef ZHSPH3000
                 MessageArray = ExMessageArray = 0;
 #endif
-                //LED
-                //digitalWrite (ZHPIN15, HIGH);
-                //digitalWrite (ZHPIN16, HIGH);
-                //digitalWrite (ZHPIN18, HIGH);   
                 isFirstinLoop = 1;                
-                digitalWrite (ZHPIN31, LOW);
+                //digitalWrite (ZHPIN31, LOW);
                 if(ScreenIndex == 0)
                 {
                     UpdateScreenFunction(0);

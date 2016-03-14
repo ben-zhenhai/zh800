@@ -4,13 +4,14 @@
 //#endif
 
 #include "zhenhai.h"
+#include "standerInput.h"
 
 #define CSCHANNEL 0
 #define SPICLOCK 600000
 
 int ScreenIndex;
 char DisableUpDown;
-char isInPairMode;
+char IsInRepairMode;
 
 void * ChangeScreenEventListenFunction(void *argument);
 int UpdateScreenFunction(int screenIndex);
