@@ -13,7 +13,7 @@ void * InputFunction(void *argument)
             case 1:
             DisableUpDown = 1;
             ScreenIndex = 7;
-            UpdateScreenFunction(7);
+            UpdateScreenFunction(7, 0);
             while(1)
             {
                 memset(tempBarcodeInput, 0, sizeof(char)*INPUTLENGTH);
@@ -38,13 +38,20 @@ void * InputFunction(void *argument)
                     sleep(0);
                     break;
                 }
-                else printf("[%s|%d]scan UserNo. error!\n", __func__, __LINE__);
+                else
+                {
+                    printf("[%s|%d]scan UserNo. error!\n", __func__, __LINE__);
+                    DisableUpDown = 1;
+                    ScreenIndex = 7;
+                    UpdateScreenFunction(7, 0);
+                    UpdateScreenFunction(99,4); 
+                }
             }
             InputDone = 1;
             InputMode = 0;
             DisableUpDown = 1;
             ScreenIndex = 0;
-            UpdateScreenFunction(0);
+            UpdateScreenFunction(0, 0);
             break;
  
             default:
@@ -89,12 +96,21 @@ void * InputFunction(void *argument)
                     break;
                 }
                 printf("Scan Lot Number error\n");
+                DisableUpDown = 1;
+                ScreenIndex = 6;
+                UpdateScreenFunction(6, 0);
+                UpdateScreenFunction(99, 1); 
+                sleep(1);
+                DisableUpDown = 0;
+                ScreenIndex = 3;
+                UpdateScreenFunction(3, 0);
+
                 memset(tempBarcodeInput, 0, sizeof(char)*INPUTLENGTH);
                 gets(tempBarcodeInput);
             }
             DisableUpDown = 1;
             ScreenIndex = 6;
-            UpdateScreenFunction(6);
+            UpdateScreenFunction(6, 0);
             while(1)
             {
                 memset(tempBarcodeInput, 0, sizeof(char)*INPUTLENGTH);
@@ -108,13 +124,14 @@ void * InputFunction(void *argument)
                 }
                 DisableUpDown = 1;
                 ScreenIndex = 6;
-                UpdateScreenFunction(6);
+                UpdateScreenFunction(6, 0);
+                UpdateScreenFunction(99, 2); 
 
                 printf("Scan Part Number error\n");
             }
             DisableUpDown = 1;
             ScreenIndex = 6;
-            UpdateScreenFunction(6);
+            UpdateScreenFunction(6, 0);
             while(1)
             {
                 int arrayCount = 0;
@@ -156,12 +173,13 @@ void * InputFunction(void *argument)
                 }
                 DisableUpDown = 1;
                 ScreenIndex = 6;
-                UpdateScreenFunction(6);
+                UpdateScreenFunction(6, 0);
+                UpdateScreenFunction(99, 3); 
                 printf("scan Count error!\n");
             }
             DisableUpDown = 1;
             ScreenIndex = 6;
-            UpdateScreenFunction(6);
+            UpdateScreenFunction(6, 0);
             while(1)
             {
                 memset(tempBarcodeInput, 0, sizeof(char)*INPUTLENGTH);
@@ -176,13 +194,14 @@ void * InputFunction(void *argument)
                 }
                 DisableUpDown = 1;
                 ScreenIndex = 6;
-                UpdateScreenFunction(6);
+                UpdateScreenFunction(6, 0);
+                UpdateScreenFunction(99, 4); 
 
                 printf("scan UserNo. error!\n");
             }
             DisableUpDown = 1;
             ScreenIndex = 6;
-            UpdateScreenFunction(6);
+            UpdateScreenFunction(6, 0);
 
             pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
             pthread_mutex_lock(&MutexLinklist);
@@ -211,7 +230,7 @@ void * InputFunction(void *argument)
             sleep(0);
             DisableUpDown = 1;
             ScreenIndex = 0;
-            UpdateScreenFunction(0);
+            UpdateScreenFunction(0, 0);
         }
     }
 }

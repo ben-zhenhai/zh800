@@ -17,7 +17,7 @@ unsigned long ExCount[EVENTSIZE];
 int I2CEXValue[6];
 short CutRoll[2];
 
-int WriteFile(int mode);
+//int WriteFile(int mode);
 
 int SetI2cConfig();
 void * ZHI2cReaderFunction1(void *argument);

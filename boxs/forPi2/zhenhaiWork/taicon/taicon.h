@@ -1,9 +1,10 @@
-#ifndef ZHDef
-#define ZHDef "../zhenhai.h"
-#include ZHDef
-#endif
+//#ifndef ZHDef
+//#define ZHDef "../zhenhai.h"
+//#include ZHDef
+//#endif
 
-#include "../taicon.h"
+#include "../zhenhai.h"
+#include "../lcd.h"
 
 #define EVENTSIZE 8
 #define WATCHDOGVALUE 1200
@@ -17,7 +18,7 @@ unsigned long ExCount[EVENTSIZE];
 int I2CEXValue[6];
 //short CutRoll[2];
 
-int WriteFile(int mode);
+//int WriteFile(int mode);
 
 int SetI2cConfig();
 void * ZHI2cReaderFunction1(void *argument);

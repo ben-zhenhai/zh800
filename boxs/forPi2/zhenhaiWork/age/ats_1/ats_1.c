@@ -73,7 +73,7 @@ int SetI2cConfig()
     return 0;
 }
 
-
+/*
 int WriteFile(int mode)
 {
     FILE *filePtr;
@@ -127,7 +127,6 @@ int WriteFile(int mode)
                 }else;
             }
         break;
-        /*
         case MachREPAIRING:
             gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
@@ -153,7 +152,6 @@ int WriteFile(int mode)
                                                                 GOODCOUNT+2, MachineNo, RepairNo, 
                                                                 (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
         break;
-        */
         case MachJobDone:
             gettimeofday(&now, NULL);
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
@@ -234,7 +232,7 @@ int WriteFile(int mode)
     fclose(filePtr);
     return 0;
 }
-
+*/
 
 void * ZHI2cReaderFunction1(void *argument)
 {
@@ -303,9 +301,9 @@ void * WatchdogFunction(void *argument)
 {
     struct timeval now;
     struct timespec outtime;
-    struct ifreq ethreq;
+    //struct ifreq ethreq;
     
-    int fd2;
+    //int fd2;
     
     while(WatchdogThreadFlag)
     {
@@ -325,16 +323,18 @@ void * WatchdogFunction(void *argument)
 
         TotalBadCount = ExCount[8] + ExCount[9] + ExCount[10] + ExCount[11] + ExCount[12] + ExCount[13] + ExCount[14];
 
-        printf("%s %s %s %s %s %s|Good Count: %ld| Total Bad Count: %ld\n",
+        if(ZHList != NULL)
+        {
+            printf("%s %s %s %s %s %s|Good Count: %ld| Total Bad Count: %ld\n",
                     MachineNo, ZHList->ISNo, ZHList->ManagerCard, ZHList->UserNo, ZHList->CountNo, ZHList->UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
-
+        }
         if(ScreenIndex == 1 && WatchdogThreadFlag != 0)
         {
            pthread_mutex_lock(&MutexScreen);
-           UpdateScreenFunction(1);  
+           UpdateScreenFunction(1, 0);  
            pthread_mutex_unlock(&MutexScreen);
         } 
-        if(StopUpdateNetworkStatusFlag == 0)
+        /*if(StopUpdateNetworkStatusFlag == 0)
         {
             //check network status
             fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -350,6 +350,6 @@ void * WatchdogFunction(void *argument)
                 //disconnect
             }
             close(fd2);
-        }    
+        }*/    
     }
 }

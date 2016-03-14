@@ -9,13 +9,21 @@
 #include "standerInput.h"
 #include "ftp.h"
 #include "eeprom.h"
-//#include "lcd.h"
 
-//#include "ats_1/ats_1.h"
-//#define ATS_1
+#include "ats_1/ats_1.h"
+#define ATS_1
 
-#include "gt_1318p/gt_1318p.h"
-#define GT1318P
+//#include "gt_1318p/gt_1318p.h"
+//#define ZHGT1318P
+
+#define GOODRATE 1.03
+#define ZHMACHLOG "/home/pi/zhlog/machStageLog"
+
+#if defined(ZHGT1318P) 
+#define PINDEFINESHIFT 1
+#else
+#define PINDEFINESHIFT 2
+#endif
 
 void sig_fork(int signo)
 {
@@ -27,11 +35,249 @@ void sig_fork(int signo)
     return;
 }
 
+int WriteFile(int mode)
+{
+    FILE *filePtr, *logPtr;
+    int forCount = 0;
+    struct timeval now;
+    //static struct  timeval changeIntoRepairmodeTimeStemp;
+    struct ifreq ifr;
+    int fd;
+    time_t nowLog;
+    struct tm ts;
+    char buf[80];
+
+    memset(buf, 0, sizeof(char)*80);
+
+    InputNode *tempNode = ZHList;   
+ 
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, ZHNETWORKTYPE, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    
+    //printf("%s open file %s\n", __func__, ZHList->UploadFilePath);
+    logPtr = fopen(ZHMACHLOG, "w");
+    time(&nowLog);
+    ts = *localtime(&nowLog);
+    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+
+    switch(mode)
+    {
+        case MachRUNNING:
+            fprintf(logPtr, "%s MachRunning", buf);
+        break;
+        case MachJobDone:
+            fprintf(logPtr, "%s MachJobDone", buf);
+        break;
+        case MachLOCK:
+            fprintf(logPtr, "%s MachLOCK", buf);
+        break;
+        case MachUNLOCK:
+            fprintf(logPtr, "%s MachUNLOCK", buf);
+        break;
+        case MachSTOPForce1:
+            fprintf(logPtr, "%s MachSTOPForce1", buf);
+        break;
+        case MachSTOPForce2:
+        break;
+        case MachSTART:
+            fprintf(logPtr, "%s MachSTART", buf);
+        break;
+        case MachSTANDBY:
+            fprintf(logPtr, "%s MachSTANDBY", buf);
+        break;
+        case MachRESUMEFROMPOWEROFF:
+            fprintf(logPtr, "%s MachSUMEFROMPOWEROFF", buf);
+        break;
+        case MachPOWEROFF:
+            fprintf(logPtr, "%s MachPOWEROFF", buf);
+        break;
+        default:
+        ;
+
+    }
+    fclose(logPtr);
+
+    if(ZHList != NULL)
+    {
+        filePtr = fopen(ZHList->UploadFilePath, "a");
+        if(filePtr != NULL)
+        {
+            switch(mode)
+            {
+                case MachRUNNING:
+                    gettimeofday(&now, NULL);            
+                    for(forCount = 0; forCount < EVENTSIZE; forCount++)
+                    {
+                        if(Count[forCount] != ExCount[forCount])
+                        {
+                            if(forCount == GOODCOUNT)
+                            {
+                                if(abs(Count[forCount] - ExCount[forCount]) > ZHMAXOUTPUT)
+                                {
+                                    fprintf(filePtr, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachRUNNING);
+                                }else
+                                {
+                                    fprintf(filePtr, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, 
+                                                                Count[forCount] - ExCount[forCount], (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachRUNNING);
+                                }
+                            }else
+                            {
+                                fprintf(filePtr, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                Count[forCount] - ExCount[forCount],
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                forCount+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachRUNNING);
+                            }
+                            }else;
+                    }
+                break;
+                /*
+                case MachREPAIRING:
+                    gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+2, MachineNo, RepairNo, MachREPAIRING);
+            
+                break;
+                case MachREPAIRING2:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                atoi(FixItemNo), MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
+                break;
+                case MachREPAIRDone:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
+                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+2, MachineNo, RepairNo, 
+                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
+                    break;
+                */
+                case MachJobDone:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachJobDone);
+                break;
+                case MachLOCK:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachLOCK);          
+                break;
+                case MachUNLOCK:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachUNLOCK); 
+                break;
+                case MachSTOPForce1:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachSTOPForce1);        
+                break;
+                case MachSTOPForce2:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachSTOPForce2);        
+                break;
+                case MachSTART:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachSTART);
+                break;
+                case MachSTANDBY:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s 0 0 0 0 %02d\n", (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, MachSTANDBY);
+                break;
+                case MachRESUMEFROMPOWEROFF:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s 0 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, MachRESUMEFROMPOWEROFF);
+                break;
+                case MachPOWEROFF:
+                    gettimeofday(&now, NULL);
+                    fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, ZHList->UserNo, MachPOWEROFF);
+                    sleep(1);     
+                    while(tempNode->link != NULL)
+                    {
+                        tempNode = tempNode->link;
+                        gettimeofday(&now, NULL);
+                        fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
+                                                                tempNode->ISNo, tempNode->ManagerCard, tempNode->CountNo, (long)now.tv_sec,
+                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+                                                                GOODCOUNT+PINDEFINESHIFT, MachineNo, tempNode->UserNo, MachPOWEROFF);
+                        sleep(1);
+                    }
+                break;
+                default:
+                ;
+            }
+            //write data into file
+            fclose(filePtr);
+        }else
+        {
+            printf("open file fail\n");
+        }
+    }
+    return 0;
+}
+
+void * PowerOffEventListenFunction(void *argument)
+{
+    printf("%s start\n", __func__);
+    while(1)
+    {
+        if(digitalRead(ZHPIN29) == 1)
+        {
+            ZHResetFlag = 1;
+            LoopLeaveEventIndex = ZHPowerOffEvent;
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+            printf("even trigger (PIN_29)1\n");
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+           // sleep(1);
+        }
+        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+    }
+    printf("[%s|%d]exit\n",__func__, __LINE__);
+}
+
+
 void * EventListenFunction(void *argument)
 {
     while(1)
     {
-        while(!ButtonEnableFlag)
+        while((!ButtonEnableFlag) && LoopLeaveEventIndex != ZHPowerOffEvent)
         {
             usleep(USLEEPTIMEUNITLONG);
             //printf("we wait\n");
@@ -62,10 +308,6 @@ void * EventListenFunction(void *argument)
                 ZHResetFlag = 1;
                 LoopLeaveEventIndex = ZHChangeUserExitEvent;
                 usleep(USLEEPTIMEUNITSHORT);
-                //printf("event trigger (PIN_29)\n");
-                //ZHResetFlag = 1;
-                //LoopLeaveEventIndex = ZHPowerOffEvent;
-                //usleep(USLEEPTIMEUNITSHORT);
 
             }else if(digitalRead(ZHPIN7) == 1)
             {
@@ -74,7 +316,7 @@ void * EventListenFunction(void *argument)
                 ZHResetFlag = 1;
                 LoopLeaveEventIndex = ZHForceExitEvent;
                 usleep(USLEEPTIMEUNITSHORT);
-            }else if(digitalRead(ZHPIN29) == 1)
+            }/*else if(digitalRead(ZHPIN29) == 1)
             {
 #ifndef LOCALTEST
                 printf("event trigger (PIN_29)\n");
@@ -82,7 +324,7 @@ void * EventListenFunction(void *argument)
                 LoopLeaveEventIndex = ZHPowerOffEvent;
                 usleep(USLEEPTIMEUNITSHORT);
 #endif
-            }
+            }*/
             else;
         }       
         pthread_mutex_lock(&MutexMain);
@@ -94,6 +336,10 @@ void * EventListenFunction(void *argument)
         {
             //normal leave
             printf("normal leave\n");
+        }else if(LoopLeaveEventIndex == ZHPowerOffEvent)
+        {
+            printf("poweroff leave\n");
+            break;
         }else
         {
             //timeout leave
@@ -119,13 +365,13 @@ void * EventListenFunction(void *argument)
 
 int main()
 {
-    pthread_t inputThread, eventListenThread, watchdogThread , changeScreenThread;
+    pthread_t inputThread, eventListenThread, watchdogThread , changeScreenThread, poweroffThread;
 
 #if defined ATS_1
     pthread_t interruptThread1; 
 #endif
 
-#if defined GT1318P
+#if defined ZHGT1318P
     pthread_t serialThread;
 #endif
 
@@ -283,18 +529,18 @@ int main()
             unlink(uploadFilePath);
         }
     }
-#ifdef LOCALTEST
+//#ifdef LOCALTEST
     if(0)
-#else
-    if(!GetRemoteDataFunction())
-#endif
+//#else
+//    if(!GetRemoteDataFunction())
+//#endif
     {
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(ZHList->GoodNo);
         WriteFile(MachRESUMEFROMPOWEROFF);
         pthread_mutex_lock(&MutexScreen);
         DisableUpDown = 1;
         ScreenIndex = 0;
-        UpdateScreenFunction(0);
+        UpdateScreenFunction(0, 0);
         pthread_mutex_unlock(&MutexScreen);
         InputMode = 1;
         printf("get data form remote\n");
@@ -307,11 +553,11 @@ int main()
     {
         //read data from eeprom
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(ZHList->GoodNo);
-        pthread_mutex_lock(&MutexScreen);
-        DisableUpDown = 1;
-        ScreenIndex = 0;
-        UpdateScreenFunction(0);
-        pthread_mutex_unlock(&MutexScreen);
+        //pthread_mutex_lock(&MutexScreen);
+        //DisableUpDown = 1;
+        //ScreenIndex = 0;
+        //UpdateScreenFunction(0, 0);
+        //pthread_mutex_unlock(&MutexScreen);
         InputMode = 1;
         printf("get data from local\n");
     }else
@@ -320,13 +566,13 @@ int main()
         EarseEEPROMData();
         if(ZHList != NULL)
         {
-            ZHList = NULL;
             free(ZHList);
+            ZHList = NULL;
         }
         //sleep(1);
         pthread_mutex_lock(&MutexScreen);
         ScreenIndex = 3;
-        UpdateScreenFunction(3);
+        UpdateScreenFunction(3, 0);
         pthread_mutex_unlock(&MutexScreen);
     }
 
@@ -340,31 +586,37 @@ int main()
     rc = pthread_create(&changeScreenThread, NULL, ChangeScreenEventListenFunction, NULL);
     assert(rc == 0);
 
+    rc = pthread_create(&poweroffThread, NULL, PowerOffEventListenFunction, NULL);
+    assert(rc == 0);
+
     InputDone = 0;
     while(1)
     {
         unsigned char cancelThreadDone = 0;
-        while(ZHList == NULL || InputDone == 0)
+        while((ZHList == NULL || InputDone == 0) && LoopLeaveEventIndex != ZHPowerOffEvent)
         {
             //printf("ZHList is NULL\n");
             usleep(USLEEPTIMEUNITLONG);
         }
 
-        if(isFirstinLoop)
+        if(ZHList != NULL)
         {
-            //first time, we need to write MachSTAR to FILE
-            WriteFile(MachSTART);
-            isFirstinLoop = 0;
-            digitalWrite (ZHPIN31, HIGH);
+            if(isFirstinLoop)
+            {
+                //first time, we need to write MachSTAR to FILE
+                WriteFile(MachSTART);
+                isFirstinLoop = 0;
+                digitalWrite (ZHPIN31, HIGH);
+            }
+            printf("%s %s %s %s\n", ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, MachineNo); 
         }
-        printf("%s %s %s %s\n", ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, MachineNo); 
  
 #if defined ATS_1
         rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
         assert(rc == 0);
 #endif
 
-#if defined GT1318P
+#if defined ZHGT1318P
         SerialFunctionFlag = 1;
         rc = pthread_create(&serialThread, NULL, ZHSerialFunction, NULL);
         assert(rc == 0);
@@ -402,7 +654,7 @@ int main()
                     pthread_join(interruptThread1, NULL); 
 #endif
                     
-#if defined GT1318P
+#if defined ZHGT1318P
                     usleep(USLEEPTIMEUNITMID);
                     SerialFunctionFlag = 0;
                     pthread_join(serialThread, NULL); 
@@ -432,7 +684,7 @@ int main()
                     pthread_join(interruptThread1, NULL);
 #endif
 
-#if defined GT1318P
+#if defined ZHGT1318P
                     usleep(USLEEPTIMEUNITMID);
                     SerialFunctionFlag = 0;
                     pthread_join(serialThread, NULL); 
@@ -446,7 +698,7 @@ int main()
                     printf("cancel done (force exit)\n");
                     //force leave
                     pthread_mutex_lock(&MutexFile);
-                    if(ExCount[GOODCOUNT] >= (long)(atol(ZHList->CountNo)/1.04))
+                    if(ExCount[GOODCOUNT] >= (long)(atol(ZHList->CountNo)/GOODRATE))
                     {
                         WriteFile(MachSTOPForce1);
                         WriteFile(MachSTANDBY);    
@@ -466,7 +718,7 @@ int main()
                     pthread_join(interruptThread1, NULL); 
 #endif
 
-#if defined GT1318P
+#if defined ZHGT1318P
                     usleep(USLEEPTIMEUNITMID);
                     SerialFunctionFlag = 0;
                     pthread_join(serialThread, NULL); 
@@ -512,14 +764,24 @@ int main()
                 }
             }
             //upload
+            printf("ready to upload\n");
             memset(uploadFilePath, 0 ,sizeof(char)*INPUTLENGTH);           
             pthread_mutex_lock(&MutexFile);
-            strcpy(uploadFilePath, ZHList->UploadFilePath);
-            gettimeofday(&now, NULL);
-            sprintf(ZHList->UploadFilePath, "%ld%s.txt", (long)now.tv_sec, MachineNo);
+            if(ZHList != NULL)
+            {
+                printf("ZHList is not null\n");
+                strcpy(uploadFilePath, ZHList->UploadFilePath);
+                gettimeofday(&now, NULL);
+                sprintf(ZHList->UploadFilePath, "%ld%s.txt", (long)now.tv_sec, MachineNo);
+                printf("local: %s\nglobal: %s\n", uploadFilePath, ZHList->UploadFilePath);
+            }else
+            {
+                printf("ZHList is null, create a temp fail\n");
+                gettimeofday(&now, NULL);
+                sprintf(uploadFilePath, "%ld%s.txt", (long)now.tv_sec, MachineNo);
+                printf("local: %s\n", uploadFilePath);
+            }
             pthread_mutex_unlock(&MutexFile); 
-
-            printf("local: %s\nglobal: %s\n", uploadFilePath, ZHList->UploadFilePath);
 
             if(stat(uploadFilePath, &fileInfo) == 0)
             {
@@ -543,13 +805,6 @@ int main()
                         //wait(&result);
                         //printf("upload success\n");
                         waitpid(-1, NULL, WNOHANG);
-                        if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
-                        {
-                        }else
-                        {
-                            //sprintf(ZHList->GoodNo, "%ld", ExCount[GOODCOUNT]);
-                            //WriteEEPROMData();
-                        }
                     }   
                 }else 
                 {
@@ -559,6 +814,10 @@ int main()
             }
             if(LoopLeaveEventIndex == ZHPowerOffEvent)
             {
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                pthread_cancel(poweroffThread);
+                pthread_join(poweroffThread, NULL);
+
                 usleep(USLEEPTIMEUNITMID);
                 pthread_cancel(eventListenThread);
                 pthread_join(eventListenThread, NULL);
@@ -567,10 +826,13 @@ int main()
                 pthread_cancel(changeScreenThread);
                 pthread_join(changeScreenThread, NULL);
 
-                sprintf(ZHList->GoodNo, "%ld", ExCount[GOODCOUNT]);
+                if(ZHList != NULL)
+                {
+                    sprintf(ZHList->GoodNo, "%ld", ExCount[GOODCOUNT]);
+                }
                 if(WriteEEPROMData())
                 {
-                    EarseEEPROMData();
+                    printf("write EEPROM fail\n");
                     EarseEEPROMData();
                 }
 
@@ -578,14 +840,14 @@ int main()
                 digitalWrite (ZHPIN31, LOW);
                 pthread_mutex_lock(&MutexScreen);
                 ScreenIndex = 2;
-                UpdateScreenFunction(2);
+                UpdateScreenFunction(2, 0);
                 pthread_mutex_unlock(&MutexScreen);
+                printf("bye\n");
 
                 return 0;
             }else if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
             {
                 pthread_mutex_lock(&MutexEEPROM);
-                EarseEEPROMData();
                 EarseEEPROMData();
                 pthread_mutex_unlock(&MutexEEPROM);
 
@@ -628,12 +890,12 @@ int main()
                 if(ScreenIndex == 0)
                 {
                     pthread_mutex_lock(&MutexScreen);
-                    UpdateScreenFunction(0);
+                    UpdateScreenFunction(0, 0);
                     pthread_mutex_unlock(&MutexScreen);
                 }else if(ScreenIndex == 1)
                 {
                     pthread_mutex_lock(&MutexScreen);
-                    UpdateScreenFunction(1);
+                    UpdateScreenFunction(1, 0);
                     pthread_mutex_unlock(&MutexScreen);
                 }else;
             }else;
@@ -642,6 +904,7 @@ int main()
             {
                 break;
             }
+            printf("[%s|%d]ready to wait again\n",__func__, __LINE__);
         }
     }
     return 0;

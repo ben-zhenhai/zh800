@@ -12,5 +12,5 @@ int ScreenIndex;
 char DisableUpDown;
 
 void * ChangeScreenEventListenFunction(void *argument);
-int UpdateScreenFunction(int screenIndex);
+int UpdateScreenFunction(int screenIndex, int status);
 int SendCommandMessageFunction(unsigned char *massage, int arrayLength);

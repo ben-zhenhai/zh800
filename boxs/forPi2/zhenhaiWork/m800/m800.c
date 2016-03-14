@@ -73,7 +73,7 @@ int SetI2cConfig()
     return 0;
 }
 
-
+/*
 int WriteFile(int mode)
 {
     FILE *filePtr;
@@ -221,7 +221,7 @@ int WriteFile(int mode)
     fclose(filePtr);
     return 0;
 }
-
+*/
 
 void * ZHI2cReaderFunction1(void *argument)
 {
@@ -300,6 +300,7 @@ void * ZHI2cReaderFunction1(void *argument)
         usleep(USLEEPTIMEUNITVERYSHORT);
     }
 }
+
 void * ZHI2cReaderFunction2(void *argument)
 {
     int fd, r, forCount, first, second;
@@ -352,6 +353,7 @@ void * ZHI2cReaderFunction2(void *argument)
         usleep(USLEEPTIMEUNITVERYSHORT);
     }
 }
+
 /*void * ZHI2cReaderFunction3(void *argument)
 {
     int fd, r, forCount, first;

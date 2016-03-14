@@ -1,6 +1,6 @@
 #include "lcd.h"
 
-int UpdateScreenFunction(int screenIndex)
+int UpdateScreenFunction(int screenIndex, int status)
 {
     unsigned char infoScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x00, 0x0d};
     unsigned char countScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0a, 0x00, 0x0d};
@@ -12,6 +12,7 @@ int UpdateScreenFunction(int screenIndex)
     unsigned char startString[5] = {0x31, 0x04, 0x31, 0x10, 0x00};
    
     pthread_mutex_lock(&MutexLinklist);
+    //count menu
     if(screenIndex == 1)
     {       
         unsigned char countNoPositionColorString[10] = {0x00, 0x69, 0x00, 0x5a, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
@@ -107,16 +108,36 @@ int UpdateScreenFunction(int screenIndex)
             }
         }
         SendCommandMessageFunction(popUpScreen, 18);
-    }/*else if(screenIndex == 99)
+    }else if(screenIndex == 99)
     {
-        unsigned char loadingProcess[28] = {0x31, 0x04, 0x31, 0x13, 0x10, 
-                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'L', 'o', 'a', 'd', 'i', 'n', 'g', '.', '.', '.', 0x0a, 0x00, 0x0d};
+        unsigned char BarcodeError1[24] = {0x31, 0x04, 0x31, 0x13, 0x10, 
+                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'E', 'r', 'r', 'o', 'r', '1', 0x0a, 0x00, 0x0d};
 
-        
-        SendCommandMessageFunction(loadingProcess, 28);
+        unsigned char BarcodeError2[24] = {0x31, 0x04, 0x31, 0x13, 0x10, 
+                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'E', 'r', 'r', 'o', 'r', '2', 0x0a, 0x00, 0x0d};
 
-    }*/else if(screenIndex == 2)
+        unsigned char BarcodeError3[24] = {0x31, 0x04, 0x31, 0x13, 0x10, 
+                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'E', 'r', 'r', 'o', 'r', '3', 0x0a, 0x00, 0x0d};
+
+        unsigned char BarcodeError4[24] = {0x31, 0x04, 0x31, 0x13, 0x10, 
+                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'E', 'r', 'r', 'o', 'r', '4', 0x0a, 0x00, 0x0d};
+
+        unsigned char BarcodeError5[24] = {0x31, 0x04, 0x31, 0x13, 0x10, 
+                   0x00, 0x5a, 0x00, 0x78, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 'E', 'r', 'r', 'o', 'r', '5', 0x0a, 0x00, 0x0d};
+
+        if(status == 1)
+            SendCommandMessageFunction(BarcodeError1, 28);
+        else if(status == 2)
+            SendCommandMessageFunction(BarcodeError2, 28);
+        else if(status == 3)
+            SendCommandMessageFunction(BarcodeError3, 28);
+        else if(status == 4)
+            SendCommandMessageFunction(BarcodeError4, 28);
+        else
+            SendCommandMessageFunction(BarcodeError5, 28);
+    }else if(screenIndex == 2)
     {
+        //poweroff
         SendCommandMessageFunction(powerOffScreen, 13);
         nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
         SendCommandMessageFunction(popUpScreen, 18);
@@ -157,12 +178,11 @@ int UpdateScreenFunction(int screenIndex)
         unsigned char countNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char userNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xcf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         */
-        unsigned char lotPostionColorString[10] = {0x00, 0x69, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
+        unsigned char lotPostionColorString[10] = {0x00, 0x5f, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString1[10] = {0x00, 0x69, 0x00, 0x5f, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString2[10] = {0x00, 0x69, 0x00, 0x82, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char countNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char userNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xcf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
-
 
         unsigned char * commandArrayPtr;
         unsigned char * commandPtr,  * managerPtr;
@@ -304,7 +324,7 @@ int UpdateScreenFunction(int screenIndex)
         unsigned char countNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char userNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xcf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         */
-        unsigned char lotPostionColorString[10] = {0x00, 0x69, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
+        unsigned char lotPostionColorString[10] = {0x00, 0x5f, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString1[10] = {0x00, 0x69, 0x00, 0x5f, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString2[10] = {0x00, 0x69, 0x00, 0x82, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char countNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
@@ -497,7 +517,7 @@ int UpdateScreenFunction(int screenIndex)
         unsigned char countNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char userNoPositionColorString[10] = {0x00, 0x96, 0x00, 0xcf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         */
-        unsigned char lotPostionColorString[10] = {0x00, 0x69, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
+        unsigned char lotPostionColorString[10] = {0x00, 0x5f, 0x00, 0x3c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString1[10] = {0x00, 0x69, 0x00, 0x5f, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char partPositionColorString2[10] = {0x00, 0x69, 0x00, 0x82, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char countNoPositionColorString[10] = {0x00, 0x82, 0x00, 0xa5, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
@@ -586,7 +606,7 @@ int UpdateScreenFunction(int screenIndex)
 
             //count no.
             arraySize = strlen(ZHList->CountNo);
-#ifdef DEBUF
+#ifdef DEBUG
             printf("array size:%d\n", arraySize);
 #endif
             commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(18 + arraySize)); 
@@ -640,12 +660,11 @@ int UpdateScreenFunction(int screenIndex)
     return 0;
 }
 
-
 void * ChangeScreenEventListenFunction(void *argument)
 {
     int screenIndex = 3;
+    int listOffset = 0;
     char flagForZHPIN32, flagForZHPIN36, flagForZHPIN38, flagForZHPIN22;
-    InputNode *nodePtr;
 
     flagForZHPIN32 = flagForZHPIN36 = flagForZHPIN38 = flagForZHPIN22 = 0;
     //ScreenIndex = screenIndex;
@@ -653,7 +672,10 @@ void * ChangeScreenEventListenFunction(void *argument)
     while(1)
     {
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-        if(ScreenIndex == 6 || ScreenIndex  == 7);
+        if(ScreenIndex == 6 || ScreenIndex  == 7)
+        {
+            nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
+        }
         else
         {
             if(DisableUpDown == 0 && flagForZHPIN32 == 0 && digitalRead(ZHPIN32) == 0)
@@ -664,8 +686,9 @@ void * ChangeScreenEventListenFunction(void *argument)
                 pthread_mutex_lock(&MutexScreen);
                 ScreenIndex = screenIndex;
                 flagForZHPIN32 = 1; 
-                UpdateScreenFunction(screenIndex);
+                UpdateScreenFunction(screenIndex, 0);
                 pthread_mutex_unlock(&MutexScreen);
+                listOffset = 0;
             }else if(flagForZHPIN32 == 1 && digitalRead(ZHPIN32) == 1)
             {
                 flagForZHPIN32 = 0;
@@ -677,8 +700,9 @@ void * ChangeScreenEventListenFunction(void *argument)
                 screenIndex = (screenIndex - 1) % 3 + 3;
                 ScreenIndex = screenIndex;
                 flagForZHPIN36 = 1; 
-                UpdateScreenFunction(screenIndex);
+                UpdateScreenFunction(screenIndex, 0);
                 pthread_mutex_unlock(&MutexScreen);
+                listOffset = 0;
             }else if(flagForZHPIN22 == 1 && digitalRead(ZHPIN22) == 1)
             {
                 flagForZHPIN22 = 0;
@@ -688,8 +712,9 @@ void * ChangeScreenEventListenFunction(void *argument)
                 pthread_mutex_lock(&MutexScreen);
                 ScreenIndex = screenIndex;
                 flagForZHPIN36 = 1;
-                UpdateScreenFunction(screenIndex);
+                UpdateScreenFunction(screenIndex, 0);
                 pthread_mutex_unlock(&MutexScreen);
+                listOffset = 0;
             }else if(flagForZHPIN36 == 1 && digitalRead(ZHPIN36) == 1)
             {
                 flagForZHPIN36 = 0;
@@ -701,35 +726,41 @@ void * ChangeScreenEventListenFunction(void *argument)
                 if(screenIndex == 3)
                 {
                     ScreenIndex = 0;
-                    UpdateScreenFunction(0);
+                    UpdateScreenFunction(0, 0);
                 }
                 else if(screenIndex == 4)
                 {
                     ScreenIndex = 1;
-                    UpdateScreenFunction(1);
+                    UpdateScreenFunction(1, 0);
                 }
                 else
                 {
                     ScreenIndex = 8;
-                    UpdateScreenFunction(8);
+                    UpdateScreenFunction(8, 0);
                 }
                 pthread_mutex_unlock(&MutexScreen);
                 flagForZHPIN38 = 1;
                 DisableUpDown = 1;
+                listOffset = 0;
             }else if(flagForZHPIN38 == 1 && digitalRead(ZHPIN38) == 1)
             {
                 flagForZHPIN38 = 0;
+                listOffset = 0;
             }else if((ScreenIndex == 0) && DisableUpDown == 1 && flagForZHPIN32 == 0 && digitalRead(ZHPIN32) == 0)
             {
-                if(nodePtr == NULL)
+                if(ZHList != NULL)
                 {
+                    InputNode *nodePtr;
                     nodePtr = ZHList;
-                }
-                if(nodePtr != NULL)
-                {
                     pthread_mutex_lock(&MutexScreen);
-                    if(nodePtr->link != NULL) nodePtr = nodePtr->link;
-                    else nodePtr = ZHList;
+                    if(listOffset == 0) listOffset = 1;
+                    else
+                    {
+                        if(nodePtr->link != NULL) nodePtr = nodePtr->link;
+                        else nodePtr = ZHList;
+                        listOffset = 0;
+                    }
+                    printf("listOffset: %d\n", listOffset);
                     unsigned char infoScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x00, 0x0d};
                     unsigned char popUpScreen[18] = {0x31, 0x04, 0x31, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0a, 0x00, 0x0d};
                     unsigned char endString[3] = {0x0a, 0x00, 0x0d};
@@ -876,9 +907,8 @@ void * ChangeScreenEventListenFunction(void *argument)
                     }
                     SendCommandMessageFunction(popUpScreen, 18);
                     pthread_mutex_unlock(&MutexScreen);
-                }
+                }else;
             }
-        
             else;
         }
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -886,7 +916,6 @@ void * ChangeScreenEventListenFunction(void *argument)
         //sleep(0);
     }
 }
-
 
 int SendCommandMessageFunction (unsigned char *message, int arrayLength)
 {
@@ -917,4 +946,3 @@ int SendCommandMessageFunction (unsigned char *message, int arrayLength)
     }
     return 0;
 }
-

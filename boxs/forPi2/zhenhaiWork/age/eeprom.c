@@ -4,11 +4,14 @@ void CleanListFunction()
 {
     InputNode *nodePtr = ZHList;
 
-    while(nodePtr->link != NULL)
+    if(nodePtr != NULL)
     {
-        ZHList = ZHList->link;
-        free(nodePtr);
-        nodePtr = ZHList; 
+        while(nodePtr->link != NULL)
+        {
+            ZHList = ZHList->link;
+            free(nodePtr);
+            nodePtr = ZHList; 
+        }
     }
 }
 

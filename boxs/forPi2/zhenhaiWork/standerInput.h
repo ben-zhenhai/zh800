@@ -4,6 +4,7 @@
 //#endif
 
 #include "zhenhai.h"
+#include "lcd.h"
 
 enum
 {

@@ -78,8 +78,6 @@ int GetRemoteDataFunction()
 
         if(codep== 200)
         {
-            //printf("%lu bytes retrieved\n%s\n%ld\n", (long)chunk.size, chunk.memory, codep);
-
             char * htmlPtr;
             long htmlSize = (long)chunk.size;
             int forCount = 0;           

@@ -73,6 +73,7 @@ int SetI2cConfig()
     return 0;
 }
 
+/*
 int WriteFile(int mode)
 {
     FILE *filePtr;
@@ -126,14 +127,13 @@ int WriteFile(int mode)
                 }else;
             }
         break;
-        /*
         case MachREPAIRING:
             gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
                                                                 ZHList->ISNo, ZHList->ManagerCard, ZHList->CountNo, 
                                                                 (long)changeIntoRepairmodeTimeStemp.tv_sec,
                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, RepairNo, MachREPAIRING);
+                                                                GOODCOUNT+1, MachineNo, RepairNo, MachREPAIRING);
             
         break;
         case MachREPAIRING2:
@@ -149,10 +149,9 @@ int WriteFile(int mode)
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, RepairNo, 
+                                                                GOODCOUNT+1, MachineNo, RepairNo, 
                                                                 (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
         break;
-        */
         case MachJobDone:
             gettimeofday(&now, NULL);
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
@@ -234,7 +233,7 @@ int WriteFile(int mode)
 
     return 0;
 }
-
+*/
 
 void * ZHSerialFunction(void *argument)
 {
@@ -414,7 +413,7 @@ void * WatchdogFunction(void *argument)
             if(ScreenIndex == 1 && WatchdogThreadFlag != 0)
             {
                 pthread_mutex_lock(&MutexScreen);
-                UpdateScreenFunction(1);  
+                UpdateScreenFunction(1, 0);  
                 pthread_mutex_unlock(&MutexScreen);
             } 
             printf("%s %s %s %s %s|| %ld %ld %ld %ld %ld\n", 

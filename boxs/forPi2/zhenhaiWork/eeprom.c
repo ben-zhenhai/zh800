@@ -136,7 +136,12 @@ int ReadEEPROMData()
             break;
         }
     }
-    
+    if(forCount == 0)
+    {
+        printf("Good Count error\n");
+        close(fd);
+        return 1;
+    } 
     i2c_smbus_write_byte_data(fd, 0x00, 0x40);
     for(forCount = 0; forCount < arraySize; forCount++)
     {
@@ -381,7 +386,7 @@ int WriteEEPROMData()
                 break;
             }
         }
-        if(strncmp(tempCountNo, CountNo, strlen(CountNo)) != 0)   
+        if(strlen(CountNo) != 0 && strncmp(tempCountNo, CountNo, strlen(CountNo)) != 0 )   
         {
             printf("CountNo error\n");
             //ZHEarseEEPROMData();

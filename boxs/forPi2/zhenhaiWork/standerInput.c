@@ -26,6 +26,10 @@ void * InputFunction(void *argument)
                 else
                 {
                     printf("scan ISNo. error\n");
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0); 
+                    UpdateScreenFunction(99); 
                 }
                 break;
             case MANAGERCARD:
@@ -38,8 +42,11 @@ void * InputFunction(void *argument)
                 else
                 {
                     printf("scan ManagerCard error\n");
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0); 
+                    UpdateScreenFunction(99); 
                 }
-
                 break;
             case USERNO:
                 if(strncmp(tempBarcodeInput, "XXXP", 4) == 0)
@@ -60,6 +67,10 @@ void * InputFunction(void *argument)
                 else
                 {
                     printf("scan UserNo. error!\n");
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0); 
+                    UpdateScreenFunction(99); 
                 }
 
                 break;
@@ -97,6 +108,10 @@ void * InputFunction(void *argument)
                 else
                 {
                     printf("scan Count error!\n");
+                    DisableUpDown = 1;
+                    ScreenIndex = 0;
+                    UpdateScreenFunction(0); 
+                    UpdateScreenFunction(99); 
                 }
                 break;
             case FIXITEM:
@@ -125,6 +140,13 @@ void * InputFunction(void *argument)
                 break;
             default:
                 printf("nothing\n");
+                DisableUpDown = 1;
+                ScreenIndex = 0;
+                UpdateScreenFunction(0); 
+                UpdateScreenFunction(99); 
+                sleep(1);
+                UpdateScreenFunction(0); 
+                
         }
         //pthread_mutex_unlock(&MutexInput);
     }

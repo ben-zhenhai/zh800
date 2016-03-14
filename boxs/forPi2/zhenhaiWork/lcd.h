@@ -9,6 +9,7 @@
 #define SPICLOCK 600000
 
 int ScreenIndex;
+//only in Menu can use button up and down
 char DisableUpDown;
 char isInPairMode;
 
