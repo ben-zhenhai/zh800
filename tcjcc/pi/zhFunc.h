@@ -24,5 +24,6 @@ void * RemoteFunction(void * argument);
 unsigned int zhCRCCheck(unsigned char* data, int dataLength);
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream);
 void PerserFunction1(unsigned char* data);
-void PerserFunction2(unsigned char* data, unsigned long** plong);
+//void PerserFunction2(unsigned char* data, unsigned long** plong);
+void PerserFunction2(unsigned char* data, long double **plong);
 

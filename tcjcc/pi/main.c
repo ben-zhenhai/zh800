@@ -5,7 +5,7 @@
 #define OUTPUTSERIALLENGTH 40
 #define REQUESTDATAPERIOD 60
 #define UPLOADDATAPERIOD 300
-#define SAMPLERATE 5 
+#define SAMPLERATE 5
 #define CONFIGPATH "/home/pi/works/waterqulity/tcjccConfig"
 #define MachSTOPRUNNING 32
 #define MachRUNNING 10
@@ -15,14 +15,15 @@ pthread_cond_t CONDSERIALSEND, CONDSERIALRECV, CONDFTP;
 pthread_mutex_t MUTEXSERIALSEND, MUTEXSERIALRECV, MUTEXFTP, MUTEXDATA;
 
 float Result[5];
-unsigned long zhFlow = 0;
+long double zhFlow = 0;
 int SumCount = 1;
+long double getValue = 0;
 short UpdateFlag = 0;
 char Name[STRINGLENGTH];
 char TargetId[STRINGLENGTH];
 char MachineId[STRINGLENGTH];
 char AccPw[STRINGLENGTH];
-char MachineType[STRINGLENGTH]; 
+char MachineType[STRINGLENGTH];
 char FtpServer[80];
 
 int main()
@@ -33,7 +34,7 @@ int main()
     char configString[80];
     char *buffer, *charPosition;
     int filesize = 0;
-    int arrayIndex = 0;    
+    int arrayIndex = 0;
 
     memset(Name, 0, sizeof(char)*STRINGLENGTH);
     memset(TargetId, 0, sizeof(char)*STRINGLENGTH);
@@ -48,7 +49,7 @@ int main()
     {
         fseek(fptr, 0, SEEK_END);
         filesize = ftell(fptr);
-        rewind(fptr); 
+        rewind(fptr);
         buffer = (char *)malloc(sizeof(char)*filesize);
         fread(buffer, 1, filesize, fptr);
         fclose(fptr);
@@ -63,7 +64,7 @@ int main()
                     int forCount = 0;
                     for(forCount = 0; forCount < arrayIndex-10; ++forCount)
                     {
-                        FtpServer[forCount] = configString[forCount+10]; 
+                        FtpServer[forCount] = configString[forCount+10];
                     }
                     printf("%s|\n", FtpServer);
                     memset(configString, 0, sizeof(char)*80);
@@ -117,7 +118,7 @@ int main()
             }else
             {
                 configString[arrayIndex] = *charPosition;
-                ++arrayIndex;    
+                ++arrayIndex;
             }
             ++charPosition;
             --filesize;
@@ -154,7 +155,7 @@ int main()
         {
             ;
         }
-    
+
         pthread_join(sendSerialThread, NULL);
         sleep(1);
         //pthread_join(recvSerialThread, NULL);
@@ -177,24 +178,24 @@ void * ReceiveSerialFunction(void * argument)
     unsigned char output[OUTPUTSERIALLENGTH];
     struct timeval now;
     struct timespec outTime;
-  
+
     memset(output, 0, sizeof(char)*OUTPUTSERIALLENGTH);
     while(1)
-    { 
+    {
         if((fd = serialOpen("/dev/ttyAMA0", 9600)) < 0)
         {
             printf("Unable to open serial device: %s\n", strerror(errno));
         }
         else
         {
-            while(serialDataAvail(fd)) 
+            while(serialDataAvail(fd))
             {
                 char temp_char = serialGetchar(fd);
                 printf("%x ",temp_char);
             }
             serialClose(fd);
         }
-        pthread_mutex_lock(&MUTEXSERIALRECV);    
+        pthread_mutex_lock(&MUTEXSERIALRECV);
         gettimeofday(&now, NULL);
         outTime.tv_sec = now.tv_sec + REQUESTDATAPERIOD;
         outTime.tv_nsec = now.tv_usec * 1000;
@@ -210,19 +211,19 @@ void * SendSerialFunction(void * argument)
     unsigned char input[INPUTSERIALLENGTH];
     unsigned char output[OUTPUTSERIALLENGTH];
     unsigned int crcResult = 0;
-    unsigned long exFlow = 0;
-    unsigned long * pLong;
+    long double exFlow = 0;
+    long double * pLong;
 
     pLong = &exFlow;
 
-    memset(input, 0, sizeof(char)*INPUTSERIALLENGTH);    
-    memset(output, 0, sizeof(char)*INPUTSERIALLENGTH);    
+    memset(input, 0, sizeof(char)*INPUTSERIALLENGTH);
+    memset(output, 0, sizeof(char)*INPUTSERIALLENGTH);
 
     struct timeval now;
     struct timespec outTime;
     unsigned char checkCrc[2];
 
-    
+
     if(strcmp(MachineType, "WaterAnalyse") == 0)
     {
         input[0] = atoi(MachineId);
@@ -233,7 +234,7 @@ void * SendSerialFunction(void * argument)
         input[5] = 0x09;
 
         crcResult = zhCRCCheck(input, 6);
-    
+
         input[6] = (0xff & (crcResult >> 8)) ;
         input[7] = (0xff & crcResult);
     }else
@@ -241,8 +242,10 @@ void * SendSerialFunction(void * argument)
         //water flow
         input[0] = atoi(MachineId);
         input[1] = 0x03;
-        input[2] = 0x03;
-        input[3] = 0x10;
+        //input[2] = 0x03;
+        //input[3] = 0x10;
+        input[2] = 0x02;
+        input[3] = 0x52;
         input[4] = 0x00;
         input[5] = 0x02;
         crcResult = zhCRCCheck(input, 6);
@@ -251,7 +254,7 @@ void * SendSerialFunction(void * argument)
         input[7] = (0xff & crcResult);
         //end
     }
-    
+
     //hard code for testing
     /*if(strcmp(MachineType, "WaterAnalyse") == 0)
     {
@@ -277,8 +280,8 @@ void * SendSerialFunction(void * argument)
         input[19] = 0x00;
         input[20] = 0xfb;
 
-        crcResult = zhCRCCheck(input, 21);     
-    
+        crcResult = zhCRCCheck(input, 21);
+
         input[21] = (0xff & (crcResult >> 8));
         input[22] = (0xff & crcResult);
         //end
@@ -290,10 +293,10 @@ void * SendSerialFunction(void * argument)
         input[3] = 0x00;
         input[4] = 0x01;
         input[5] = 0x86;
-        input[6] = 0xb7; 
+        input[6] = 0xb7;
 
-        crcResult = zhCRCCheck(input, 7); 
-    
+        crcResult = zhCRCCheck(input, 7);
+
         input[7] = (0xff & (crcResult >> 8));
         input[8] = (0xff & crcResult);
     }
@@ -319,7 +322,7 @@ void * SendSerialFunction(void * argument)
             sleep(2);
             while(serialDataAvail(fd))
             {
-                output[arrayCount]= serialGetchar(fd); 
+                output[arrayCount]= serialGetchar(fd);
                 printf("%x ", output[arrayCount]);
                 ++arrayCount;
             }
@@ -328,7 +331,7 @@ void * SendSerialFunction(void * argument)
 
             if(arrayCount > 8)
             {
-                memset(checkCrc, 0 ,sizeof(unsigned char)*2); 
+                memset(checkCrc, 0 ,sizeof(unsigned char)*2);
                 crcResult = zhCRCCheck(output, arrayCount-2);
 
                 checkCrc[0] = (0xff & (crcResult) >> 8);
@@ -347,8 +350,9 @@ void * SendSerialFunction(void * argument)
                         PerserFunction2(output, &pLong);
                         SumCount = (SumCount % SAMPLERATE) + 1;
                         UpdateFlag = 1;
+                        getValue = getValue + 1;
                     }else;
-                    pthread_mutex_unlock(&MUTEXDATA);            
+                    pthread_mutex_unlock(&MUTEXDATA);
                     arrayCount = 0;
 
                 }
@@ -368,14 +372,19 @@ void * SendSerialFunction(void * argument)
         }
         pthread_mutex_lock(&MUTEXSERIALSEND);
         gettimeofday(&now, NULL);
-        outTime.tv_sec = now.tv_sec + REQUESTDATAPERIOD;
+        if(strcmp(MachineType, "WaterFlow") == 0)
+        {
+            outTime.tv_sec = now.tv_sec + (REQUESTDATAPERIOD/5);
+        }else{
+            outTime.tv_sec = now.tv_sec + REQUESTDATAPERIOD;
+        }
         outTime.tv_nsec = now.tv_usec * 1000;
         pthread_cond_timedwait(&CONDSERIALSEND, &MUTEXSERIALSEND, &outTime);
         pthread_mutex_unlock(&MUTEXSERIALSEND);
 
         /*input[6] = input[6] + 1;
-        crcResult = zhCRCCheck(input, 7); 
-    
+        crcResult = zhCRCCheck(input, 7);
+
         input[7] = (0xff & (crcResult >> 8));
         input[8] = (0xff & crcResult);*/
     }
@@ -407,13 +416,13 @@ void * FtpFunction(void * argument)
         memset(remoteUrl, 0, sizeof(char)*80);
         memcpy(remoteUrl,FtpServer, 80);
 
-        pthread_mutex_lock(&MUTEXFTP);    
+        pthread_mutex_lock(&MUTEXFTP);
         gettimeofday(&now, NULL);
         outTime.tv_sec = now.tv_sec + UPLOADDATAPERIOD;
         outTime.tv_nsec = now.tv_usec * 1000;
         pthread_cond_timedwait(&CONDFTP, &MUTEXFTP, &outTime);
         pthread_mutex_unlock(&MUTEXFTP);
-        
+
         gettimeofday(&now, NULL);
         timeStamp = *localtime(&now);
         strftime(currentTime, sizeof(currentTime), "%m%d%H%M", &timeStamp);
@@ -435,7 +444,7 @@ void * FtpFunction(void * argument)
                     fprintf(fptr, "259%-6s%d%s%-10.1f%d\n", TargetId, atoi(currentYear) - 1911, currentTime, Result[zhTEMP], MachRUNNING);
                 }else
                 {
-                    fprintf(fptr, "248%-6s%d%s%-10ld%d\n", TargetId, atoi(currentYear) - 1911, currentTime, zhFlow, MachRUNNING);
+                    fprintf(fptr, "248%-6s%d%s%-10lf%d\n", TargetId, atoi(currentYear) - 1911, currentTime, zhFlow/(getValue*12), MachRUNNING);
                 }
             }
             else
@@ -448,19 +457,19 @@ void * FtpFunction(void * argument)
                     fprintf(fptr, "259%-6s%d%s%-10.1f%d\n", TargetId, atoi(currentYear) - 1911, currentTime, 0.0, MachSTOPRUNNING);
                 }else
                 {
-                    fprintf(fptr, "248%-6s%d%s%-10d%d\n", TargetId, atoi(currentYear) - 1911, currentTime, 0, MachSTOPRUNNING);
+                    fprintf(fptr, "248%-6s%d%s%-10f%d\n", TargetId, atoi(currentYear) - 1911, currentTime, 0.00, MachSTOPRUNNING);
                 }
             }
-    
+
             SumCount = 1;
-            UpdateFlag = 0; 
-            pthread_mutex_unlock(&MUTEXDATA);            
+            UpdateFlag = 0;
+            pthread_mutex_unlock(&MUTEXDATA);
 
             fclose(fptr);
             strcat(remoteUrl, upLoadFile);
 
             //ftp process
-            if(stat(upLoadFile, &fileInfo)) 
+            if(stat(upLoadFile, &fileInfo))
             {
                 printf("Could not open %s %s\n", upLoadFile, strerror(errno));
             }
@@ -482,7 +491,7 @@ void * FtpFunction(void * argument)
                     if(res != CURLE_OK)
                     {
                         printf("sorry upload fail %d\n", res);
-                    } 
+                    }
 
                     curl_easy_cleanup(curl);
                     if(fptr)
@@ -494,6 +503,7 @@ void * FtpFunction(void * argument)
             }
             memset(Result, 0, sizeof(float)*5);
             zhFlow = 0;
+            getValue = 0;
             unlink(upLoadFile);
         }
     }
@@ -521,20 +531,39 @@ void PerserFunction1(unsigned char *data)
     Result[zhEC] = (Result[zhEC] * (SumCount-1) + (float) (data[15]*256 + data[16]) / 100) / SumCount;
     printf(" %.2f %.2f %.2f\n", Result[zhPH], Result[zhTEMP], Result[zhEC]);
 }
-void PerserFunction2(unsigned char *data, unsigned long **plong)
+//void PerserFunction2(unsigned char *data, unsigned long **plong)
+void PerserFunction2(unsigned char *data, long double **plong)
 {
-    unsigned long currentFlow =  (((((long)data[3] * 256)+ (long)data[4]*256) + (long)data[5])*256) + (long)data[6];
+    long double result;
+    long long shift;
+    unsigned bias;
+    unsigned significandbits = 32 - 8 - 1; // -1 for sign bit
+    uint32_t i = 0;
 
-    //FFFF = 65535
-    if(**plong == 0)
-    {
-        **plong = currentFlow;
-    }else
-    {
-       zhFlow = zhFlow + (currentFlow - **plong) ;
-       **plong = currentFlow;
-    }
-    printf("Total Flow:%ld ,zhFlow: %ld\n",**plong,zhFlow);
+    i = (uint32_t)data[3] << 24 |
+        (uint32_t)data[4] << 16 |
+        (uint32_t)data[5] << 8  |
+        (uint32_t)data[6];
+
+    if (i == 0) **plong = 0.0;
+
+    // pull the significand
+    result = (i&((1LL<<significandbits)-1)); // mask
+    result /= (1LL<<significandbits); // convert back to float
+    result += 1.0f; // add the one back on
+
+    // deal with the exponent
+    bias = (1<<(8-1)) - 1;
+    shift = ((i>>significandbits)&((1LL<<8)-1)) - bias;
+    while(shift > 0) { result *= 2.0; shift--; }
+    while(shift < 0) { result /= 2.0; shift++; }
+
+    // sign it
+    result *= (i>>(32-1))&1? -1.0: 1.0;
+
+    zhFlow = zhFlow + result;
+    **plong = result;
+    printf("Total Flow:%lf ,zhFlow: %lf\n",**plong,zhFlow);
 }
 
 void * RemoteFunction(void * argument)
@@ -553,16 +582,15 @@ unsigned int zhCRCCheck(unsigned char* data, int dataLength)
         regCRC ^= *data++;
         for(forCount = 0; forCount < 8; forCount++)
         {
-            if(regCRC & 0x01) 
+            if(regCRC & 0x01)
                 regCRC = (regCRC>>1) ^ 0xA001;
-            else 
+            else
                 regCRC = regCRC >> 1;
-            
+
         }
     }
     unsigned int outCRC=((regCRC<<8)&0xFF00)|((regCRC>>8)&0x00FF);
     //printf(" %3x %3x\n", regCRC, outCRC);
     return outCRC;
 }
-
 
