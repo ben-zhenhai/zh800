@@ -264,6 +264,83 @@ void * ZHSerialFunction(void *argument)
         short flagPack = 0;
         memset(Count, 0, sizeof(long)*EVENTSIZE);
 
+        //3
+        memset(arraySender, 0, sizeof(char)*RS232LengthSender);
+        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232LengthReceiver);
+        memset(prefixCheck, 0, sizeof(unsigned char)*8);
+        //strcpy(arraySender, "@11RD5420001054*");
+        strcpy(arraySender, "@11RD542100085C*");
+        arraySender[16] = 0x0d;
+        arraySender[17] = 0x0a;
+        charCount = 0;
+        count1 = 0;
+        flagPack = 0;
+          
+        for(forCount = 0; forCount < 18; ++forCount)
+        {
+            serialPutchar(fd, arraySender[forCount]);
+        }
+        usleep(100000);
+        //sleep(1);
+
+
+        printf("\n3\n");
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            printf("%x ", tempChar1);
+            if(flagPack == 1 && tempChar1 == '*')
+            {   
+                int localCharCount = 0;
+                forCount = 0;
+                printf("\nlength: %d\n", charCount);
+                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
+                {
+                    Count[forCount+6] = 
+                            TransferFormatLongFunction(arrayReceiver[localCharCount]) * 4096 + 
+                            TransferFormatLongFunction(arrayReceiver[localCharCount+1]) * 256 + 
+                            TransferFormatLongFunction(arrayReceiver[localCharCount+2]) * 16 + 
+                            TransferFormatLongFunction(arrayReceiver[localCharCount+3]);
+                    forCount++;
+                }
+                flagPack = 0;
+            }else if(flagPack == 1 && tempChar1 != '*')
+            {
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                //printf("%c ", tempChar1);
+            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00",7) == 0)
+            {
+                flagPack = 1;
+                arrayReceiver[charCount] = tempChar1;
+                ++charCount;
+                printf("check\n");
+            }else if(count1 != 0 && count1 < 7)
+            {
+                prefixCheck[count1] = tempChar1;
+                count1++;
+                printf("%d\n", count1);
+            }else if(tempChar1 == 0x40)
+            {
+                count1 = 1;
+                prefixCheck[0] = tempChar1;
+                printf("check\n");
+            }else
+            {
+                memset(prefixCheck, 0, sizeof(unsigned char)*8);
+                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
+                count1 = 0;
+                charCount = 0;
+                flagPack = 0;
+                printf("clean\n");
+            }
+            fflush(stdout);
+        }
+        usleep(100000);
+        //sleep(1);
+        printf("\n3 size: %d\n", charCount);
+ 
         //send to Server
         //1
         memset(arraySender, 0 , sizeof(char)*RS232LengthSender);
@@ -274,6 +351,7 @@ void * ZHSerialFunction(void *argument)
         arraySender[17] = 0x0a;
         charCount = 0;
         count1 = 0;
+        flagPack = 0;
 
         for(forCount = 0; forCount < 18; ++forCount)
         {
@@ -283,11 +361,12 @@ void * ZHSerialFunction(void *argument)
         //nanosleep((const struct timespec[]){{0, 50000000L}}, NULL);
         sleep(1);
 
+        printf("\n1\n");
         while(serialDataAvail(fd))
         {
             char tempChar1;
             tempChar1 = serialGetchar(fd);
-            //printf("%x ", tempChar1);
+            printf("%x ", tempChar1);
             if(flagPack == 1 && tempChar1 == '*')
             {
                 int localCharCount = 0;
@@ -326,17 +405,20 @@ void * ZHSerialFunction(void *argument)
             {
                 count1 = 1;
                 prefixCheck[0] = tempChar1;
+                printf("check\n");
             }else
             {
                 memset(prefixCheck, 0, sizeof(unsigned char)*8);
                 memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
                 count1 = 0;
                 charCount = 0;
+                flagPack = 0;
+                printf("clean\n");
             }
             fflush(stdout);
         }
         //usleep(200000);
-        //printf("  1111 size:%d\n",charCount);
+        printf("  1111 size:%d\n",charCount);
         //nanosleep((const struct timespec[]){{0, 50000000L}}, NULL);
         sleep(1);
         
@@ -363,7 +445,7 @@ void * ZHSerialFunction(void *argument)
         {
             char tempChar1;
             tempChar1 = serialGetchar(fd);
-            //printf("%x ", tempChar1);
+            printf("%x ", tempChar1);
             if(flagPack == 1 && tempChar1 == '*')
             {
                 Count[4] = 
@@ -403,87 +485,17 @@ void * ZHSerialFunction(void *argument)
                 memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
                 count1 = 0;
                 charCount = 0;
+                flagPack = 0;
             }
             fflush(stdout);
         }
-        //printf(" 2222 size:%d\n",charCount);
+        printf(" 2222 size:%d\n",charCount);
         //nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
         sleep(1);
         
          
         //printf("\n\n");
-        //3
-        memset(arraySender, 0, sizeof(char)*RS232LengthSender);
-        memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232LengthReceiver);
-        memset(prefixCheck, 0, sizeof(unsigned char)*8);
-        strcpy(arraySender, "@11RD5420001054*");
-        arraySender[16] = 0x0d;
-        arraySender[17] = 0x0a;
-        charCount = 0;
-        count1 = 0;
-        flagPack = 0;
-          
-        for(forCount = 0; forCount < 18; ++forCount)
-        {
-            serialPutchar(fd, arraySender[forCount]);
-        }
-        usleep(100000);
-        //sleep(1);
-
-
-        printf("\n3\n");
-        while(serialDataAvail(fd))
-        {
-            char tempChar1;
-            tempChar1 = serialGetchar(fd);
-                //printf("%x ", tempChar1);
-            if(flagPack == 1 && tempChar1 == '*')
-            {   
-                int localCharCount = 0;
-                forCount = 0;
-                //printf("\nlength: %d\n", charCount);
-                for(localCharCount = 0; localCharCount <= charCount-3 ; localCharCount = localCharCount + 4)
-                {
-                    Count[forCount+5] = 
-                            TransferFormatLongFunction(arrayReceiver[localCharCount]) * 4096 + 
-                            TransferFormatLongFunction(arrayReceiver[localCharCount+1]) * 256 + 
-                            TransferFormatLongFunction(arrayReceiver[localCharCount+2]) * 16 + 
-                            TransferFormatLongFunction(arrayReceiver[localCharCount+3]);
-                    forCount++;
-                }
-                flagPack = 0;
-            }else if(flagPack == 1 && tempChar1 != '*')
-            {
-                arrayReceiver[charCount] = tempChar1;
-                ++charCount;
-                //printf("%c ", tempChar1);
-            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00",7) == 0)
-            {
-                flagPack = 1;
-                arrayReceiver[charCount] = tempChar1;
-                ++charCount;
-                //printf("check\n");
-            }else if(count1 != 0 && count1 < 7)
-            {
-                prefixCheck[count1] = tempChar1;
-                count1++;
-            }else if(tempChar1 == 0x40)
-            {
-                count1 = 1;
-                prefixCheck[0] = tempChar1;
-            }else
-            {
-                memset(prefixCheck, 0, sizeof(unsigned char)*8);
-                memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
-                count1 = 0;
-                charCount = 0;
-            }
-            fflush(stdout);
-        }
-        usleep(100000);
-        //sleep(1);
-        //printf("\n");
-        
+       
         //4
         memset(arraySender, 0, sizeof(char)*RS232LengthSender);
         memset(arrayReceiver, 0 , sizeof(unsigned char)*RS232LengthReceiver);
@@ -507,7 +519,7 @@ void * ZHSerialFunction(void *argument)
         {
             char tempChar1;
             tempChar1 = serialGetchar(fd);
-            //printf("%x ", tempChar1);
+            //printf("%c ", tempChar1);
             if(flagPack == 1 && tempChar1 == '*')
             {   
                 int localCharCount = 0;
@@ -529,12 +541,11 @@ void * ZHSerialFunction(void *argument)
                 arrayReceiver[charCount] = tempChar1;
                 ++charCount;
                 //printf("%c ", tempChar1);
-            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00",7) == 0)
+            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00", 7) == 0)
             {
                 flagPack = 1;
                 arrayReceiver[charCount] = tempChar1;
-                ++charCount;
-                //printf("check\n");
+                ++charCount; 
             }else if(count1 != 0 && count1 < 7)
             {
                 prefixCheck[count1] = tempChar1;
@@ -549,7 +560,6 @@ void * ZHSerialFunction(void *argument)
                 memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
                 count1 = 0;
                 charCount = 0;
-                //printf("clean\n");
             }
             fflush(stdout);
         }
@@ -582,7 +592,7 @@ void * ZHSerialFunction(void *argument)
         {
             char tempChar1;
             tempChar1 = serialGetchar(fd);
-            //printf("%x ", tempChar1);
+            //printf("%c ", tempChar1);
             if(flagPack == 1 && tempChar1 == '*')
             {   
                 int localCharCount = 0;
@@ -608,7 +618,6 @@ void * ZHSerialFunction(void *argument)
                 flagPack = 1;
                 arrayReceiver[charCount] = tempChar1;
                 ++charCount;
-                //printf("check\n");
             }else if(count1 != 0 && count1 < 7)
             {
                 prefixCheck[count1] = tempChar1;
@@ -623,7 +632,6 @@ void * ZHSerialFunction(void *argument)
                 memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
                 count1 = 0;
                 charCount = 0;
-                //printf("clean\n");
             }
             fflush(stdout);
         }
@@ -656,7 +664,7 @@ void * ZHSerialFunction(void *argument)
         {
             char tempChar1;
             tempChar1 = serialGetchar(fd);
-            //printf("%x ", tempChar1);
+            //printf("%c ", tempChar1);
             if(flagPack == 1 && tempChar1 == '*')
             {   
                 int localCharCount = 0;
@@ -681,12 +689,11 @@ void * ZHSerialFunction(void *argument)
                 arrayReceiver[charCount] = tempChar1;
                 ++charCount;
                 //printf("%c ", tempChar1);
-            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00",7) == 0)
+            }else if(count1 == 7 && strncmp(prefixCheck, "@11RD00", 7) == 0)
             {
                 flagPack = 1;
                 arrayReceiver[charCount] = tempChar1;
-                ++charCount;
-                //printf("check\n");
+                ++charCount; 
             }else if(count1 != 0 && count1 < 7)
             {
                 prefixCheck[count1] = tempChar1;
@@ -701,31 +708,23 @@ void * ZHSerialFunction(void *argument)
                 memset(arrayReceiver, 0, sizeof(unsigned char)*RS232LengthReceiver);
                 count1 = 0;
                 charCount = 0;
-                //printf("clean\n");
             }
             fflush(stdout);
         }
-        
+        while(serialDataAvail(fd))
+        {
+            char tempChar1;
+            tempChar1 = serialGetchar(fd);
+            printf("useless %c\n ", tempChar1);
+            fflush(stdout);
+        }
+ 
         //printf("\n");
         for(forCount = 0; forCount < 39; ++forCount)
         {
             printf("%ld ", Count[forCount]);
         }
         printf("\n");
-
-        //avoid wrong info send from machine
-        for(forCount = 0; forCount < EVENTSIZE; ++forCount)
-        {
-            if(abs(ExCount[forCount] - Count[forCount]) > 15 && errorCheckCount[forCount] < ERRORCHECKMAXRETRY)
-            {
-                Count[forCount] = ExCount[forCount];
-                errorCheckCount[forCount]++;
-            }
-            else
-            {
-                errorCheckCount[forCount] = 0;
-            }
-        }
 
         for(forCount = 0; forCount < EVENTSIZE; ++forCount)
         {
@@ -740,15 +739,27 @@ void * ZHSerialFunction(void *argument)
             }
             else;
         }
+        
+        //avoid wrong info send form machine
+        for(forCount = 0; forCount < EVENTSIZE; ++forCount)
+        {
+            if(abs(ExCount[forCount] - Count[forCount]) > 15 && errorCheckCount[forCount] < ERRORCHECKMAXRETRY)
+            {
+                Count[forCount] = ExCount[forCount];
+                errorCheckCount[forCount]++;
+            }
+            else
+            {
+                errorCheckCount[forCount] = 0;
+            }
+        }
 
         pthread_mutex_lock(&MutexFile);
         WriteFile(MachRUNNING);
         pthread_mutex_unlock(&MutexFile);
         
         memcpy(ExCount, Count, sizeof(long)*EVENTSIZE);
-        //TotalBadCount = ExCount[4];
-        TotalBadCount = ExCount[6] + ExCount[7] + ExCount[8] + ExCount[9] + ExCount[10] + ExCount[11] + ExCount[12] + ExCount[13] + ExCount[14] + ExCount[15];
-        
+        TotalBadCount = ExCount[4]; 
         printf("%s %s %s %s %s %s|Good Count: %ld|Total Bad: %ld\n",
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
 

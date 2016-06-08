@@ -428,10 +428,12 @@ void * WatchdogFunction(void *argument)
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
 
 
+            pthread_mutex_lock(&MutexScreen);
             if(ScreenIndex == 1)
             {
                 UpdateScreenFunction(1);  
             } 
+            pthread_mutex_unlock(&MutexScreen);
        
             //a timeout mechanism
             if(newDataIncome == 1)

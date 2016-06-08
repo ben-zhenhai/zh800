@@ -73,156 +73,6 @@ int SetI2cConfig()
     return 0;
 }
 
-
-/*int WriteFile(int mode)
-{
-    FILE *filePtr;
-    int forCount = 0;
-    struct timeval now;
-    static struct  timeval changeIntoRepairmodeTimeStemp;
-    struct ifreq ifr;
-    int fd;
-    
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, ZHNETWORKTYPE, IFNAMSIZ-1);
-    ioctl(fd, SIOCGIFADDR, &ifr);
-    close(fd);
-    
-    filePtr = fopen(UploadFilePath, "a");
-    switch(mode)
-    {
-        case MachRUNNING:
-            gettimeofday(&now, NULL);            
-            for(forCount = 0; forCount < EVENTSIZE; forCount++)
-            {
-                if(Count[forCount] != ExCount[forCount])
-                {
-                    if(forCount == GOODCOUNT)
-                    {
-                        if(abs(Count[forCount] - ExCount[forCount]) > ZHMAXOUTPUT)
-                        {
-                            fprintf(filePtr, "%s %s %s -1 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachRUNNING);
-                        }
-                        else
-                        {
-                            fprintf(filePtr, "%s %s %s %ld %ld 0 %s %d %s %s 0 0 0 %02d\n", 
-                                                                ISNo, ManagerCard, CountNo, 
-                                                                Count[forCount] - ExCount[forCount], (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachRUNNING);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(filePtr, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                Count[forCount] - ExCount[forCount],
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                forCount+2, MachineNo, UserNo, MachRUNNING);
-                    }
-                }else;
-            }
-        break;
-        case MachREPAIRING:
-            gettimeofday(&changeIntoRepairmodeTimeStemp, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n", 
-                                                                ISNo, ManagerCard, CountNo, 
-                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, RepairNo, MachREPAIRING);
-            
-        break;
-        case MachREPAIRING2:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                atoi(FixItemNo), MachineNo, RepairNo, 
-                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRING);
-        break;
-        case MachREPAIRDone:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s %ld 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, RepairNo, 
-                                                                (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
-        break;
-        case MachJobDone:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachJobDone);
-        break;
-        case MachLOCK:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachLOCK);          
-        break;
-        case MachUNLOCK:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachUNLOCK); 
-        break;
-        case MachSTOPForce1:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachSTOPForce1);        
-        break;
-        case MachSTOPForce2:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachSTOPForce2);        
-        break;
-        case MachSTART:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachSTART);
-        break;
-        case MachSTANDBY:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "0 0 0 0 %ld 0 %s %d %s 0 0 0 0 %02d\n", (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, MachSTANDBY);
-        break;
-        case MachRESUMEFROMPOWEROFF:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s 0 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, MachRESUMEFROMPOWEROFF);
-        break;
-        case MachPOWEROFF:
-            gettimeofday(&now, NULL);
-            fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
-                                                                ISNo, ManagerCard, CountNo, (long)now.tv_sec,
-                                                                inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
-                                                                GOODCOUNT+2, MachineNo, UserNo, MachPOWEROFF);
-        break;
-        default:
-        ;
-    }
-    //write data into file
-    fclose(filePtr);
-    return 0;
-}*/
-
-
 void * ZHI2cReaderFunction1(void *argument)
 {
     int fd, r;
@@ -416,16 +266,17 @@ void * WatchdogFunction(void *argument)
 {
     struct timeval now;
     struct timespec outtime;
-    struct ifreq ethreq;
+    //struct ifreq ethreq;
     
     int watchdogCoolDown = WATCHDOGVALUE;
-    int fd2;
+    //int fd2;
     
     while(WatchdogThreadFlag)
     {
         pthread_mutex_lock(&MutexWatchdog);
         gettimeofday(&now, NULL);
         outtime.tv_sec = now.tv_sec + WATCHDOGPERIOD;
+        //outtime.tv_sec = now.tv_sec + 1;
         outtime.tv_nsec = now.tv_usec * 1000;
 
         pthread_cond_timedwait(&CondWatchdog, &MutexWatchdog, &outtime);
@@ -443,40 +294,44 @@ void * WatchdogFunction(void *argument)
         {
             ZHResetFlag = 1;
         }
+        //[vers test ]
+        //Count[GOODCOUNT]++;
+        //[vers end]
+ 
         //FILE I/O
         pthread_mutex_lock(&MutexFile);
         WriteFile(MachRUNNING);
         pthread_mutex_unlock(&MutexFile);
-
         memcpy(ExCount, Count, sizeof(unsigned long)*EVENTSIZE);
         TotalBadCount = ExCount[7] + ExCount[17] + ExCount[18] + ExCount[16]; 
         printf("%s %s %s %s %s %s|Good Count: %ld|Total Bad: %ld\n",
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
 
+        pthread_mutex_lock(&MutexScreen);
         if(ScreenIndex == 1)
         {
            UpdateScreenFunction(1);  
         } 
+        pthread_mutex_unlock(&MutexScreen);
         //check network status
-        fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        memset(&ethreq, 0, sizeof(ethreq));
-        strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
-        ioctl(fd2,  SIOCGIFFLAGS, &ethreq);
+        //fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        //memset(&ethreq, 0, sizeof(ethreq));
+        //strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
+        //ioctl(fd2,  SIOCGIFFLAGS, &ethreq);
         
-        if(ethreq.ifr_flags & IFF_RUNNING)
-        {
+        //if(ethreq.ifr_flags & IFF_RUNNING)
+        //{
             //connect
             //digitalWrite (ZHPIN15, HIGH);
             //digitalWrite (ZHPIN16, HIGH);
             //digitalWrite (ZHPIN18, LOW);            
-        }else
-        {
+        //}else
+        //{
             //disconnect
             //digitalWrite (ZHPIN15, HIGH);
             //digitalWrite (ZHPIN16, LOW);
             //digitalWrite (ZHPIN18, LOW);
-        }
-        close(fd2);
-        
+        //}
+        //close(fd2);
     }
 }   

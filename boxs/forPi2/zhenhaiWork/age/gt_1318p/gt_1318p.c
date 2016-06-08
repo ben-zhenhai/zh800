@@ -239,7 +239,6 @@ void * ZHSerialFunction(void *argument)
 {
     int fd;
     char tempOutput[RS232Length];
-    int charCount = 0;
     int stringCount = 0;
     int getString = 0;
     int readyToStart = 0;
@@ -308,20 +307,18 @@ void * WatchdogFunction(void *argument)
 {
     struct timeval now;
     struct timespec outtime;
-    struct ifreq ethreq;
+    //struct ifreq ethreq;
     
-    int fd2;
+    //int fd2;
     int writeFileCount = 0;
     char tempFileOutput[RS232Length];
     char configParameter[18];
-    unsigned char countArray[9];
 
     float lcCheck, dxUpperBond;
     double cxLowerBond, cxUpperBond, cxCheck;
 
     int forCount = 0;
     short errorCheckCount[3];
-    char result[3]; //remeber last stage 
 
     lcCheck = dxUpperBond = 0;
     cxUpperBond = cxCheck = dxUpperBond = 0;
@@ -439,6 +436,7 @@ void * WatchdogFunction(void *argument)
             */
         }       
     }
+    printf("[%s] exit\n", __func__);
 }
 
 double CXResult(char CX1, char CX2, char CX3, char CX4, char CX5, char CX6)

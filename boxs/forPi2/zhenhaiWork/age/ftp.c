@@ -29,6 +29,7 @@ int GetRemoteDataFunction()
     
     struct MemoryStruct chunk;
     char resumeDataAddress[INPUTLENGTH] = "http://192.168.3.2/api/machineStatus/";
+    //char resumeDataAddress[INPUTLENGTH] = "http://192.168.0.141:8081/api/machineStatus/";
 
     strcat(resumeDataAddress, MachineNo);
     strcat(resumeDataAddress, ".txt");

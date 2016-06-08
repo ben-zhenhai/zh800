@@ -266,17 +266,15 @@ void * ZHI2cReaderFunction1(void *argument)
             
             for(forCount = 0; forCount < 8; ++forCount)
             {
-                if(forCount == 4 && (first & 1) == 1)
+                if((first & 1) == 1)
                 {
-                    //if((x & 32) == 0)
-                    if((x & 32) == 32)
+                    if(forCount == 4 || forCount == 5)
                     {
                         Count[5] = Count[5] + 1;
                     }
-                    //if((x & 8) == 8)
-                    if((x & 8) == 0)
+                    else
                     {
-                        Count[3] = Count[3] + 1;
+                        Count[forCount] = Count[forCount] + 1;
                     }
                 }
                 first = first >> 1;
@@ -421,7 +419,14 @@ void * WatchdogFunction(void *argument)
         pthread_mutex_lock(&MutexFile);
         WriteFile(MachRUNNING);
         pthread_mutex_unlock(&MutexFile);
-
+      
+        if(ExCount[5] > ExCount[3])
+        { 
+            TotalBadCount = ExCount[5] - ExCount[3]; 
+        }else
+        {
+            TotalBadCount = 0;
+        }
         memcpy(ExCount, Count, sizeof(unsigned long)*EVENTSIZE);
         printf("%s %s %s %s %s %s|Good Count: %ld|Total Bad: %ld\n",
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);

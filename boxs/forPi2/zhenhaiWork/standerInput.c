@@ -13,7 +13,7 @@ void * InputFunction(void *argument)
         printf("get input string: %s\n", tempBarcodeInput);
         stringLength = strlen(tempBarcodeInput);
 
-        //pthread_mutex_lock(&MutexInput);
+        pthread_mutex_lock(&MutexInput);
         switch(BarcodeIndex)
         {
             case ISNO:
@@ -22,14 +22,15 @@ void * InputFunction(void *argument)
                     memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
                     memcpy(ISNo, tempBarcodeInput, sizeof(char)*INPUTLENGTH);
                     InputDone = 1;
-                }
-                else
+                }else
                 {
                     printf("scan ISNo. error\n");
+                    pthread_mutex_lock(&MutexScreen);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
                     UpdateScreenFunction(99); 
+                    pthread_mutex_unlock(&MutexScreen);
                 }
                 break;
             case MANAGERCARD:
@@ -38,14 +39,15 @@ void * InputFunction(void *argument)
                         memset(ManagerCard, 0, sizeof(char)*INPUTLENGTH);
                         memcpy(ManagerCard, tempBarcodeInput, sizeof(char)*INPUTLENGTH);
                         InputDone = 1;
-                }
-                else
+                }else
                 {
                     printf("scan ManagerCard error\n");
+                    pthread_mutex_lock(&MutexScreen);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
                     UpdateScreenFunction(99); 
+                    pthread_mutex_unlock(&MutexScreen);
                 }
                 break;
             case USERNO:
@@ -55,24 +57,23 @@ void * InputFunction(void *argument)
                     memset(UserNo, 0, sizeof(char)*INPUTLENGTH);
                     memcpy(UserNo, tempPtr, sizeof(char)*(INPUTLENGTH-4));
                     InputDone = 1;
-                }
-                else if(strncmp(tempBarcodeInput, "XXXM", 4) == 0 && CanChangeRepairModeFlag == 1)
+                }else if(strncmp(tempBarcodeInput, "XXXM", 4) == 0 && CanChangeRepairModeFlag == 1)
                 {
                     char *tempPtr = tempBarcodeInput + 4;
                     memset(RepairNo, 0, sizeof(char)*INPUTLENGTH);
                     memcpy(RepairNo, tempPtr, sizeof(char)*(INPUTLENGTH-4));
                     CanChangeRepairModeFlag = 2;
                     InputDone = 1;
-                }
-                else
+                }else
                 {
                     printf("scan UserNo. error!\n");
+                    pthread_mutex_lock(&MutexScreen);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
                     UpdateScreenFunction(99); 
+                    pthread_mutex_unlock(&MutexScreen);
                 }
-
                 break;
             case COUNTNO:
                 while(arrayCount < stringLength)
@@ -104,14 +105,15 @@ void * InputFunction(void *argument)
                         printf("need finish: %ld\n", goodCount);
                         InputDone = 1;
                     }
-                }
-                else
+                }else
                 {
                     printf("scan Count error!\n");
+                    pthread_mutex_lock(&MutexScreen);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
                     UpdateScreenFunction(99); 
+                    pthread_mutex_unlock(&MutexScreen);
                 }
                 break;
             case FIXITEM:
@@ -132,23 +134,24 @@ void * InputFunction(void *argument)
                 }else if(strncmp(tempBarcodeInput, "XXXM", 4) == 0 && CanChangeRepairModeFlag != 3)
                 {
                     printf("need input Fix item first!\n");
-                }
-                else 
+                }else 
                 {
                     printf("scan Fix Item NO. error!\n");
                 }
                 break;
             default:
                 printf("nothing\n");
+                pthread_mutex_lock(&MutexScreen);
                 DisableUpDown = 1;
                 ScreenIndex = 0;
                 UpdateScreenFunction(0); 
                 UpdateScreenFunction(99); 
                 sleep(1);
                 UpdateScreenFunction(0); 
+                pthread_mutex_unlock(&MutexScreen);
                 
         }
-        //pthread_mutex_unlock(&MutexInput);
+        pthread_mutex_unlock(&MutexInput);
     }
     printf("we leave\n\n\n");
 }

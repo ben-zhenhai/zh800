@@ -37,8 +37,7 @@ void * InputFunction(void *argument)
                     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
                     sleep(0);
                     break;
-                }
-                else
+                }else
                 {
                     printf("[%s|%d]scan UserNo. error!\n", __func__, __LINE__);
                     DisableUpDown = 1;
@@ -69,7 +68,7 @@ void * InputFunction(void *argument)
             memset(ZHNode->GoodNo, 0, sizeof(char)*INPUTLENGTH);
             ZHNode->link = NULL;
  
-            printf("Ready to work!!\n");
+            printf("[%s]Ready to work!!\n", __func__);
             memset(tempBarcodeInput, 0, sizeof(char)*INPUTLENGTH);
             gets(tempBarcodeInput);
 
@@ -234,4 +233,3 @@ void * InputFunction(void *argument)
         }
     }
 }
-

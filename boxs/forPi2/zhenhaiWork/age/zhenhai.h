@@ -49,6 +49,11 @@
 #define I2CDEVICEADDR "/dev/i2c-1"
 #define Debug
 
+#define ZHCHECKSCREENBUSY
+//#define ZHREFRESHSCREEN
+
+#define MAXORDER 2
+
 #define I2CIOEXTEND1 0x20
 #define I2CIOEXTEND2 0x24
 #define I2CIOEXTEND3 0x26
@@ -74,6 +79,7 @@
 #define ZHPIN29 21
 #define ZHPIN31 22
 #define ZHPIN32 26
+#define ZHPIN33 23 
 #define ZHPIN36 27
 #define ZHPIN38 28
 #define ZHPIN40 29
@@ -126,12 +132,13 @@ InputNode *ZHNode;
 //char FixItemNo[INPUTLENGTH];
 //char RepairNo[INPUTLENGTH];
 char MachineNo[INPUTLENGTH]; 
+char NewOrdering;
 int OrderInBox;
 int InputDone;
 //globle value
 
-pthread_cond_t CondWatchdog, CondMain;
-pthread_mutex_t MutexInput, MutexFile, MutexWatchdog, MutexMain, MutexEEPROM, MutexLinklist, MutexScreen;
+pthread_cond_t CondWatchdog, CondMain, CondLcdRefresh ;
+pthread_mutex_t MutexInput, MutexFile, MutexWatchdog, MutexMain, MutexEEPROM, MutexLinklist, MutexScreen, MutexLcdRefresh;
 
 unsigned long GoodCount;
 unsigned long TotalBadCount;
@@ -139,12 +146,13 @@ unsigned long TotalBadCount;
 //globle flag
 unsigned char UploadFileThreadFlag;
 unsigned char WatchdogThreadFlag;
+unsigned char LcdRefreshFlag;
 unsigned char WatchdogResetFlag;
 unsigned char WatchdogCoolDownCount;
-unsigned char InputThreadFlag;
+unsigned char BarcodeIndex;
 unsigned char ZHResetFlag;
 unsigned char SerialFuntionFlag;
-unsigned char StopUpdateNetworkStatusFlag;
+//unsigned char StopUpdateNetworkStatusFlag;
 unsigned char LoopLeaveEventIndex;
 unsigned char ButtonEnableFlag;
 #endif

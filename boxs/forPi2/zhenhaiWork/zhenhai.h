@@ -19,6 +19,7 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 #include <wiringPiSPI.h>
+#include <wiringPiI2C.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -31,7 +32,8 @@
 //#define BarcodeFilePath "/home/pi/works/tsw100/new_barcode"
 //#define BarcodeFilePath "/home/pi/zhenhaiWork/newbarcode"
 #define BarcodeFilePath "/home/pi/works/machineNumber"
-
+#define ZHCHECKSCREENBUSY
+//#define ZHREFRESHSCREEN
 
 #define INPUTLENGTH 256
 #define USLEEPTIMEUNITVERYSHORT 1000
@@ -72,10 +74,11 @@
 #define ZHPIN29 21
 #define ZHPIN31 22
 #define ZHPIN32 26
+#define ZHPIN33 23 
 #define ZHPIN36 27
+#define ZHPIN37 25
 #define ZHPIN38 28
 #define ZHPIN40 29
-
 
 // 0: timeout leave
 // 1: normal leave
@@ -119,14 +122,15 @@ char FixItemNo[INPUTLENGTH];
 char RepairNo[INPUTLENGTH];
 char UploadFilePath[INPUTLENGTH];
 
-pthread_cond_t CondWatchdog, CondMain;
-pthread_mutex_t MutexInput, MutexFile, MutexWatchdog, MutexMain, MutexEEPROM;
+pthread_cond_t CondWatchdog, CondMain, CondLcdRefresh;
+pthread_mutex_t MutexInput, MutexFile, MutexWatchdog, MutexMain, MutexEEPROM, MutexScreen, MutexLcdRefresh;
 
 //globle flag
 unsigned char InputDone;
 unsigned char UploadFileThreadFlag;
 unsigned char WatchdogThreadFlag;
 unsigned char WatchdogResetFlag;
+unsigned char LcdRefreshFlag;
 unsigned char WatchdogCoolDownCount;
 unsigned char BarcodeIndex;
 unsigned char UploadFileFlag;

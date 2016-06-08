@@ -499,10 +499,12 @@ void * WatchdogFunction(void *argument)
             printf("%s %s %s %s %s %s|Good Count: %ld|Total Bad: %ld\n",
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
 
+            pthread_mutex_lock(&MutexScreen);
             if(ScreenIndex == 1)
             {
                UpdateScreenFunction(1);  
             } 
+            pthread_mutex_unlock(&MutexScreen);
        
             //a timeout mechanism
             if(newDataIncome == 1)
@@ -519,7 +521,7 @@ void * WatchdogFunction(void *argument)
                 ZHResetFlag = 1;
             }
             //check network status
-            fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+            /*fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
             memset(&ethreq, 0, sizeof(ethreq));
             strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
             ioctl(fd2,  SIOCGIFFLAGS, &ethreq);
@@ -538,6 +540,7 @@ void * WatchdogFunction(void *argument)
                 //digitalWrite (ZHPIN18, LOW);
             }
             close(fd2);
+            */
         }       
     }
 }

@@ -151,7 +151,6 @@ int UpdateScreenFunction(int screenIndex)
         SendCommandMessageFunction(menuScreen, 13);
         nanosleep((const struct timespec[]){{0, 450000000L}}, NULL);
 
-
         SendCommandMessageFunction(bar1, 34);
         SendCommandMessageFunction(popUpScreen, 18);
     }else if (screenIndex == 4)
@@ -572,6 +571,35 @@ int SendCommandMessageFunction (unsigned char *message, int arrayLength)
     unsigned char *copyMessageArray;
     int forCount = 0;
 
+#ifdef ZHCHECKSCREENBUSY
+    unsigned char x[2] = {0x00, 0x00};
+    int maxRetry = 100;
+
+    while(x[1] != 0x01)
+    {
+        x[0] = 0x01;
+        x[1] = 0x00;
+        wiringPiSPIDataRW(CSCHANNEL, x, 2);
+        printf("we wait %x\n", x[1]);
+        if(x[1] == 0x01) break;
+        nanosleep((const struct timespec[]){{0, 10000000L}}, NULL);
+        maxRetry --;
+        if(maxRetry <= 0)
+        {
+            digitalWrite (ZHPIN33, LOW);
+            //nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
+            sleep(2);    
+
+            digitalWrite (ZHPIN33, HIGH);
+            //nanosleep((const struct timespec[]){{0, 1500000000L}}, NULL);
+            sleep(2);    
+            maxRetry = 100;
+            printf("refresh\n");
+        }
+    }
+    printf("lcd idle\n");
+#endif
+
     copyMessageArray = (unsigned char *)malloc(sizeof(unsigned char)*arrayLength);
 
     memset(copyMessageArray, 0, sizeof(unsigned char)*arrayLength);
@@ -587,7 +615,7 @@ int SendCommandMessageFunction (unsigned char *message, int arrayLength)
 #endif
 
     wiringPiSPIDataRW(CSCHANNEL, copyMessageArray, arrayLength);
-    nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
+    ///nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
     //sleep(1);
     if(copyMessageArray != NULL)
     {

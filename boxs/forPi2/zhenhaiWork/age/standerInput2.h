@@ -7,7 +7,7 @@
 #include "lcd.h"
 enum
 {
-    ISNO = 0,
+    ISNO = 1,
     MANAGERCARD,
     USERNO,
     COUNTNO,
@@ -27,3 +27,4 @@ unsigned char InputMode;
 unsigned char BarcodeInputDone;
 
 void *InputFunction(void *argument);
+void *BarcodeInsertFunction(void *argument);

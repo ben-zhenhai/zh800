@@ -16,8 +16,8 @@ int SetI2cConfig()
         return 1;
     }
     i2c_smbus_write_byte_data(fd, OUTP0, 0x00);
-    i2c_smbus_write_byte_data(fd, INVP0, 0xc0);
-    i2c_smbus_write_byte_data(fd, CONFIGP0, 0xc0);
+    i2c_smbus_write_byte_data(fd, INVP0, 0x70);
+    i2c_smbus_write_byte_data(fd, CONFIGP0, 0x70);
 
     i2c_smbus_write_byte_data(fd, OUTP1, 0x00);
     i2c_smbus_write_byte_data(fd, INVP1, 0xff);
@@ -276,16 +276,25 @@ void * ZHI2cReaderFunction1(void *argument)
             
             for(forCount = 0; forCount < 8; ++forCount)
             {
-                if(forCount == 7 && ((first & 1) == 0))
+                if(forCount == 7)
                 {
                     if((x & 64) == 64)
                     {
-                        //input No
-                        Count[forCount] = Count[forCount] + 1;
+                        if((first & 1) == 0)
+                        {
+                            //input No
+                            Count[forCount] = Count[forCount] + 1;
+                        }
+                        if((y & 128) == 128)
+                        {
+                            Count[GOODCOUNT] = Count[GOODCOUNT] + 1;
+                        }
                     }
+                }else
+                {
+                    //Count[forCount] = Count[forCount] + (first & 1);
+                    Count[forCount+8] = Count[forCount+8] + (second & 1);
                 }
-                Count[forCount] = Count[forCount] + (first & 1);
-                Count[forCount+8] = Count[forCount+8] + (second & 1);
                 first = first >> 1;
                 second = second >> 1;
             }
@@ -315,6 +324,10 @@ void * WatchdogFunction(void *argument)
         pthread_cond_timedwait(&CondWatchdog, &MutexWatchdog, &outtime);
         pthread_mutex_unlock(&MutexWatchdog);
 
+        //[vers|for test]
+        //Count[GOODCOUNT]++;
+        //[vers|end]
+
         //FILE I/O
         pthread_mutex_lock(&MutexFile);
         WriteFile(MachRUNNING);
@@ -322,7 +335,7 @@ void * WatchdogFunction(void *argument)
         memcpy(ExCount, Count, sizeof(unsigned long)*EVENTSIZE);
 
         TotalBadCount = ExCount[8] + ExCount[9] + ExCount[10] + ExCount[11] + ExCount[12] + ExCount[13] + ExCount[14];
-
+        //TotalBadCount = TotalBadCount + ExCount[8] + ExCount[9] + ExCount[10] + ExCount[11] + ExCount[12] + ExCount[13] + ExCount[14] + 1;
         if(ZHList != NULL)
         {
             printf("%s %s %s %s %s %s|Good Count: %ld| Total Bad Count: %ld\n",

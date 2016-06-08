@@ -15,6 +15,7 @@
 #define GOODCOUNT 0
 #define ERRORCHECKMAXRETRY 4
 #define RS232LENGTH 41
+#define ZHMAXOUTPUT 10
 //#define ERRORTYPE 9
 
 enum

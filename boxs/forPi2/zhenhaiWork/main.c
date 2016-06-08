@@ -5,7 +5,7 @@
 
 #include "zhenhai.h"
 
-#define LOCALTEST
+//#define LOCALTEST
 
 #include "lock.h"
 #include "standerInput.h"
@@ -14,11 +14,11 @@
 
 #define GOODRATE 1.03
 
-//#include "tsw100/tsw100.h"
-//#define ZHTSW100
+#include "tsw100/tsw100.h"
+#define ZHTSW100
 
-#include "tsw303/tsw303.h"
-#define ZHTSW303
+//#include "tsw303/tsw303.h"
+//#define ZHTSW303
 
 //#include "m800/m800.h"
 //#define ZHM800
@@ -31,6 +31,9 @@
 
 //#include "ncr236/ncr236.h"
 //#define ZHNCR236
+
+//#include "ncr236_2/ncr236.h"
+//#define ZHNCR236_2
 
 //#include "m3100/m3100.h"
 //#define ZHM3100
@@ -136,8 +139,10 @@ int WriteFile(int mode)
                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
                                                                 GOODCOUNT+PINDEFINESHIFT, MachineNo, UserNo, MachRUNNING);
                         }
-                    }
-                    else
+#ifdef ZHM3050
+                        if(NewDataIncome == 0) NewDataIncome = 1;
+#endif
+                    }else
                     {
                         fprintf(filePtr, "%s %s %s 0 %ld %ld %s %d %s %s 0 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -268,7 +273,7 @@ int WriteFile(int mode)
                                                                 GOODCOUNT+PINDEFINESHIFT, MachineNo, MachRESUMEFROMPOWEROFF);
         break;
         case MachPOWEROFF:
-            fprintf(logPtr, "%s MachPOWEROFF %d", buf);
+            fprintf(logPtr, "%s MachPOWEROFF", buf);
             gettimeofday(&now, NULL);
             fprintf(filePtr, "%s %s %s 0 %ld 0 %s %d %s %s 0 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
@@ -283,29 +288,90 @@ int WriteFile(int mode)
     fclose(logPtr);
     return 0;
 }
+void * LcdRefreshFunction(void *argument)
+{
+    struct timeval now;
+    struct timespec outtime;
+
+    while(LcdRefreshFlag)
+    {
+        pthread_mutex_lock(&MutexLcdRefresh);
+        gettimeofday(&now, NULL);
+        outtime.tv_sec = now.tv_sec + 300;
+        outtime.tv_nsec = now.tv_usec * 1000;
+        pthread_cond_timedwait(&CondLcdRefresh, &MutexLcdRefresh, &outtime);
+        pthread_mutex_unlock(&MutexLcdRefresh);
+
+        digitalWrite (ZHPIN33, LOW);
+        //nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
+        sleep(2);    
+
+        digitalWrite (ZHPIN33, HIGH);
+        //nanosleep((const struct timespec[]){{0, 1500000000L}}, NULL);
+        sleep(2);    
+
+        pthread_mutex_lock(&MutexScreen);
+        UpdateScreenFunction(ScreenIndex);    
+        pthread_mutex_unlock(&MutexScreen);
+        printf("refresh2\n");
+    }
+    printf("[%s] exit\n",__func__);
+}
 
 void * PowerOffEventListenFunction(void *argument)
 {
     printf("%s start\n", __func__);
     while(1)
     {
-        if(digitalRead(ZHPIN29) == 1)
+        if((digitalRead(ZHPIN29) == 1)) //&& (LoopLeaveEventIndex != ZHPowerOffEvent))
         {
             ZHResetFlag = 1;
             LoopLeaveEventIndex = ZHPowerOffEvent;
             pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-            printf("even trigger (PIN_29)1\n");
+            printf("even trigger (PIN_29)\n");
             pthread_mutex_lock(&MutexMain);
             UploadFileFlag = 0;
             pthread_cond_signal(&CondMain);
             pthread_mutex_unlock(&MutexMain);
-            printf("even trigger (PIN_29)2\n");
+            //printf("even trigger (PIN_29)2\n");
             pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
            // sleep(1);
-        }
+        }else nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
         nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
     }
     printf("[%s|%d]exit\n",__func__, __LINE__);
+}
+
+void * CancelOrderFunction(void *argument)
+{
+    while(1)
+    {
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+        if(strlen(ISNo) > 0 && BarcodeIndex != SCANDONE)
+        {
+            if(digitalRead(ZHPIN40) == 0)
+            {
+                printf("event trigger (PIN_40) clear data now\n");
+                pthread_mutex_lock(&MutexInput);
+                BarcodeIndex = 0;
+                
+                memset(ISNo, 0, sizeof(char)*INPUTLENGTH);
+                memset(ManagerCard, 0, sizeof(char)*INPUTLENGTH);
+                memset(CountNo, 0, sizeof(char)*INPUTLENGTH);
+                memset(UserNo, 0, sizeof(char)*INPUTLENGTH);
+
+                pthread_mutex_lock(&MutexScreen);
+                DisableUpDown = 1;
+                ScreenIndex = 0;
+                UpdateScreenFunction(0);    
+                pthread_mutex_unlock(&MutexScreen);
+                pthread_mutex_unlock(&MutexInput);
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+            }
+        }
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+    }
 }
 
 void * EventListenFunction(void *argument)
@@ -316,145 +382,174 @@ void * EventListenFunction(void *argument)
         InputDone = 0;
         if(BarcodeIndex == 0 || BarcodeIndex == SCANDONE)
         {
+            pthread_mutex_lock(&MutexInput);
             BarcodeIndex = ISNO;
+            pthread_mutex_unlock(&MutexInput);
             while(InputDone == 0)
             {
                 LockMachineFunction();
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
+                if(BarcodeIndex != ISNO) break;
             }
+            pthread_mutex_lock(&MutexScreen);
             DisableUpDown = 1;
             ScreenIndex = 0;
             UpdateScreenFunction(0);    
+            pthread_mutex_unlock(&MutexScreen);
         }
         //2
         InputDone = 0;
         if(BarcodeIndex == ISNO)
         {
+            pthread_mutex_lock(&MutexInput);
             BarcodeIndex = MANAGERCARD;
+            pthread_mutex_unlock(&MutexInput);
             while(InputDone == 0)
             {
                 LockMachineFunction();
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
+                if(BarcodeIndex != MANAGERCARD) break;
             }
+            pthread_mutex_lock(&MutexScreen);
             DisableUpDown = 1;
             ScreenIndex = 0;
             UpdateScreenFunction(0);    
+            pthread_mutex_unlock(&MutexScreen);
         }
         //3
         InputDone = 0;
         if(BarcodeIndex == MANAGERCARD)
         {
+            pthread_mutex_lock(&MutexInput);
             BarcodeIndex = COUNTNO;
+            pthread_mutex_unlock(&MutexInput);
             while(InputDone == 0)
             {
                 LockMachineFunction();
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
+                if(BarcodeIndex != COUNTNO) break;
             }
+            pthread_mutex_lock(&MutexScreen);
             DisableUpDown = 1;
             ScreenIndex = 0;
             UpdateScreenFunction(0);    
+            pthread_mutex_unlock(&MutexScreen);
         }
         //4
         InputDone = 0;
         if(BarcodeIndex == COUNTNO)
         {
+            pthread_mutex_lock(&MutexInput);
             BarcodeIndex = USERNO;
+            pthread_mutex_unlock(&MutexInput);
             while(InputDone == 0)
             {
                 LockMachineFunction();
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
+                if(BarcodeIndex != USERNO) break;
             }
+            pthread_mutex_lock(&MutexScreen);
             DisableUpDown = 1;
             ScreenIndex = 0;
             UpdateScreenFunction(0);    
-        }
-        BarcodeIndex = SCANDONE;
-        CanChangeRepairModeFlag = 1;
-        
-        while(!UploadFileFlag)
-        {
-            nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
-            //printf("we wait\n");
-        }
-
-        while(1)
-        {
-            ZHResetFlag = 0;
-            LoopLeaveEventIndex = ZHTimeoutExitEvent;
-            pthread_mutex_lock(&MutexEEPROM);
-            //because write eeprom need more time, a check for go through too fast
-            pthread_mutex_unlock(&MutexEEPROM);
- 
-            while(!ZHResetFlag)
-            {
-                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                GoodCount = ExCount[GOODCOUNT];
-#ifdef M3100
-                if(ExCount[GOODCOUNT]-ExCount[GOODCOUNT-1] >= atol(CountNo))
-                {
-                    //finish job                 
-                    printf("Good Count Number arrival!\n");
-                    ZHResetFlag = 1; 
-                    LoopLeaveEventIndex = ZHNormalExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }
-#else
-                if(ExCount[GOODCOUNT] >= atol(CountNo))
-                {
-                    //finish job                 
-                    printf("Good Count Number arrival!\n");
-                    ZHResetFlag = 1; 
-                    LoopLeaveEventIndex = ZHNormalExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }
-#endif
-                else if(digitalRead(ZHPIN40) == 0)
-                {
-                    printf("event trigger (PIN_40)!\n");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHChangeUserExitEvent;                    
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }else if(digitalRead(ZHPIN7) == 1)
-                {
-                    //finish job
-                    printf("event trigger (PIN_7)\n");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHForceExitEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-                }/*else if(digitalRead(ZHPIN29) == 1)
-                {
-#ifndef LOCALTEST
-                    printf("even trigger (PIN_29)");
-                    ZHResetFlag = 1;
-                    LoopLeaveEventIndex = ZHPowerOffEvent;
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
-#endif
-                }*/
-                else;
-            }       
-
-            pthread_mutex_lock(&MutexMain);
-            UploadFileFlag = 0;
-            pthread_cond_signal(&CondMain);
-            pthread_mutex_unlock(&MutexMain);
+            pthread_mutex_unlock(&MutexScreen);
             
-            if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
+            if(BarcodeIndex == USERNO)
+            { 
+                pthread_mutex_lock(&MutexInput);
+                BarcodeIndex = SCANDONE;
+                pthread_mutex_unlock(&MutexInput);
+                CanChangeRepairModeFlag = 1;
+            }
+        }
+        
+        if(BarcodeIndex == SCANDONE)
+        {
+            while(!UploadFileFlag) //UploadFileFlag == 0
             {
-                //normal leave
-                printf("not timeout leave\n");
-                break;
-            }else
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                //printf("we wait\n");
+            }
+
+            while(1)
             {
-                //timeout leave
-                printf("timeout leave\n");
-                WaitMainFunctionScanBarcodeDone = 1;
-                while(WaitMainFunctionScanBarcodeDone)
+                ZHResetFlag = 0;
+                LoopLeaveEventIndex = ZHTimeoutExitEvent;
+                pthread_mutex_lock(&MutexEEPROM);
+                //because write eeprom need more time, a check for go through too fast
+                pthread_mutex_unlock(&MutexEEPROM);
+ 
+                while(!ZHResetFlag)
                 {
-                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                    nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    GoodCount = ExCount[GOODCOUNT];
+#ifdef M3100
+                    if(ExCount[GOODCOUNT]-ExCount[GOODCOUNT-1] >= atol(CountNo))
+                    {
+                        //finish job                 
+                        printf("Good Count Number arrival!\n");
+                        ZHResetFlag = 1; 
+                        LoopLeaveEventIndex = ZHNormalExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }
+#else
+                    if(ExCount[GOODCOUNT] >= atol(CountNo))
+                    {
+                        //finish job                 
+                        printf("Good Count Number arrival!\n");
+                        ZHResetFlag = 1; 
+                        LoopLeaveEventIndex = ZHNormalExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }
+#endif
+                    else if(digitalRead(ZHPIN40) == 0)
+                    {
+                        printf("event trigger (PIN_40)!\n");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHChangeUserExitEvent;                    
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }else if(digitalRead(ZHPIN7) == 1)
+                    {
+                        //finish job
+                        printf("event trigger (PIN_7)\n");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHForceExitEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    }/*else if(digitalRead(ZHPIN29) == 1)
+                    {
+#ifndef LOCALTEST
+                        printf("even trigger (PIN_29)");
+                        ZHResetFlag = 1;
+                        LoopLeaveEventIndex = ZHPowerOffEvent;
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+#endif
+                    }*/
+                    else;
+                }       
+
+                pthread_mutex_lock(&MutexMain);
+                UploadFileFlag = 0;
+                pthread_cond_signal(&CondMain);
+                pthread_mutex_unlock(&MutexMain);
+            
+                if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
+                {
+                    //normal leave
+                    printf("not timeout leave\n");
+                    break;
+                }else
+                {
+                    //timeout leave
+                    printf("timeout leave\n");
+                    WaitMainFunctionScanBarcodeDone = 1;
+                    while(WaitMainFunctionScanBarcodeDone)
+                    {
+                        nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
+                    }
                 }
             }
         }
@@ -463,55 +558,23 @@ void * EventListenFunction(void *argument)
 
 int main()
 {
-    pthread_t inputThread, eventListenThread, watchDogThread, changeScreenThread, poweroffThread;
+    pthread_t inputThread, eventListenThread, watchDogThread, changeScreenThread, poweroffThread, cancelOrderThread, lcdRefreshThread;
 
 #if defined(ZHTSW100) || defined(ZHM2200A)
     pthread_t interruptThread1, interruptThread2, interruptThread3;
 #endif
 
-//#ifdef ZHM2200A
-//    pthread_t interruptThread1, interruptThread2, interruptThread3;
-//#endif
-
 #if defined (ZHM800) || defined (ZHM3100) || defined (ZHM2200)
     pthread_t interruptThread1, interruptThread2;
 #endif
 
-//#ifdef ZHM3100
-//    pthread_t interruptThread1, interruptThread2;
-//#endif
-
-#if defined (ZHTAICON) || defined (ZHNCR236)
+#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHNCR236_2)
     pthread_t interruptThread1;
 #endif
-
-//#ifdef ZHNCR236
-//    pthread_t interruptThread1;
-//#endif
 
 #if defined (ZHTSW303) || defined (ZHM3050) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
     pthread_t serialThread;
 #endif
-
-//#ifdef ZHM3050
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHM2200
-//    pthread_t interruptThread1;
-//#endif
-
-//#ifdef ZHM2600
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHM168T
-//    pthread_t serialThread;
-//#endif
-
-//#ifdef ZHSPH3000
-//    pthread_t serialThread;
-//#endif
 
     int rc = 0;
     int filesize = 0;
@@ -527,22 +590,12 @@ int main()
     pthread_mutex_init(&MutexInput, NULL);
     pthread_mutex_init(&MutexFile, NULL);
     pthread_mutex_init(&MutexWatchdog, NULL);
+    pthread_mutex_init(&MutexLcdRefresh, NULL);
+    pthread_mutex_init(&MutexScreen, NULL);
 
 #if defined (ZHTSW303) || defined (ZHM2600) || defined (ZHM168T) || defined (ZHSPH3000)
     pthread_mutex_init(&MutexSerial, NULL);
 #endif
-
-//#ifdef ZHM2600
-//    pthread_mutex_init(&MutexSerial, NULL);
-//#endif
-
-//#ifdef ZHM168T
-//pthread_mutex_init(&MutexSerial, NULL);
-//#endif
-
-//#ifdef ZHSPH3000
-//pthread_mutex_init(&MutexSerial, NULL);
-//#endif
 
 #ifdef ZHM3050
     pthread_mutex_init(&MutexSerial, NULL);
@@ -550,6 +603,7 @@ int main()
 #endif
 
     pthread_cond_init(&CondMain, NULL);
+    pthread_cond_init(&CondLcdRefresh, NULL);
     pthread_cond_init(&CondWatchdog, NULL);
        
     memset(Count, 0, sizeof(unsigned long)*EVENTSIZE);
@@ -567,27 +621,9 @@ int main()
     memset(CutRoll, 0, sizeof(short)*4);
 #endif
 
-//#ifdef ZHM800
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//    memset(CutRoll, 0, sizeof(short)*2);
-//#endif
-
-//#ifdef ZHM3100
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//    memset(CutRoll, 0, sizeof(short)*2);
-//#endif
-
-#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200)
+#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200) || defined(ZHNCR236_2)
     memset(I2CEXValue, 0, sizeof(int)*6);
 #endif
-
-//#ifdef ZHNCR236
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//#endif
-
-//#ifdef ZHM2200
-//    memset(I2CEXValue, 0, sizeof(int)*6);
-//#endif
 
 #ifdef ZHM2600
     memset(MessageArray, 0, sizeof(int)*6);
@@ -620,11 +656,14 @@ int main()
     pinMode(ZHPIN36, INPUT);
     pinMode(ZHPIN38, INPUT);
     pinMode(ZHPIN40, INPUT);
+    pinMode(ZHPIN37, INPUT);
 
     pullUpDnControl(ZHPIN22, PUD_UP);
     pullUpDnControl(ZHPIN29, PUD_UP);
     pullUpDnControl(ZHPIN32, PUD_UP);
+    //pullUpDnControl(ZHPIN33, PUD_UP);
     pullUpDnControl(ZHPIN36, PUD_UP);
+    pullUpDnControl(ZHPIN37, PUD_UP);
     pullUpDnControl(ZHPIN38, PUD_UP);
     pullUpDnControl(ZHPIN40, PUD_UP);
     pullUpDnControl(ZHPIN7, PUD_DOWN);
@@ -634,6 +673,8 @@ int main()
     pinMode(ZHPIN18, OUTPUT);
     //pinMode(ZHPIN24, OUTPUT);
     pinMode(ZHPIN31, OUTPUT);
+    pinMode(ZHPIN33, OUTPUT);
+    digitalWrite (ZHPIN33, HIGH);
 
     filePtr = fopen(BarcodeFilePath , "r");
     if(filePtr != NULL)
@@ -716,33 +757,53 @@ int main()
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(GoodNo);
         GoodCount = ExCount[GOODCOUNT];
         BarcodeIndex = COUNTNO;
+        pthread_mutex_lock(&MutexScreen);
         DisableUpDown = 1;
         ScreenIndex = 0;
         UpdateScreenFunction(0);
+        pthread_mutex_unlock(&MutexScreen);
         printf("get data from remote\n");  
     }
-//#ifdef LOCALTEST
-    //else if(0)
-//#else
+#ifdef LOCALTEST
+    else if(0)
+#else
     else if(!ReadEEPROMData())
-//#endif
+#endif
     {
         //read data from eeprom
         Count[GOODCOUNT] = ExCount[GOODCOUNT] = atol(GoodNo);
         GoodCount = ExCount[GOODCOUNT];
         BarcodeIndex = COUNTNO;
+        pthread_mutex_lock(&MutexScreen);
         DisableUpDown = 1;
         ScreenIndex = 0;
         UpdateScreenFunction(0);
+        pthread_mutex_unlock(&MutexScreen);
         printf("get data from local\n");  
     }else
     {
         printf("load data fail\n");
         ZHEarseEEPROMData();
+        pthread_mutex_lock(&MutexScreen);
         ScreenIndex = 3;
         UpdateScreenFunction(3);
+        pthread_mutex_unlock(&MutexScreen);
     }
-   
+
+#ifdef ZHREFRESHSCREEN
+    printf("[%s] Refresh screen function enable\n", __func__);
+#endif
+
+#ifdef ZHCHECKSCREENBUSY
+    printf("[%s] Check Screen Busy function enable\n", __func__);
+#endif
+
+#ifdef ZHREFRESHSCREEN
+    LcdRefreshFlag = 1;
+    rc = pthread_create(&lcdRefreshThread, NULL, LcdRefreshFunction, NULL);   
+    assert(rc == 0);
+#endif
+
     rc = pthread_create(&inputThread, NULL, InputFunction, NULL);
     assert(rc == 0);
 
@@ -751,18 +812,33 @@ int main()
     
     rc = pthread_create(&changeScreenThread, NULL, ChangeScreenEventListenFunction, NULL);
     assert(rc == 0);
-
+#ifndef LOCALTEST
     rc = pthread_create(&poweroffThread, NULL, PowerOffEventListenFunction, NULL);
     assert(rc == 0);
- 
+#endif 
     while(1)
     {
         unsigned char cancelThreadDone = 0;
+        if(isFirstinLoop == 1)
+        {
+            rc = pthread_create(&cancelOrderThread, NULL, CancelOrderFunction, NULL);
+            assert(rc == 0);
+        }
         
         while(BarcodeIndex != SCANDONE && LoopLeaveEventIndex != ZHPowerOffEvent)
         {
             nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITLONG}}, NULL);
         }
+        if(isFirstinLoop == 1)
+        {
+            pthread_cancel(cancelOrderThread);
+            pthread_join(cancelOrderThread, NULL);
+        }
+
+        pthread_mutex_lock(&MutexMain);
+        UploadFileFlag = 1;
+        pthread_mutex_unlock(&MutexMain);
+
         if(isFirstinLoop && strlen(ISNo) > 0 && strlen(ManagerCard) > 0 && strlen(UserNo) > 0 && strlen(CountNo) > 0)
         {
             //first time, we need to write MachSTAR to FILE
@@ -800,8 +876,7 @@ int main()
         assert(rc == 0); 
 #endif
 
-
-#if defined (ZHTAICON) || defined (ZHNCR236)
+#if defined (ZHTAICON) || defined (ZHNCR236) || defined(ZHNCR236_2)
         rc = pthread_create(&interruptThread1, NULL, ZHI2cReaderFunction1, NULL);
         assert(rc == 0);
 #endif
@@ -821,13 +896,15 @@ int main()
         rc = pthread_create(&watchDogThread, NULL, WatchdogFunction, NULL);
         assert(rc == 0);
 #endif
-        pthread_mutex_lock(&MutexMain);
-        UploadFileFlag = 1;
-        pthread_mutex_unlock(&MutexMain);
         while(1)
         {
             char uploadFilePath[INPUTLENGTH];           
             if(!UploadFileFlag); //UploadFileFlag == 0;
+            else if(LoopLeaveEventIndex == ZHPowerOffEvent)
+            {
+                printf("[%s]power off, so we don't sleep\n", __func__);
+                gettimeofday(&now, NULL);
+            }
             else
             {
                 pthread_mutex_lock(&MutexMain);
@@ -840,14 +917,14 @@ int main()
                 gettimeofday(&now, NULL);
                 printf("[%s|%d] %ld wake up\n", __func__, __LINE__,(long)now.tv_sec);
             }
-            if(!UploadFileFlag) //UploadFileFlag == 0;
+            if(!UploadFileFlag || LoopLeaveEventIndex == ZHPowerOffEvent) //UploadFileFlag == 0;
             {
                 LockMachineFunction();
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 UnlockMachineFunction();
 
-#if defined (ZHTSW100) || defined (ZHM2200A)
                 printf("ready to cancel thread\n");
+#if defined (ZHTSW100) || defined (ZHM2200A)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(interruptThread1);
                 pthread_join(interruptThread1, NULL);
@@ -860,7 +937,7 @@ int main()
                 pthread_cancel(interruptThread3);
                 pthread_join(interruptThread3, NULL);
 #endif
-#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200)
+#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200) || defined (ZHNCR236_2)
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(interruptThread1);
                 pthread_join(interruptThread1, NULL);
@@ -982,9 +1059,11 @@ int main()
                     strcpy(tempUserNo, UserNo); 
                     memset(UserNo, 0, sizeof(char)*INPUTLENGTH);
                     nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
+                    pthread_mutex_lock(&MutexScreen);
                     DisableUpDown = 1;
                     ScreenIndex = 0;
                     UpdateScreenFunction(0); 
+                    pthread_mutex_unlock(&MutexScreen);
 
                     InputDone = 0;
                     BarcodeIndex = USERNO;
@@ -1005,9 +1084,11 @@ int main()
                         //DisableUpDown = 1;
                         //ScreenIndex = 7;
                         //UpdateScreenFunction(7);    
+                        pthread_mutex_lock(&MutexScreen);
                         DisableUpDown = 1;
                         ScreenIndex = 0;
                         UpdateScreenFunction(0);    
+                        pthread_mutex_unlock(&MutexScreen);
 
                         //need upload right now 
                         memset(uploadFilePath, 0 ,sizeof(char)*INPUTLENGTH);           
@@ -1061,16 +1142,19 @@ int main()
                                 pthread_mutex_lock(&MutexFile);
                                 WriteFile(MachREPAIRDone);
                                 pthread_mutex_unlock(&MutexFile);
-                                BarcodeIndex = SCANDONE;                                
+                                BarcodeIndex = SCANDONE;
+                                CanChangeRepairModeFlag = 1; 
                                 break;
                             }else
                             {
                                 pthread_mutex_lock(&MutexFile);
                                 WriteFile(MachREPAIRING2);
                                 pthread_mutex_unlock(&MutexFile);
+                                pthread_mutex_lock(&MutexScreen);
                                 DisableUpDown = 1;
                                 ScreenIndex = 0;
                                 UpdateScreenFunction(0);    
+                                pthread_mutex_unlock(&MutexScreen);
                             }
                         }
                         strcpy(UserNo, tempUserNo); 
@@ -1087,14 +1171,20 @@ int main()
                         WriteFile(MachUNLOCK);
                         pthread_mutex_unlock(&MutexFile);
                         WaitMainFunctionScanBarcodeDone = 0;
+                        pthread_mutex_lock(&MutexScreen);
                         DisableUpDown = 1;
                         ScreenIndex = 0;
                         UpdateScreenFunction(0);
+                        pthread_mutex_unlock(&MutexScreen);
                     }
                 }else;
             }
+            if(LoopLeaveEventIndex == ZHPowerOffEvent)
+            {
+                WriteFile(MachPOWEROFF);
+            }
+
             //upload
-            
             memset(uploadFilePath, 0 ,sizeof(char)*INPUTLENGTH);           
             pthread_mutex_lock(&MutexFile);
             strcpy(uploadFilePath, UploadFilePath);
@@ -1135,9 +1225,20 @@ int main()
             }
             if(LoopLeaveEventIndex == ZHPowerOffEvent)
             {
+#ifndef LOCALTEST
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(poweroffThread);
                 pthread_join(poweroffThread, NULL);
+#endif
+
+#ifdef REFRESHSCREEN
+                nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
+                pthread_mutex_lock(&MutexLcdRefresh);
+                LcdRefreshFlag = 0;
+                pthread_cond_signal(&CondLcdRefresh);
+                pthread_mutex_unlock(&MutexLcdRefresh);
+                pthread_join(lcdRefreshThread, NULL);
+#endif
 
                 nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
                 pthread_cancel(inputThread);
@@ -1164,8 +1265,10 @@ int main()
                 sleep(10);
                 digitalWrite (ZHPIN31, LOW);
                 //user config for black screen;
+                pthread_mutex_lock(&MutexScreen);
                 ScreenIndex = 2;
                 UpdateScreenFunction(2);
+                pthread_mutex_unlock(&MutexScreen);
 
                 return 0;
             }else if(LoopLeaveEventIndex == ZHNormalExitEvent || LoopLeaveEventIndex == ZHForceExitEvent)
@@ -1197,7 +1300,7 @@ int main()
                 memset(CutRoll, 0, sizeof(short)*4);
 #endif
 
-#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200) 
+#if defined (ZHTAICON) || defined (ZHNCR236) || defined (ZHM2200) || defined (ZHNCR236_2) 
                 memset(I2CEXValue, 0, sizeof(int)*6);
 #endif
 
@@ -1216,6 +1319,7 @@ int main()
 #endif
                 isFirstinLoop = 1;                
                 digitalWrite (ZHPIN31, LOW);
+                pthread_mutex_lock(&MutexScreen);
                 if(ScreenIndex == 0)
                 {
                     UpdateScreenFunction(0);
@@ -1223,6 +1327,7 @@ int main()
                 {
                     UpdateScreenFunction(1);
                 }else;
+                pthread_mutex_unlock(&MutexScreen);
             }
             else;
             if(cancelThreadDone == 1)

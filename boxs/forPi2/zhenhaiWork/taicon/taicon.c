@@ -225,11 +225,21 @@ int WriteFile(int mode)
 
 void * ZHI2cReaderFunction1(void *argument)
 {
-    int fd, r;
-     
+    //int fd, r;
+    int lastStage = 0; 
     while(1)
     {
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+        if(digitalRead(ZHPIN37) == 1 && lastStage == 0)
+        {
+            Count[GOODCOUNT]++;
+            lastStage = 1;
+            WatchdogResetFlag = 1;
+        }else if(digitalRead(ZHPIN37) == 0 && lastStage == 1)
+        {
+            lastStage = 0;
+        }else;
+        /*
         fd = open(I2CDEVICEADDR, O_RDWR);
         int x, y;
         int forCount, first, second;
@@ -274,8 +284,11 @@ void * ZHI2cReaderFunction1(void *argument)
             }
             WatchdogResetFlag = 1;
         }
+        */
+        
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-        usleep(USLEEPTIMEUNITVERYSHORT);
+        //usleep(USLEEPTIMEUNITVERYSHORT);
+        usleep(100);
     }
 }
 /*void * ZHI2cReaderFunction2(void *argument)
@@ -379,10 +392,10 @@ void * WatchdogFunction(void *argument)
 {
     struct timeval now;
     struct timespec outtime;
-    struct ifreq ethreq;
+    //struct ifreq ethreq;
     
     int watchdogCoolDown = WATCHDOGVALUE;
-    int fd2;
+    //int fd2;
     
     while(WatchdogThreadFlag)
     {
@@ -415,31 +428,33 @@ void * WatchdogFunction(void *argument)
         printf("%s %s %s %s %s %s|Good Count: %ld|Total Bad: %ld\n",
                      MachineNo, ISNo, ManagerCard, UserNo, CountNo, UploadFilePath, ExCount[GOODCOUNT], TotalBadCount);
 
+        pthread_mutex_lock(&MutexScreen);
         if(ScreenIndex == 1)
         {
            UpdateScreenFunction(1);  
         } 
+        pthread_mutex_unlock(&MutexScreen);
 
         //check network status
-        fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        memset(&ethreq, 0, sizeof(ethreq));
-        strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
-        ioctl(fd2,  SIOCGIFFLAGS, &ethreq);
+        //fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        //memset(&ethreq, 0, sizeof(ethreq));
+        //strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
+        //ioctl(fd2,  SIOCGIFFLAGS, &ethreq);
         
-        if(ethreq.ifr_flags & IFF_RUNNING)
-        {
+        //if(ethreq.ifr_flags & IFF_RUNNING)
+        //{
             //connect
             //digitalWrite (ZHPIN15, HIGH);
             //digitalWrite (ZHPIN16, HIGH);
             //digitalWrite (ZHPIN18, LOW);            
-        }else
-        {
+        //}else
+        //{
             //disconnect
             //digitalWrite (ZHPIN15, HIGH);
             //digitalWrite (ZHPIN16, LOW);
             //digitalWrite (ZHPIN18, LOW);
-        }
-        close(fd2);
+        //}
+        //close(fd2);
         
     }
 }   

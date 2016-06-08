@@ -6,7 +6,8 @@
 #include "zhenhai.h"
 
 #define CSCHANNEL 0
-#define SPICLOCK 600000
+//#define SPICLOCK 1000
+#define SPICLOCK 100000
 
 int ScreenIndex;
 //only in Menu can use button up and down
