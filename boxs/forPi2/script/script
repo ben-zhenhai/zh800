@@ -1,0 +1,178 @@
+#!/bin/bash
+interfaceFile="/etc/network/interfaces"
+bashrcFile="/home/pi/.bashrc"
+configFile="/home/pi/new_patch/config"
+machineIDFile="/home/pi/works/machineNumber"
+read -p "Please input address " address
+read -p "Please input network " network
+read -p "Please machine type " machineType
+read -p "Please machine Number" machineID
+echo -e "address ${address}\nnetwork ${network}\nmachine type ${machineType}\nmachine ID ${machineID}\nis correct?"
+read -p "(y/n)" correct
+if [ ${correct} == "Y" -o ${correct} == "y" ]; then
+sed -i "s/address."*"/address "${address}"/g" ${interfaceFile}
+sed -i "s/network."*"/network "${network}"/g" ${interfaceFile}
+sed -i "s/MachineType:."*"/MachineType:"${machineType}"\//g" ${configFile}
+sed -i "1c "${machineId}"" ${machineIDFile}
+sed -i "s/#sudo .\/autopatch.a/sudo .\/autopatch.a/g" ${bashrcFile}
+case ${machineType} in
+    "tsw100")
+    echo -e "change machine type to tsw100"
+    sed -i "s/#sudo ..\/works\/tsw100\/tsw100.a/sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "tsw303")
+    echo -e "change machine type to tsw303"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/tsw303\/tsw303.a/sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "m168t")
+    echo -e "charge machine type to m168t"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/m168t\/m168t.a/sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "m2600")
+    echo -e "change machine type to m2600"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/m2600\/m2600.a/sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "m3050")
+    echo -e "change machine type to m3050"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/m3050\/m3050.a/sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "ncr236")
+    echo -e "change machine type to ncr236"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/ncr236\/ncr236.a/sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "taicon")
+    echo -e "change machine type to taicon"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/taicon\/taicon.a/sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "sph3000")
+    echo -e "change machine type to sph3000"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/sph3000\/sph3000.a/sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "ats_1")
+    echo -e "change machine type to ats_1"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/ats_1\/ats_1.a/sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "gt_1318p")
+    echo -e "change machine type to gt_1318p"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/gt_1318p\/gt_1318p.a/sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/yc\/yc.a/#sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    "yc")
+    echo -e "change machine type to yc"
+    sed -i "s/."*"sudo ..\/works\/tsw100\/tsw100.a/#sudo ..\/works\/tsw100\/tsw100.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/tsw303\/tsw303.a/#sudo ..\/works\/tsw303\/tsw303.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m168t\/m168t.a/#sudo ..\/works\/m168t\/m168t.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m2600\/m2600.a/#sudo ..\/works\/m2600\/m2600.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/m3050\/m3050.a/#sudo ..\/works\/m3050\/m3050.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ncr236\/ncr236.a/#sudo ..\/works\/ncr236\/ncr236.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/taicon\/taicon.a/#sudo ..\/works\/taicon\/taicon.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/sph3000\/sph3000.a/#sudo ..\/works\/sph3000\/sph3000.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/ats_1\/ats_1.a/#sudo ..\/works\/ats_1\/ats_1.a/g" ${bashrcFile}
+    sed -i "s/."*"sudo ..\/works\/gt_1318p\/gt_1318p.a/#sudo ..\/works\/gt_1318p\/gt_1318p.a/g" ${bashrcFile}
+    sed -i "s/#sudo ..\/works\/yc\/yc.a/sudo ..\/works\/yc\/yc.a/g" ${bashrcFile}
+    ;;
+    *)
+    echo -e "make sure your input is right or wrong?"
+    ;;
+esac 
+fi
+echo -e "finish"
