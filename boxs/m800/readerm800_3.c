@@ -1664,11 +1664,11 @@ int main(int argc ,char *argv[])
 #ifdef PrintMode
                                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                      MachineCode, UserNo, MachREPAIRING);
+                                                                                      MachineCode, FixerNo, MachREPAIRING);
 #else
                                 fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s 0 0 0 %02d\n", ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                                       inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                                      MachineCode, UserNo, MachREPAIRING);
+                                                                                      MachineCode, FixerNo, MachREPAIRING);
 #endif
                                 fclose(pfile);
 
@@ -1714,12 +1714,12 @@ int main(int argc ,char *argv[])
                                             fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s %ld 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                MachineCode, UserNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
+                                                                MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #else
                                             fprintf(pfile, "%s %s %s 0 %ld 0 %s 16 %s %s %ld 0 0 %02d\n",
                                                                 ISNo, ManagerCard, CountNo, (long)now.tv_sec,
                                                                 inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 
-                                                                MachineCode, UserNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
+                                                                MachineCode, FixerNo, (long)changeIntoRepairmodeTimeStemp.tv_sec, MachREPAIRDone);
 #endif
                                             fclose(pfile);
 
