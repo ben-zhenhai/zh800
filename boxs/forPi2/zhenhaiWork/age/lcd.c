@@ -1,5 +1,17 @@
 #include "lcd.h"
 
+//針對wf35m 的lcd 進行 操作的function 都集中在此
+//因為老化機允許多單,在工單資料時, 會將切換螢幕的button 功能disable
+
+//傳入screenIndex 確認是要顯示哪一頁
+// 0 : 工單畫面
+// 1 : 計數頁面
+// 2 : 關機時的黑畫面, 以後可能會有其他用途, 不過現在僅拿來顯示關機
+// 3,4,5 : 都是顯示選單畫面, 差別僅是"> <" 的位只有所不同
+// 6 : config 畫面 顯示機台編號 ip address 軟體日期等等
+// 7 : 工單畫面, 不過進入維修狀態才會跑道這個index
+
+//status != 表示輸入工單中輸入到那個階段
 int UpdateScreenFunction(int screenIndex, int status)
 {
     unsigned char infoScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x00, 0x0d};
@@ -424,6 +436,7 @@ int UpdateScreenFunction(int screenIndex, int status)
         //config
         unsigned char machineNoPositionColorString[10] = {0x00, 0x8c, 0x00, 0x8c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char ipAddressPositionColorString[10] = {0x00, 0x64, 0x00, 0xc8, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};   
+        unsigned char versionPositionColorString[18] = {0x00, 0x00, 0x00, 0x50, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 'V', 'E', 'R', 'S', 'I', 'N', ':'};   
 
         unsigned char * commandArrayPtr;
         unsigned char * commandPtr, * countPtr;
@@ -432,6 +445,27 @@ int UpdateScreenFunction(int screenIndex, int status)
         SendCommandMessageFunction(configScreen, 13);
         nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
         //sleep(1);
+
+        arraySize = strlen(VERSION);
+#ifdef DEBUG
+        printf("array size:%d\n", arraySize);
+#endif
+        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(26 + arraySize)); 
+        memset(commandArrayPtr, 0, sizeof(unsigned char)*(26 + arraySize));
+        commandPtr = commandArrayPtr;
+        memcpy(commandPtr, startString, 5);
+        commandPtr = commandPtr + 5;
+        memcpy(commandPtr, versionPositionColorString, 18);
+        commandPtr = commandPtr + 18;
+        memcpy(commandPtr, VERSION, arraySize);
+        commandPtr = commandPtr + arraySize;
+        memcpy(commandPtr, endString, 3);
+        SendCommandMessageFunction(commandArrayPtr, 26 + arraySize);
+        if(commandArrayPtr != NULL) 
+        {
+            free(commandArrayPtr);
+            commandPtr = NULL;
+        }
 
         int fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         struct ifreq ethreq;

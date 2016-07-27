@@ -1,5 +1,10 @@
 #include "eeprom.h"
 
+//操作 eeprom 的method
+//因為eeprom 自己有個 32bytes 的 buffer, 如果沒有想辦法塞滿有時後會寫到奇怪的位置去, 因此這邊操作一次都是以32 bytes做操作
+
+//清除eeprom data
+//因為目前不會用到後面的儲存空間, 只從 0x00 清道 0xbf
 int ZHEarseEEPROMData()
 {
     int fd, r;
@@ -53,6 +58,7 @@ int ZHEarseEEPROMData()
     return 0;
 }
 
+// read data. 先放入 local var之後, 在copy 到 gobal var 去,
 int ReadEEPROMData()
 {
     int fd, r, forCount;
@@ -174,6 +180,10 @@ int ReadEEPROMData()
     return 0;
 }
 
+
+//write data to eeprom, 因為要確保資料正確, 寫完後會讀出來比對, 錯的話就整段擦掉, 然後重寫, 最多三次
+//也是先把global var 存到 local var 下面, 再用local var 去做處理
+//只存放 管理卡號 料號 目標量 目前總量, 不良品數量與作業員工號則不存
 int WriteEEPROMData()
 {
     int fd, r, forCount;

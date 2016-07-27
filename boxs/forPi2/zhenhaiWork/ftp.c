@@ -1,5 +1,7 @@
 #include "ftp.h"
 
+//用來抓去server 資料的 method
+//主要是改 cURL 的 sample code 
 
 size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -20,6 +22,8 @@ size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *user
 
     return realsize;
 }
+
+//目前撈data的網頁位置 192.168.3.2/api/machineStatus/xxx.txt, xxx表示機台號碼 ex A2600-01.txt
 
 int GetRemoteDataFunction()
 {

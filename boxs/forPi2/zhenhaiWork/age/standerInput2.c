@@ -1,5 +1,12 @@
 #include "standerInput2.h"
 
+
+//主要將合法的barcode info放入node中
+
+//InputMode==2, 代表一開始就scan UserNo
+//InputMode==1, change UserNo
+//剩下就是一般模式
+
 void * InputFunction(void *argument)
 {
     struct timeval now;
@@ -198,6 +205,14 @@ void * InputFunction(void *argument)
     }
 }
 
+//處理 stdin 的資料
+//用BarcodeIndex這個global var去判斷那個狀態, 讀取到stdin資料後, 配合BarcodeIndex 做判斷
+// ISNO : 管理卡號
+// ManagerCard : 產品料號
+// USERNO : 員工編號
+// 輸入員工編號的時候允許吃維修人員或是一般工作人員
+// COUNTNO : 目標數量 
+// 非上述情況, 程式都會把stdin 傳來的東西丟掉
 void * BarcodeInsertFunction(void * argument)
 {
     char tempBarcodeInput[INPUTLENGTH];

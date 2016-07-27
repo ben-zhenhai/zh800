@@ -1,5 +1,7 @@
 #include "eeprom.h"
 
+//local function 
+//當讀取失敗後,用來清掉 link list
 void CleanListFunction()
 {
     InputNode *nodePtr = ZHList;
@@ -15,6 +17,8 @@ void CleanListFunction()
     }
 }
 
+//清除eeprom data
+//因為目前不會用到後面的儲存空間, 只從 0x00 清到 0xbf
 int EarseEEPROMData()
 {
     int fd, r, returnValue;
@@ -87,6 +91,7 @@ int EarseEEPROMData()
     return 0;
 }
 
+// read data. 先放入 local var之後, 在copy 到 gobal var 去,
 int ReadEEPROMData()
 {
     int fd, r, forCount;
@@ -356,6 +361,9 @@ int ReadEEPROMData()
     return 0;
 }
 
+//write data to eeprom, 因為要確保資料正確, 寫完後會讀出來比對, 錯的話就整段擦掉, 然後重寫, 最多三次
+//也是先把global var 存到 local var 下面, 再用local var 去做處理
+//只存放 管理卡號 料號 目標量 目前總量, 不良品數量與作業員工號則不存
 int WriteEEPROMData()
 {
     int fd, r, forCount;

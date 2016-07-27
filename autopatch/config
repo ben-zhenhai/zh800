@@ -1,4 +1,4 @@
 Server:ftp://192.168.2.223:8888/
 AccPw:raspberry:1234
 MachineType:tsw100/
-ftp://192.168.20.100:21/upload/uploadFile/
+#ftp://192.168.20.100:21/upload/uploadFile/

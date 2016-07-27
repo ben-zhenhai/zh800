@@ -5,6 +5,7 @@
 
 #include "zhenhai.h"
 
+//define localTest 的情況, 執行時不會跟server 撈data 方便local 做測試, 不然還要等timeout
 //#define LOCALTEST
 
 #include "lock.h"
@@ -14,6 +15,8 @@
 
 #define GOODRATE 1.03
 
+
+//針對不同機台需要inlcude 不同type 的機型
 #include "tsw100/tsw100.h"
 #define ZHTSW100
 
@@ -59,6 +62,7 @@
 #define PINDEFINESHIFT 2
 #endif
 
+// 紀錄機台的最後狀況, 方便zhenhai ssh 進去box 做確認
 #define ZHMACHLOG "/home/pi/zhlog/machStageLog"
 #define GOODRATE 1.03
 
@@ -75,6 +79,8 @@ void sig_fork(int signo)
     return;
 }
 
+
+// write data to file 都使用這個method, 傳入值為 machine status, 細節請參閱 zhenhai.h 或是Brian 提供之文件
 int WriteFile(int mode)
 {
     FILE *filePtr, *logPtr;
@@ -288,6 +294,8 @@ int WriteFile(int mode)
     fclose(logPtr);
     return 0;
 }
+
+//這個method 已經不使用, lcd refresh 以交由 lcd.c 中的 sendCommandMessageFunction 做處理
 void * LcdRefreshFunction(void *argument)
 {
     struct timeval now;
@@ -318,6 +326,8 @@ void * LcdRefreshFunction(void *argument)
     printf("[%s] exit\n",__func__);
 }
 
+//進入關電模式的listener method, 只要 gpio 拉high 就會被trigger
+
 void * PowerOffEventListenFunction(void *argument)
 {
     printf("%s start\n", __func__);
@@ -341,6 +351,8 @@ void * PowerOffEventListenFunction(void *argument)
     }
     printf("[%s|%d]exit\n",__func__, __LINE__);
 }
+
+//cancel 管理卡資訊 method, 只要工單輸入完成, 這個pthread 就會被中止 然後那個gpio 就會被拿去做換班
 
 void * CancelOrderFunction(void *argument)
 {
@@ -374,6 +386,9 @@ void * CancelOrderFunction(void *argument)
     }
 }
 
+// 除了 poweroff event 跟 lcd 操作的 gpio 外, 所有event都在這邊做listen 
+// 良品數量到達目標, 按下結單或是換班, 這三件事情
+// BarcodeIndex 的變換也是由這邊跟main 做操作, standInput底下只做讀取
 void * EventListenFunction(void *argument)
 {   
     while(1)
@@ -556,6 +571,8 @@ void * EventListenFunction(void *argument)
     }
 }
 
+
+// 執行 mongoDB的script 放入此,每5min 只要file size > 0就會執行一次
 int main()
 {
     pthread_t inputThread, eventListenThread, watchDogThread, changeScreenThread, poweroffThread, cancelOrderThread, lcdRefreshThread;
@@ -704,8 +721,6 @@ int main()
         printf("read machine's number error");
         return 0;
     }
-    //unmask for test batter 
-    //digitalWrite (ZHPIN31, HIGH);
 
     memset(UploadFilePath, 0, sizeof(char)*INPUTLENGTH);
     gettimeofday(&now, NULL);

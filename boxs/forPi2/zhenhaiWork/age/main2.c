@@ -258,6 +258,7 @@ int WriteFile(int mode)
     return 0;
 }
 
+//canel order event
 void * CancelOrderFunction(void *argument)
 {
     char flagForZHPIN40 = 0;
@@ -355,7 +356,7 @@ void * CancelOrderFunction(void *argument)
         nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITMID}}, NULL);
     }
 }
-
+//這個function 已經沒有作用了, refresh 透過別的function 做處理
 void * LcdRefreshFunction(void *argument)
 {
     struct timeval now;
@@ -386,6 +387,7 @@ void * LcdRefreshFunction(void *argument)
     printf("[%s] exit\n", __func__);
 }
 
+//listen power off event function
 void * PowerOffEventListenFunction(void *argument)
 {
     printf("%s start\n", __func__);
@@ -409,6 +411,8 @@ void * PowerOffEventListenFunction(void *argument)
     printf("[%s|%d]exit\n",__func__, __LINE__);
 }
 
+//listen gpio event, 不含切換螢幕按鍵
+//因為換班不會鎖機, 因此單純判斷是否有按下結單或是生產數量達到,當然poweroff event 發生後, 這邊也會順道結束
 void * EventListenFunction(void *argument)
 {
     while(1)

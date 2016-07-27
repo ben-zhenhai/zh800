@@ -10,9 +10,10 @@
 #include <time.h>
 
 #include "crc.h"
-
+//使用於工廠數據收集上
 #define Version "taicon_ver"
 #define FrontNameLength 10
+//使用於污水偵測數據收集上
 //#define Version "tcjcc_ver"
 //#define FrontNameLength 9
 #define VersionNumberLength 8
@@ -39,7 +40,7 @@ struct MemoryStruct {
     size_t size;    
 };
 
-//file name and crc value
+//file name and crc value 是否跟最新版本一致, 一致的話就不需要拉新檔案
 int CheckLocalFileCRCValueFunction(char *dlFilePath, int crcValue)
 {
     FILE *filePtr;
@@ -143,6 +144,9 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
     return realsize;
 }
 
+//確認local 端的 版本文件與server相比是否是最新版本, 是的話 retrurn 0, 否則 return 1執行update
+//比較方式則是透過filename 上面的日期數字相比... yyyymmddxx,分別為年 月 日 編號,若是一天內有兩次patch 則透過編號+1區別
+//ex: 2016070501 跟 2016070502 
 int CheckNewestVersionFunction()
 {
     CURL *curl_handle;
@@ -390,7 +394,7 @@ int main(int argc,char* argv[])
         char targetPath[ExecuteFilePathLength];
         char remoteFolder[FileNameSize];
 
-        //update version list
+        //update 最新版本的files crc
         if(curl_handle)
         {
             char RemoteURL[ExecuteFilePathLength];
@@ -516,6 +520,7 @@ int main(int argc,char* argv[])
         fread(bufferForupdatelist, 1, fileSize2, pfile);
         fclose(pfile);
 
+        //使用兩個loop 去做比對... 先開taicon_xxxxxxx parse 完一行後在parse 全部的 updatelist 進行比多
         while(fileSize > 0)
         {   
             if(*charPositionTempNewestFile != '\n' && *charPositionTempNewestFile != 0x0d) 
@@ -623,6 +628,7 @@ int main(int argc,char* argv[])
 
                                     if(res3 == CURLE_OK)
                                     {
+                                        //成功下載新版的file 後進行 crc 比對, 確認upload 成功
                                         //check crc
                                         pfile = fopen(road, "r");
                                         if(pfile != NULL)

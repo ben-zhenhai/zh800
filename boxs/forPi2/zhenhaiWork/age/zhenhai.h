@@ -32,12 +32,13 @@
 //#define BarcodeFilePath "/home/pi/zhenhaiWork/age/newbarcode"
 #define BarcodeFilePath "/home/pi/works/machineNumber"
 
-
 #define INPUTLENGTH 256
 #define USLEEPTIMEUNITVERYSHORT 1000
 #define USLEEPTIMEUNITSHORT 100000
 #define USLEEPTIMEUNITMID 500000
 #define USLEEPTIMEUNITLONG 700000
+
+#define VERSION "2016063001"
 
 #define NANOSLEEPTIMEUNITMID 500000000L
 #define NANOSLEEPTIMEUNITLONG 700000000L
