@@ -1,16 +1,478 @@
 #include "lcd.h"
 
-//針對wf35m 的lcd 進行 操作的function 都集中在此
+/* 20160829, Joey Ni, test for LCD bug ------------------ { */
+#include <pthread.h>
 
-//傳入screenIndex 確認是要顯示哪一頁
-// 0 : 工單畫面
-// 1 : 計數頁面
-// 2 : 關機時的黑畫面, 以後可能會有其他用途, 不過現在僅拿來顯示關機
-// 3,4,5 : 都是顯示選單畫面, 差別僅是"> <" 的位只有所不同
-// 6 : config 畫面 顯示機台編號 ip address 軟體日期等等
-// 7 : 工單畫面, 不過進入維修狀態才會跑道這個index
+
+/* WF35M module { */
+#define SB1 0x01
+#define SB2 0x02
+#define SB3 0x04
+
+#define MODE_STRING             0X31
+#define MODE_GRAPHIC		    0X32
+#define MODE_PIXEL			    0X33
+#define MODE_LINE			    0X34
+#define MODE_SQUARE			    0X35
+#define MODE_CLEAR			    0X36
+#define MODE_PWM			    0X37
+#define MODE_SET_BL			    0X39
+#define MODE_ERASE_ICON_LAYER	0X41
+#define MODE_CAL_RTP		    0X7E
+
+#define CMD_LEN_GRAPHIC	13
+#define CMD_LEN_PIXEL	14
+#define CMD_LEN_CLEAR	14
+#define CMD_LEN_SQUARE	19
+/* WF35M module } */
+
+#define TEXT_LEN_MAX 30
+
+
+typedef enum screen_background {
+    BG_POWER_ON = 0,
+    BG_WORK_INFO,
+    BG_PRODUCT_COUNT,
+    BG_POWER_OFF,
+    BG_MAIN_MENU,
+    BG_MACHINE_INFO,
+} screen_bg_t;
+
+
+pthread_mutex_t screen_update_mutex = PTHREAD_MUTEX_INITIALIZER;
+static screen_bg_t current_screen_bg = BG_POWER_OFF;  // screen background
+static int flag_wf35m_error = 0;
+static int flag_timer = 0;
+static int WF35M_reset_count = 0;
+
+
+void alarm_handler(int a);
+void WF35M_screen_update(int index);
+int WF35M_bg_update(screen_bg_t background);
+int WF35M_check_busy(void);
+int WF35M_spi_text_cmd(char font_type, char display_level, char transparent, char rotation,
+                      int X_point, int Y_point, unsigned long text_color, unsigned long bg_color,
+                      char *text, int text_len);
+int WF35M_spi_picture_cmd(char display_level, char rotation, 
+                           int X_point, int Y_point, int picture_index);
+int WF35M_spi_square_cmd(char display_level, char rotation, int X_start, int Y_start,
+                          int X_end, int Y_end, int border_pixel, unsigned long color);
+int WF35M_spi_clear_cmd(int X_start, int Y_start, int X_end, int Y_end);
+
+
+void alarm_handler(int a)
+{
+    flag_timer = 1;
+}
+
+
+void WF35M_screen_update(int index)
+{
+    int cmd_result = 0;
+    char text_buffer[TEXT_LEN_MAX];
+    int fd2;
+    int fd;
+    struct ifreq ethreq;
+
+    pthread_mutex_lock(&screen_update_mutex);
+
+    if (flag_wf35m_error) {
+        pthread_mutex_unlock(&screen_update_mutex);
+        return;
+    }
+
+    switch (index) {
+    case 1:  // product count
+        if (WF35M_bg_update(BG_PRODUCT_COUNT) == -1) goto WF35M_ERROR;
+
+        cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 106, 88, 0x00FFFF, 0x000000, CountNo, strlen(CountNo));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        sprintf(text_buffer, "%ld", GoodCount);
+        cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 106, 134, 0x00FFFF, 0x000000, text_buffer, strlen(text_buffer));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        sprintf(text_buffer, "%ld", TotalBadCount);
+        cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 106, 184, 0x00FFFF, 0x000000, text_buffer, strlen(text_buffer));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+        /* ����:  �����s�����L�{���B�z��global�ܼ�, ���k���O�ܫ���, �i�H�Ҽ{�ק� */
+
+    case 2:  // Power off
+        if (WF35M_bg_update(BG_POWER_OFF) == -1) goto WF35M_ERROR;
+        break;
+
+    case 3:  // select item 1
+        if (WF35M_bg_update(BG_MAIN_MENU) == -1) goto WF35M_ERROR;
+
+        cmd_result = WF35M_spi_square_cmd(3, 0, 100, 59, 225, 99, 3, 0x0000FF);
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 4:  // select item 2
+        if (WF35M_bg_update(BG_MAIN_MENU) == -1) goto WF35M_ERROR;
+
+        cmd_result = WF35M_spi_square_cmd(3, 0, 99, 111, 224, 151, 3, 0x0000FF);
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 5:  // select item 3
+        if (WF35M_bg_update(BG_MAIN_MENU) == -1) goto WF35M_ERROR;
+
+        cmd_result = WF35M_spi_square_cmd(3, 0, 98, 161, 223, 201, 3, 0x0000FF);
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 6:  // machine info
+        fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (WF35M_bg_update(BG_MACHINE_INFO) == -1) goto WF35M_ERROR;
+
+        strncpy(ethreq.ifr_name, ZHNETWORKTYPE, IFNAMSIZ);
+        ioctl(fd2, SIOCGIFFLAGS, &ethreq);
+
+        if(ethreq.ifr_flags & IFF_RUNNING) {
+            fd = socket(AF_INET, SOCK_DGRAM, 0);
+            struct ifreq ifr;
+
+            ifr.ifr_addr.sa_family = AF_INET;
+            strncpy(ifr.ifr_name, ZHNETWORKTYPE, IFNAMSIZ-1);
+            ioctl(fd, SIOCGIFADDR, &ifr);
+            close(fd);
+
+            /* IP address */
+            strncpy(text_buffer, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 17);
+            cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 95, 200, 0x00FFFF, 0x000000, text_buffer, strlen(text_buffer));
+            if (cmd_result != 0) goto WF35M_ERROR;
+        }
+
+        close(fd2);
+
+        /* machine number */
+        cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 130, 140, 0x00FFFF, 0x000000, MachineNo, strlen(MachineNo));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 7:  // repair
+        if (WF35M_bg_update(BG_POWER_OFF) == -1) goto WF35M_ERROR;
+
+        strcpy(text_buffer, "Repairing...");
+        cmd_result = WF35M_spi_text_cmd(0, 3, 0, 0, 10, 50, 0xFF0000, 0x000000, text_buffer, strlen(text_buffer));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        sprintf(text_buffer, "ID: %s", RepairNo);
+        cmd_result = WF35M_spi_text_cmd(0, 3, 0, 0, 10, 134, 0xFF0000, 0x000000, text_buffer, strlen(text_buffer));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 99:  // Barcode Error
+        switch (BarcodeIndex) {
+        case 0:
+            strcpy(text_buffer, "Error 1");
+            break;
+        case 1:
+            strcpy(text_buffer, "Error 2");
+            break;
+        case 2:
+            strcpy(text_buffer, "Error 3");
+            break;
+        case 3:
+            strcpy(text_buffer, "Error 4");
+            break;
+        default:
+            strcpy(text_buffer, "Error 5");
+            break;
+        }
+        cmd_result = WF35M_spi_text_cmd(0, 3, 1, 0, 106, 184, 0xFFFF00, 0xFF0000, text_buffer, strlen(text_buffer));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        break;
+
+    case 111:  // show debug message on screen
+        if (current_screen_bg == BG_MAIN_MENU || current_screen_bg == BG_WORK_INFO) {
+            cmd_result = WF35M_spi_clear_cmd(290, 0, 320, 40);
+            if (cmd_result != 0) goto WF35M_ERROR;
+            usleep(500000);  // 500ms
+            
+            if (WF35M_reset_count == 0) {
+                cmd_result = WF35M_spi_square_cmd(3, 0, 300, 8, 314, 22, 7, 0x008040);
+                if (cmd_result != 0) goto WF35M_ERROR;
+            }
+            else if (WF35M_reset_count < 10) {
+                sprintf(text_buffer, "%d", WF35M_reset_count);
+                cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 290, 000, 0xFF0000, 0x000000, text_buffer, strlen(text_buffer));
+                if (cmd_result != 0) goto WF35M_ERROR;
+            }
+            else {
+                strcpy(text_buffer, "X");
+                cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 290, 000, 0xFF0000, 0x000000, text_buffer, strlen(text_buffer));
+                if (cmd_result != 0) goto WF35M_ERROR;
+            }
+        }
+
+        break;
+
+    default:  // work info
+        if (WF35M_bg_update(BG_WORK_INFO) == -1) goto WF35M_ERROR;
+
+        /* working number */
+        if (strlen(ISNo) > 0) {
+            cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 97, 57, 0x00FFFF, 0x000000, ISNo, strlen(ISNo));
+            if (cmd_result != 0) goto WF35M_ERROR;
+        }
+
+        /* item number */
+        if (strlen(ManagerCard) > 0) {
+            cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 75, 93, 0x00FFFF, 0x000000, ManagerCard, 10);
+            if (cmd_result != 0) goto WF35M_ERROR;
+            cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 75, 123, 0x00FFFF, 0x000000, ManagerCard+10, 14);
+            if (cmd_result != 0) goto WF35M_ERROR;
+        }
+
+        /* goal amount */
+        cmd_result = WF35M_spi_text_cmd(1, 3, 0, 0, 130, 163, 0x00FFFF, 0x000000, CountNo, strlen(CountNo));
+        if (cmd_result != 0) goto WF35M_ERROR;
+
+        /* employee ID */
+        if (isInPairMode == 1) {
+            if(CanChangeRepairModeFlag == 3)
+                strcpy(text_buffer, "Repair Done");
+            else
+                strcpy(text_buffer, "Repairing");
+            cmd_result = WF35M_spi_text_cmd(0, 3, 0, 0, 130, 205, 0xFFFF00, 0x000000, text_buffer, strlen(text_buffer));
+            if (cmd_result != 0) goto WF35M_ERROR;
+        }
+        else {
+            if (strlen(UserNo) <= 25)
+                cmd_result = WF35M_spi_text_cmd(0, 3, 0, 0, 130, 205, 0xFFFF00, 0x000000, UserNo, strlen(UserNo));
+            else
+                cmd_result = WF35M_spi_text_cmd(0, 3, 0, 0, 130, 205, 0xFFFF00, 0x000000, UserNo+24, strlen(UserNo)-24);
+            if (cmd_result != 0) goto WF35M_ERROR;
+        }
+
+        break;
+    }
+
+    pthread_mutex_unlock(&screen_update_mutex);
+
+    return;
+
+WF35M_ERROR:  // error handle
+    flag_wf35m_error = 1;
+    pthread_mutex_unlock(&screen_update_mutex);
+
+    /* reset LCD module */
+    digitalWrite(ZHPIN33, LOW);
+    sleep(2);
+    digitalWrite(ZHPIN33, HIGH);
+    sleep(2);
+
+    current_screen_bg = BG_POWER_ON;
+
+    WF35M_reset_count++;
+    printf("WF35M LCD module is reset, reset count = %d\n", WF35M_reset_count);
+
+    WF35M_bg_update(BG_MAIN_MENU);
+    // Reset up down key if we reset the screen.
+    DisableUpDown = 0;
+    WF35M_spi_square_cmd(3, 0, 100, 59, 225, 99, 3, 0x0000FF);
+
+    flag_wf35m_error = 0;
+
+    return;
+}
+
+	
+int WF35M_bg_update(screen_bg_t background)
+{
+    int cmd_result = 0;
+
+    if (background != current_screen_bg) {
+        cmd_result = WF35M_spi_picture_cmd(1, 0, 0, 0, background);
+        if (cmd_result != 0) return -1;
+        current_screen_bg = background;
+    }
+
+    cmd_result = WF35M_spi_clear_cmd(0, 0, 320, 240);
+    if (cmd_result != 0) return -1;
+
+    return 0;
+}
+
+
+int WF35M_check_busy(void)
+{
+    unsigned char cmd_buffer[2] = {0x01, 0xFF};
+    int count = 1;
+
+    usleep(5000);  // before checking, wait 5ms
+
+    while (1) {
+        wiringPiSPIDataRW(SPI_CHANNEL, cmd_buffer, 2);
+        delayMicroseconds(500);  // delay 0.5ms and check busy flag
+        if (cmd_buffer[1] == 0x01) break;
+        count++;
+        if (count > 100) break;
+        usleep(5000);  // if still busy, wait 5ms
+    }
+
+    if (count > 20)
+        printf("Warning! count of check_busy = %d\n", count);
+
+    if (count > 100) {
+        printf("Error! LCD always busy! \n");
+        return -1;
+    }
+
+    #if 0  // for test
+    static int test_count = 0;
+    test_count++;
+    if (test_count%50 == 0) {
+        printf("test_count=%d\n", test_count);
+        return -1;
+    }
+    #endif
+
+    return 0;
+}
+
+
+int WF35M_spi_text_cmd(char font_type, char display_level, char transparent, char rotation,
+                      int X_point, int Y_point, unsigned long text_color, unsigned long bg_color,
+                      char *text, int text_len)
+{
+    unsigned char cmd_buffer[18+TEXT_LEN_MAX];
+
+    if (text_len > TEXT_LEN_MAX) {
+        printf("text is too long, can't be sent!\n");
+        return -2;
+    }
+
+    cmd_buffer[0] = 0x31;
+    cmd_buffer[1] = SB3;
+    cmd_buffer[2] = MODE_STRING;
+    cmd_buffer[3] = ((font_type << 4) & 0xF0) + display_level;
+    cmd_buffer[4] = ((transparent << 4) & 0xF0) + rotation;
+    cmd_buffer[5] = (X_point >> 8);
+    cmd_buffer[6] = X_point;
+    cmd_buffer[7] = (Y_point >> 8);
+    cmd_buffer[8] = Y_point;
+    cmd_buffer[9] = (text_color >> 16);
+    cmd_buffer[10] = (text_color >> 8);
+    cmd_buffer[11] =  text_color;
+    cmd_buffer[12] = (bg_color >> 16);
+    cmd_buffer[13] = (bg_color >> 8);
+    cmd_buffer[14] =  bg_color;
+
+    memcpy((void *)(cmd_buffer+15), text, text_len);
+
+    cmd_buffer[text_len + 15] = 0x0A;
+    cmd_buffer[text_len + 16] = 0x00;
+    cmd_buffer[text_len + 17] = 0x0D;
+    
+    wiringPiSPIDataRW(SPI_CHANNEL, cmd_buffer, text_len + 18);
+
+    return WF35M_check_busy();
+}
+
+
+int WF35M_spi_picture_cmd(char display_level, char rotation, 
+                           int X_point, int Y_point, int picture_index)
+{
+	unsigned char cmd_buffer[CMD_LEN_GRAPHIC];
+
+	cmd_buffer[0] = 0x31;
+	cmd_buffer[1] = SB3;
+	cmd_buffer[2] = MODE_GRAPHIC;
+	cmd_buffer[3] = ((display_level << 4) & 0xF0) + rotation;
+	cmd_buffer[4] = (X_point >> 8);
+	cmd_buffer[5] = X_point;
+	cmd_buffer[6] = (Y_point >> 8);
+	cmd_buffer[7] = Y_point;
+	cmd_buffer[8]= (picture_index >> 8);
+	cmd_buffer[9]= picture_index;
+	cmd_buffer[10]= 0x0A;
+	cmd_buffer[11]= 0x00;
+	cmd_buffer[12]= 0x0D;
+
+    wiringPiSPIDataRW(SPI_CHANNEL, cmd_buffer, CMD_LEN_GRAPHIC);
+
+    usleep(500000);  // painting full size picture needs about 500 ms
+    
+    return WF35M_check_busy();
+}
+
+
+int WF35M_spi_square_cmd(char display_level, char rotation, int X_start, int Y_start,
+                          int X_end, int Y_end, int border_pixel, unsigned long color)
+{
+	unsigned char cmd_buffer[CMD_LEN_SQUARE];
+
+	cmd_buffer[0] = 0x31;
+	cmd_buffer[1] = SB3;
+	cmd_buffer[2] = MODE_SQUARE;
+	cmd_buffer[3] = ((display_level << 4) & 0xF0) + rotation;
+	cmd_buffer[4] = (X_start >> 8);
+	cmd_buffer[5] = X_start;
+	cmd_buffer[6] = (Y_start >> 8);
+	cmd_buffer[7] = Y_start;
+	cmd_buffer[8] = (X_end >> 8);
+	cmd_buffer[9] = X_end;
+	cmd_buffer[10] = (Y_end >> 8);
+	cmd_buffer[11] = Y_end;
+	cmd_buffer[12] = border_pixel;
+	cmd_buffer[13]= (color >> 16);
+	cmd_buffer[14]= (color >> 8);
+	cmd_buffer[15]= color;
+	cmd_buffer[16]= 0x0A;
+	cmd_buffer[17]= 0x00;
+	cmd_buffer[18]= 0x0D;
+
+    wiringPiSPIDataRW(SPI_CHANNEL, cmd_buffer, CMD_LEN_SQUARE);
+	
+    return WF35M_check_busy();
+}
+
+
+int WF35M_spi_clear_cmd(int X_start, int Y_start, int X_end, int Y_end)
+{
+	unsigned char cmd_buffer[CMD_LEN_CLEAR];
+
+	cmd_buffer[0] = 0x31;
+	cmd_buffer[1] = SB3;
+	cmd_buffer[2] = MODE_CLEAR;
+	cmd_buffer[3] = (X_start >> 8);
+	cmd_buffer[4] = X_start;
+	cmd_buffer[5] = (Y_start >> 8);
+	cmd_buffer[6] = Y_start;
+	cmd_buffer[7] = (X_end >> 8);
+	cmd_buffer[8] = X_end;
+	cmd_buffer[9] = (Y_end >> 8);
+	cmd_buffer[10] = Y_end;
+	cmd_buffer[11]= 0x0A;
+	cmd_buffer[12]= 0x00;
+	cmd_buffer[13]= 0x0D;
+
+    wiringPiSPIDataRW(SPI_CHANNEL, cmd_buffer, CMD_LEN_CLEAR);
+
+    return WF35M_check_busy();
+}
+
+/* 20160829, Joey Ni, test for LCD bug ------------------ } */
+
+
 int UpdateScreenFunction(int screenIndex)
 {
+    /* 20160829, Joey Ni, test for screen bug { */
+    WF35M_screen_update(screenIndex);
+    return 0;
+    /* 20160829, Joey Ni, test for screen bug } */
+
     unsigned char infoScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x00, 0x0d};
     unsigned char countScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0a, 0x00, 0x0d};
     unsigned char powerOffScreen[13] = {0x31, 0x04, 0x32, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x0a, 0x00, 0x0d};
@@ -187,7 +649,6 @@ int UpdateScreenFunction(int screenIndex)
     {
         unsigned char machineNoPositionColorString[10] = {0x00, 0x8c, 0x00, 0x8c, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
         unsigned char ipAddressPositionColorString[10] = {0x00, 0x64, 0x00, 0xc8, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00};   
-        unsigned char versionPositionColorString[18] = {0x00, 0x00, 0x00, 0x50, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 'V', 'E', 'R', 'S', 'I', 'O', 'N', ':'};
 
         unsigned char * commandArrayPtr;
         unsigned char * commandPtr, * countPtr;
@@ -196,27 +657,6 @@ int UpdateScreenFunction(int screenIndex)
         SendCommandMessageFunction(configScreen, 13);
         nanosleep((const struct timespec[]){{0, 450000000L}}, NULL);
         //sleep(1);
-
-        arraySize = strlen(VERSION);
-#ifdef DEBUG
-        printf("arraySize: %d\n", arraySize);
-#endif
-        commandArrayPtr = (unsigned char *)malloc(sizeof(unsigned char)*(26 + arraySize)); 
-        memset(commandArrayPtr, 0, sizeof(unsigned char)*(26 + arraySize));
-        commandPtr = commandArrayPtr;
-        memcpy(commandPtr, startString, 5);
-        commandPtr = commandPtr + 5;
-        memcpy(commandPtr, versionPositionColorString, 18);
-        commandPtr = commandPtr + 18;
-        memcpy(commandPtr, VERSION, arraySize);
-        commandPtr = commandPtr + arraySize;
-        memcpy(commandPtr, endString, 3);
-        SendCommandMessageFunction(commandArrayPtr, 26 + arraySize);
-        if(commandArrayPtr != NULL) 
-        {
-            free(commandArrayPtr);
-            commandPtr = NULL;
-        }
 
         int fd2 = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         struct ifreq ethreq;
@@ -515,7 +955,6 @@ int UpdateScreenFunction(int screenIndex)
     return 0;
 }
 
-//listen 上,下,進入,返回 四個button 的 method
 
 void * ChangeScreenEventListenFunction(void *argument)
 {
@@ -525,8 +964,28 @@ void * ChangeScreenEventListenFunction(void *argument)
     flagForZHPIN32 = flagForZHPIN22 = flagForZHPIN36 = flagForZHPIN38 = 0;
     //ScreenIndex = screenIndex;
 
+    /* 20160830, Joey Ni, test for LCD bug ------------------ { */
+    char text_buffer[TEXT_LEN_MAX];
+    /* Timer */
+    signal(SIGALRM, alarm_handler);
+    alarm(1);
+    /* 20160830, Joey Ni, test for LCD bug ------------------ } */
+
     while(1)
     {
+        /* 20160830, Joey Ni, test for LCD bug ------------------ { */
+        if (flag_timer) {
+            WF35M_screen_update(111);
+            flag_timer = 0;
+            alarm(1);
+        }
+        /* 20160830, Joey Ni, test for LCD bug ------------------ } */
+
+        // ZHPIN32 = Key Down
+        // ZHPIN22 = Key Up
+        // ZHPIN38 = Key Enter
+        // ZHPIN36 = Key Return
+
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         if(DisableUpDown == 0 && flagForZHPIN32 == 0 && digitalRead(ZHPIN32) == 0)
         {
@@ -598,9 +1057,6 @@ void * ChangeScreenEventListenFunction(void *argument)
     }
 }
 
-
-//真正送spi command 的method, ZHCHECKSCREENBUSY 有define 的情況下, 需要收到 0x01 才會接著送下一個command
-//傳入值為 spi command 內容跟長度
 int SendCommandMessageFunction (unsigned char *message, int arrayLength)
 {
     unsigned char *copyMessageArray;

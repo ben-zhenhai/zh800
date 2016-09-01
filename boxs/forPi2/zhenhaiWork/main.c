@@ -17,8 +17,8 @@
 
 
 //針對不同機台需要inlcude 不同type 的機型
-#include "tsw100/tsw100.h"
-#define ZHTSW100
+//#include "tsw100/tsw100.h"
+//#define ZHTSW100
 
 //#include "tsw303/tsw303.h"
 //#define ZHTSW303
@@ -498,7 +498,7 @@ void * EventListenFunction(void *argument)
                 //because write eeprom need more time, a check for go through too fast
                 pthread_mutex_unlock(&MutexEEPROM);
  
-                while(!ZHResetFlag)
+                while(!ZHResetFlag) // ZHResetFlag == 0
                 {
                     nanosleep((const struct timespec[]){{0, NANOSLEEPTIMEUNITSHORT}}, NULL);
                     GoodCount = ExCount[GOODCOUNT];
